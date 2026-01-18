@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>리뷰 요청 목록</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header>
+    <h1>리뷰 요청 목록</h1>
+
+    <div style="margin-top:12px;">
+        <select id="status-select">
+            <option value="PENDING_REVIEW" selected>대기중</option>
+            <option value="APPROVED">승인됨</option>
+            <option value="REJECTED">거절됨</option>
+        </select>
+    </div>
+</header>
+
+<main class="page-container">
+    <div id="review-list" class="problem-list"></div>
+</main>
+
+<script src="/js/cursor-paging.js"></script>
+<script>
+
+    const list = document.getElementById("review-list");
+
+    let cursor = null;     // CursorResponse
+    let hasNext = true;
+    let currentStatus = "PENDING_REVIEW";
+
+    const statusSelect = document.getElementById("status-select");
+
+    statusSelect.addEventListener("change", () => {
+        currentStatus = statusSelect.value;
+
+        // 🔥 상태 바뀌면 전부 초기화
+        cursor = null;
+        hasNext = true;
+        list.innerHTML = "";
+
+        loadReviews();
+    });
+
+    /* ===============================
+       데이터 로딩
+    =============================== */
+    async function loadReviews() {
+        if (!hasNext) return;
+
+        try {
+            const page = await fetchCursorPage({
+                url: "/admin/api/review-requests",
+                params: {
+                    registrationStatus: currentStatus
+                },
+                cursor
+            });
+
+            renderReviews(page.items);
+
+            cursor = page.nextCursor;   // 🔥 서버가 내려준 커서 그대로 사용
+            hasNext = page.hasNext;
+
+        } catch (e) {
+            console.error(e);
+            alert("리뷰 요청 목록을 불러오지 못했습니다.");
+        }
+    }
+
+    /* ===============================
+       렌더링
+    =============================== */
+    function renderReviews(reviews) {
+        if (!reviews || reviews.length === 0) {
+            // 최초 로딩인데 아무것도 없을 때만 메시지
+            if (list.children.length === 0) {
+                list.innerHTML =
+                    `<p style="text-align:center;">리뷰 요청이 없습니다.</p>`;
+            }
+            return;
+        }
+
+        reviews.forEach(r => {
+            const card = document.createElement("div");
+            card.className = "problem-card";
+
+            // 클릭 → 문제 상세
+            card.onclick = () => {
+                location.href = `/admin/review-requests/${r.id}`;
+            };
+
+            card.innerHTML = `
+                <div class="problem-content">
+                    ${r.rootProblem}
+                </div>
+                <div class="problem-meta">
+                    <span class="tag review-status">${r.registrationStatus}</span>
+                </div>
+            `;
+
+            list.appendChild(card);
+        });
+    }
+
+    /* ===============================
+       무한 스크롤
+    =============================== */
+    window.addEventListener("scroll", () => {
+        if (
+            window.innerHeight + window.scrollY >=
+            document.body.offsetHeight - 200
+        ) {
+            loadReviews();
+        }
+    });
+
+    /* ===============================
+       최초 로딩
+    =============================== */
+    loadReviews();
+</script>
+
+</body>
+</html>

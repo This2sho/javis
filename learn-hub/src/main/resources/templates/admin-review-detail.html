@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>리뷰 요청 상세</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header>
+    <h1>리뷰 요청 상세</h1>
+</header>
+
+<main class="page-container">
+
+    <!-- 문제 상세 (읽기 전용) -->
+    <div id="view-root"></div>
+
+    <!-- 승인 / 거절 -->
+    <div class="page-actions">
+        <button class="approve-btn approve" onclick="submitReview('APPROVED')">
+            승인
+        </button>
+        <button class="reject-btn reject" onclick="submitReview('REJECTED')">
+            거절
+        </button>
+    </div>
+
+</main>
+
+<script th:inline="javascript">
+    const REVIEW_ID = /*[[${reviewId}]]*/ 0;
+    const ROOT_PROBLEM_ID   = /*[[${problemId}]]*/ 0;
+</script>
+
+<script>
+    /* ===============================
+       문제 상세 조회
+    =============================== */
+    fetch(`/api/problems/${ROOT_PROBLEM_ID}`, { credentials: "include" })
+        .then(res => {
+            if (!res.ok) throw new Error("문제 조회 실패");
+            return res.json();
+        })
+        .then(problem => {
+            const root = document.getElementById("view-root");
+            root.innerHTML = "";
+            renderView(root, problem, 0);
+        });
+
+    function renderView(container, problem, depth) {
+        const box = document.createElement("div");
+        box.className = "problem-box";
+        box.style.marginLeft = `${depth * 24}px`;
+
+        box.innerHTML = `
+            <div class="problem-content">${problem.content}</div>
+
+            <div class="problem-meta">
+                <span class="tag difficulty">${problem.difficulty}</span>
+                <span class="tag category">${problem.category}</span>
+            </div>
+
+            <div class="section">
+                <h4>예상 답변</h4>
+                <p>${problem.referenceAnswer}</p>
+            </div>
+
+            <div class="section keyword-list"></div>
+        `;
+
+        const kw = box.querySelector(".keyword-list");
+        problem.keywords?.forEach(k => {
+            const span = document.createElement("span");
+            span.className = "keyword-tag";
+            span.innerText = k;
+            kw.appendChild(span);
+        });
+
+        container.appendChild(box);
+
+        problem.followUps?.forEach(fu =>
+            renderView(container, fu, depth + 1)
+        );
+    }
+
+    /* ===============================
+       리뷰 승인 / 거절
+    =============================== */
+    function submitReview(status) {
+        fetch(`/admin/api/review-requests/${REVIEW_ID}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({
+                registrationStatus: status
+            })
+        })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error("리뷰 처리 실패");
+                }
+
+                // 1️⃣ Location 헤더 기반 redirect
+                const location = res.headers.get("Location");
+                if (location) {
+                    window.location.href = location;
+                    return;
+                }
+
+                // 2️⃣ body 기반 redirect (선택)
+                return res.json();
+            })
+            .then(data => {
+                if (data && data.redirectUrl) {
+                    window.location.href = data.redirectUrl;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("리뷰 처리 중 오류가 발생했습니다.");
+            });
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,100 @@
+/* 기본 레이아웃 */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: Arial, sans-serif;
+}
+
+/* 전체 컨테이너 */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* 화면 전체 높이 차지 */
+}
+
+/* 메시지 영역 */
+.messages {
+    flex: 1; /* 남는 공간 모두 차지 */
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* 메시지 간격 */
+    padding: 20px;
+    overflow-y: auto; /* 메시지 영역만 스크롤 */
+    background-color: #ffffff;
+}
+
+/* 메시지 공통 스타일 */
+.message {
+    padding: 10px 14px;
+    border-radius: 20px;
+    max-width: 70%;
+    word-wrap: break-word;
+    line-height: 1.4;
+}
+
+/* 봇 메시지: 왼쪽 */
+.bot-message {
+    background-color: #f1f1f1;
+    align-self: flex-start;
+}
+
+/* 유저 메시지: 오른쪽 */
+.user-message {
+    background-color: #007bff;
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px; /* 챗지피티 느낌 */
+}
+
+/* 입력창 영역 */
+.input-container {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+    background-color: #fff;
+}
+
+/* 입력창 */
+.chat-input {
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    padding: 10px 14px;
+    resize: none;
+    min-height: 40px;
+    max-height: 150px;
+    overflow-y: auto;
+    font-size: 14px;
+}
+
+/* 전송 버튼 */
+.send-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-left: 8px;
+}
+
+.send-button svg {
+    width: 24px;
+    height: 24px;
+    fill: #007bff;
+}
+
+/* 채점 로딩 */
+.spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #ccc;
+    border-top-color: #555;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

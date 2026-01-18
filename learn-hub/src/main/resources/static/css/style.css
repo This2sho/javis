@@ -1,0 +1,687 @@
+/* 전체 레이아웃 */
+body {
+    font-family: sans-serif;
+    background-color: #f9fafb;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+h1 {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 32px 0 16px;
+    text-align: center;
+}
+
+.problem-section {
+    margin-top: 24px;
+}
+
+.primary-action {
+    width: 33%;
+    padding: 24px;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 16px;
+}
+
+.problem-history-action {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.problem-history {
+    width: 85%;
+    padding: 24px;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 16px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+/* 버튼 */
+button {
+    background-color: #4f46e5;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+button:hover {
+    background-color: #4338ca;
+}
+
+/* 메인 버튼 컨테이너 */
+.button-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 600px;
+    margin: 40px auto;
+}
+
+/* 인터뷰 버튼 카드 */
+.button-container button {
+    width: 100%;
+    font-size: 18px;
+    font-weight: 600;
+    padding: 24px;
+    border-radius: 16px;
+    background-color: white;
+    color: #111827;
+    border: 1px solid #e5e7eb;
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.button-container button:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* 마이페이지 */
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+ul li {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* 채팅 UI */
+.chat-box {
+    height: 70vh;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 12px;
+    background-color: #fff;
+    margin-bottom: 12px;
+}
+
+.chat-message {
+    background: #f3f4f6;
+    padding: 10px;
+    margin: 6px 0;
+    border-radius: 10px;
+    max-width: 70%;
+}
+
+/* =========================
+   인터뷰 기록 목록 페이지
+   ========================= */
+
+.interview-list-container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 16px;
+}
+
+.interview-list-title {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 16px;
+}
+
+.interview-item {
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease-in-out, transform 0.1s ease-in-out;
+}
+
+.interview-item:hover {
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+}
+
+.interview-category {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.interview-date {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.interview-loading {
+    text-align: center;
+    padding: 16px;
+    font-size: 14px;
+    color: #9ca3af;
+}
+
+/* =========================
+   인터뷰 상세 페이지
+   ========================= */
+
+.interview-detail-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px 16px;
+}
+
+.interview-detail-title {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.qna-card {
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.qna-question {
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #111827;
+}
+
+.qna-answer {
+    margin-bottom: 12px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: #1f2937;
+}
+
+.qna-feedback {
+    background-color: #f3f4f6;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #374151;
+}
+
+.interview-detail-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.interview-list-button {
+    width: 100%;
+    padding: 4%;
+}
+
+/* =========================
+   마이페이지 - 점수 리스트
+   ========================= */
+
+.score-list {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 16px;
+}
+
+.score-list-title {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 16px;
+}
+
+.score-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease-in-out, transform 0.1s ease-in-out;
+}
+
+.score-item:hover {
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+}
+
+.score-item-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.score-item-value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #4f46e5;
+}
+
+/* =========================
+   점수 상세 페이지 - 바 차트
+   ========================= */
+
+.chart-container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 16px;
+}
+
+.chart-title {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 24px;
+}
+
+.bar-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.bar-label {
+    width: 140px;
+    font-size: 14px;
+    color: #374151;
+}
+
+.bar-wrapper {
+    flex: 1;
+    background-color: #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-right: 12px;
+}
+
+.bar {
+    height: 24px;
+    background-color: #4f46e5;
+    border-radius: 8px;
+    width: 0;
+    transition: width 0.6s ease;
+}
+
+.bar-score {
+    width: 40px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: right;
+    color: #111827;
+}
+
+/* =========================
+   Problem 생성 UI
+   ========================= */
+
+.problem-box {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.field {
+    margin-bottom: 14px;
+}
+
+.field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #111827;
+}
+
+input,
+textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    font-size: 14px;
+}
+
+textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* =========================
+   키워드 입력
+   ========================= */
+
+.keyword-input {
+    display: flex;
+    gap: 8px;
+}
+
+.keyword-input input {
+    flex: 1;
+}
+
+.keyword-input button {
+    width: 36px;
+    background-color: #4f46e5;
+    color: white;
+    font-size: 18px;
+}
+
+.keyword-input button:hover {
+    background-color: #4338ca;
+}
+
+.keyword-list {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.keyword-tag {
+    background-color: #eef2ff;
+    color: #1e1b4b;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.keyword-tag button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/* =========================
+   꼬리 문제
+   ========================= */
+
+.children {
+    margin-left: 24px;
+    margin-top: 12px;
+    padding-left: 16px;
+    border-left: 2px dashed #e5e7eb;
+}
+
+/* =========================
+   버튼
+   ========================= */
+
+button {
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 12px;
+}
+
+.add-followup {
+    margin-top: 12px;
+    background-color: #f3f4f6;
+    color: #111827;
+    padding: 8px 12px;
+}
+
+.add-followup:hover {
+    background-color: #e5e7eb;
+}
+
+.submit-btn {
+    margin-top: 24px;
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    background-color: #4f46e5;
+    color: white;
+}
+
+.submit-btn:hover {
+    background-color: #4338ca;
+}
+
+/* =========================
+   카테고리 단계형 선택
+   ========================= */
+
+.category-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.category-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.category-item {
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    background-color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.15s ease-in-out;
+}
+
+.category-item:hover {
+    background-color: #f3f4f6;
+}
+
+.category-item.selected {
+    background-color: #4f46e5;
+    color: white;
+    border-color: #4f46e5;
+}
+
+.selected-category {
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4f46e5;
+}
+
+/* =========================
+   난이도 선택
+   ========================= */
+
+.difficulty-selector {
+    display: flex;
+    gap: 8px;
+}
+
+.difficulty-btn {
+    padding: 6px 14px;
+    border-radius: 9999px;
+    border: 1px solid #d1d5db;
+    background-color: #f9fafb;
+    color: #374151;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.difficulty-btn:hover {
+    background-color: #eef2ff;
+}
+
+.difficulty-btn.selected {
+    background-color: #4f46e5;
+    color: white;
+    border-color: #4f46e5;
+}
+
+.problem-list {
+    max-width: 720px;
+    margin: 15px auto 0;
+}
+
+.problem-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    display: flex;
+    transition: box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.problem-card:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+}
+
+.problem-content {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    flex: 3;
+}
+
+.problem-meta {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+}
+
+.tag {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.tag.difficulty {
+    background: #eef2ff;
+    color: #4338ca;
+}
+
+.tag.category {
+    background: #ecfeff;
+    color: #0f766e;
+}
+
+.section {
+    margin-top: 16px;
+}
+
+.primary-action {
+    margin-top: 24px;
+}
+
+.edit-actions button {
+    width: auto;
+    min-width: 120px;
+    padding: 10px 18px;
+}
+
+.submit-btn {
+    background-color: #5b5bf0;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.problem-addition-action {
+    padding: 24px;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 16px;
+}
+
+#edit-mode {
+    position: relative;
+    z-index: 100;
+}
+
+/* 문제 박스 */
+#edit-mode .problem-box {
+    position: relative;
+    z-index: 101;
+}
+
+/* 난이도 선택 영역 */
+#edit-mode .difficulty-selector {
+    position: relative;
+    z-index: 102;
+}
+
+/* 난이도 버튼 */
+#edit-mode .difficulty-btn {
+    position: relative;
+    z-index: 103;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+.tag.review-status {
+    background-color: #eef2ff;
+    color: #4338ca;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap; /* 줄바꿈 방지 */
+}
+
+.approve-btn {
+    width: 30%;
+    padding: 24px;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 16px;
+}
+
+.reject-btn {
+    width: 30%;
+    padding: 24px;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 16px;
+    background-color: #6b7780c7;
+}
+
+#jsonPreview {
+    min-height: 80vh;
+}

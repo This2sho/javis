@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>문제 목록</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header>
+    <h1>문제 기록</h1>
+    <div class="header-actions">
+        <button class="problem-addition-action"
+                onclick="location.href='/review-requests'">
+            리뷰 상태 보기
+        </button>
+
+        <button class="problem-addition-action"
+                onclick="location.href='/problems/new'">
+            + 새 문제 생성
+        </button>
+    </div>
+</header>
+
+<main class="page-container">
+    <div id="problem-list" class="problem-list"></div>
+    <div id="loading" class="interview-loading">불러오는 중...</div>
+</main>
+
+<!-- problem-form.js는 그대로 유지 -->
+<script src="/js/problem-form.js"></script>
+<script src="/js/cursor-paging.js"></script>
+<script>
+
+    let loading = false;
+    let hasNext = true;
+    let nextCursor = null;
+
+    const listEl = document.getElementById("problem-list");
+    const loadingEl = document.getElementById("loading");
+
+    async function loadProblems() {
+        if (loading || !hasNext) return;
+        loading = true;
+
+        try {
+            const data = await fetchCursorPage({
+                url: "/api/problems",
+                params: { size: 10 },
+                cursor: nextCursor,
+                credentials: "include"
+            });
+
+            renderProblems(data.items);
+
+            hasNext = data.hasNext;
+            nextCursor = data.nextCursor;
+
+            if (!hasNext) {
+                loadingEl.innerText = "모든 문제를 불러왔습니다.";
+            }
+        } catch (e) {
+            console.error(e);
+            loadingEl.innerText = "불러오기 실패";
+        } finally {
+            loading = false;
+        }
+    }
+
+    function renderProblems(problems) {
+        problems.forEach(p => {
+            const card = document.createElement("div");
+            card.className = "problem-card";
+            card.onclick = () => location.href = `/problems/${p.id}`;
+
+            card.innerHTML = `
+                <div class="problem-content">${p.content}</div>
+                <div class="problem-meta">
+                    <span class="tag difficulty">${p.difficulty}</span>
+                    <span class="tag category">${p.category}</span>
+                </div>
+            `;
+
+            listEl.appendChild(card);
+        });
+    }
+
+    // 🔥 스크롤 하단 감지
+    window.addEventListener("scroll", () => {
+        if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100) {
+            loadProblems();
+        }
+    });
+
+    // 최초 로딩
+    loadProblems();
+</script>
+
+</body>
+</html>

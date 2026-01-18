@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - 메인</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header>
+    <h1>Admin Console</h1>
+    <div>
+        <button onclick="location.href='/'">
+            메인으로
+        </button>
+    </div>
+</header>
+
+<main>
+
+    <!-- =========================
+         관리자 기능 섹션
+    ========================= -->
+    <section class="problem-section">
+        <h2 class="section-title">🛠 관리자 기능</h2>
+
+        <div class="problem-history-action">
+            <button
+                    class="problem-history"
+                    onclick="location.href='/admin/review-requests'">
+                📋 리뷰 요청 관리
+            </button>
+        </div>
+
+        <div class="problem-history-action">
+            <button
+                    class="problem-history"
+                    onclick="location.href='/admin/problem-insert'">
+                문제 추가
+            </button>
+        </div>
+    </section>
+
+</main>
+
+</body>
+</html>

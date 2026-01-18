@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>문제 상세</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header>
+    <h1>문제 상세</h1>
+</header>
+
+<main class="page-container">
+
+    <!-- 읽기 모드 -->
+    <div id="view-root"></div>
+
+    <div class="page-actions">
+        <button class="primary-action" onclick="requestReview()">리뷰요청</button>
+        <button class="primary-action" onclick="enterEditModeAll()">수정하기</button>
+    </div>
+
+    <!-- 편집 모드 -->
+    <div id="edit-mode" style="display:none;">
+        <h2>문제 편집</h2>
+        <div id="edit-root"></div>
+
+        <div class="edit-actions">
+            <button class="submit-btn" onclick="submitUpdate()">수정 완료</button>
+            <button class="secondary-btn" onclick="exitEditMode()">취소</button>
+        </div>
+    </div>
+
+</main>
+
+<script th:inline="javascript">
+    const ROOT_PROBLEM_ID = /*[[${problemId}]]*/ 0;
+    const DIFFICULTIES = /*[[${difficulties}]]*/ [];
+    const CATEGORY_TREE = /*[[${categoryTree.categoryNodeResponses}]]*/ [];
+</script>
+
+<script src="/js/problem-form.js"></script>
+
+<script>
+    let ROOT_RESPONSE = null;
+
+    /* ===============================
+       키워드
+    =============================== */
+    function addKeywordByValue(node, value) {
+        let list = node.querySelector(".keyword-list");
+        if (!list) {
+            list = document.createElement("div");
+            list.className = "keyword-list";
+            node.appendChild(list);
+        }
+        if ([...list.children].some(el => el.innerText === value)) return;
+
+        const span = document.createElement("span");
+        span.className = "keyword-tag";
+        span.innerText = value;
+        list.appendChild(span);
+    }
+
+    /* ===============================
+       상세 조회
+    =============================== */
+    fetch(`/api/problems/${ROOT_PROBLEM_ID}`, { credentials: "include" })
+        .then(res => res.json())
+        .then(problem => {
+            ROOT_RESPONSE = problem;
+            const root = document.getElementById("view-root");
+            root.innerHTML = "";
+            renderView(root, problem, 0);
+        });
+
+    function renderView(container, problem, depth) {
+        const box = document.createElement("div");
+        box.className = "problem-box";
+        box.style.marginLeft = `${depth * 24}px`;
+
+        box.innerHTML = `
+            <div class="problem-content">${problem.content}</div>
+            <div class="problem-meta">
+                <span class="tag difficulty">${problem.difficulty}</span>
+                <span class="tag category">${problem.category}</span>
+            </div>
+            <div class="section">
+                <h4>예상 답변</h4>
+                <p>${problem.referenceAnswer}</p>
+            </div>
+            <div class="section keyword-list"></div>
+        `;
+
+        const kw = box.querySelector(".keyword-list");
+        problem.keywords?.forEach(k => {
+            const span = document.createElement("span");
+            span.className = "keyword-tag";
+            span.innerText = k;
+            kw.appendChild(span);
+        });
+
+        container.appendChild(box);
+        problem.followUps?.forEach(fu => renderView(container, fu, depth + 1));
+    }
+
+    /* ===============================
+       수정 모드
+    =============================== */
+    function enterEditModeAll() {
+        document.getElementById("view-root").style.display = "none";
+        document.querySelector(".page-actions").style.display = "none";
+        document.getElementById("edit-mode").style.display = "block";
+
+        const editRoot = document.getElementById("edit-root");
+        editRoot.innerHTML = "";
+
+        const rootNode = createProblemNode(ROOT_RESPONSE.category);
+        rootNode.dataset.root = "true"; // 🔥 루트 표시
+        ensureHiddenId(rootNode);
+
+        editRoot.appendChild(rootNode);
+        fillEditTree(rootNode, ROOT_RESPONSE);
+    }
+
+    function fillEditTree(node, problem) {
+        node.dataset.problemId = problem.id; // 🔥 여기
+
+        node.querySelector('[data-field="content"]').value = problem.content;
+        node.querySelector('[data-field="expectedAnswer"]').value = problem.referenceAnswer;
+        node.querySelector('[data-field="difficulty"]').value = problem.difficulty;
+        node.querySelector('[data-field="category"]').value = problem.category;
+
+        selectDifficulty(node, problem.difficulty);
+        problem.keywords?.forEach(k => addKeywordByValue(node, k));
+
+        if (!problem.followUps) return;
+
+        const children = node.querySelector(":scope > .children");
+        problem.followUps.forEach(fu => {
+            const child = createProblemNode(fu.category);
+            children.appendChild(child);
+            fillEditTree(child, fu);
+        });
+    }
+
+
+    function ensureHiddenId(node) {
+        if (!node.querySelector('[data-field="id"]')) {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.setAttribute("data-field", "id");
+            node.appendChild(input);
+        }
+    }
+
+    function selectDifficulty(node, difficulty) {
+        node.querySelectorAll(".difficulty-btn").forEach(btn => {
+            btn.classList.toggle("selected", btn.innerText === difficulty);
+        });
+        node.querySelector('[data-field="difficulty"]').value = difficulty;
+    }
+
+    function exitEditMode() {
+        document.getElementById("edit-mode").style.display = "none";
+        document.getElementById("view-root").style.display = "block";
+        document.querySelector(".page-actions").style.display = "block";
+        document.getElementById("edit-root").innerHTML = "";
+    }
+
+    function submitUpdate() {
+        const rootBox = document.querySelector(
+            '#edit-root > .problem-box[data-root="true"]'
+        );
+
+        const payload = collectProblemNode(rootBox);
+
+        fetch(`/api/problems/${ROOT_PROBLEM_ID}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(payload)
+        }).then(res => {
+            if (!res.ok) throw new Error("수정 실패");
+            location.reload();
+        });
+    }
+
+    function requestReview() {
+        fetch(`/api/problems/${ROOT_PROBLEM_ID}/review-requests`, {
+            method: "POST",
+            credentials: "include"
+        }).then(res => {
+            const location = res.headers.get("Location");
+            if (location) window.location.href = location;
+        });
+    }
+</script>
+
+</body>
+</html>

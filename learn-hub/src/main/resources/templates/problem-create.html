@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>문제 생성</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header>
+    <h1>문제 생성</h1>
+</header>
+
+<main class="page-container">
+    <div id="root"></div>
+    <button class="submit-btn" onclick="submitProblem()">문제 저장</button>
+</main>
+
+<!-- 서버에서 내려준 데이터 -->
+<script th:inline="javascript">
+    const CATEGORY_TREE_RESPONSE = /*[[${categoryTree}]]*/ {};
+    const CATEGORY_TREE = CATEGORY_TREE_RESPONSE.categoryNodeResponses || [];
+    const DIFFICULTIES = /*[[${difficulties}]]*/ [];
+</script>
+
+<script src="/js/problem-form.js"></script>
+<script>
+    document.getElementById("root").appendChild(
+        createProblemNode("")
+    );
+
+    function submitProblem() {
+        const rootBox = document.querySelector('#root .problem-box');
+        const payload = collectProblemNode(rootBox);
+
+        if (!payload.keywords || payload.keywords.length === 0) {
+            alert("키워드는 최소 1개 이상 입력해야 합니다.");
+            return;
+        }
+
+        fetch("/api/problems", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(payload)
+        })
+            .then(res => {
+                if (!res.ok) throw new Error("문제 생성 실패");
+                const location = res.headers.get("Location");
+                if (!location) throw new Error("Location 헤더 없음");
+                window.location.href = location;
+            })
+            .catch(err => {
+                console.error(err);
+                alert("문제 생성 중 오류가 발생했습니다.");
+            });
+    }
+</script>
+
+</body>
+</html>

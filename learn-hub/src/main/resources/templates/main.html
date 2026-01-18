@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>인터뷰 웹</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header>
+    <h1>인터뷰 웹</h1>
+    <div>
+        <!-- 로그인 여부 체크 -->
+        <button th:if="${memberId == -1}" onclick="location.href='/login'">
+            로그인
+        </button>
+        <button th:if="${memberId != -1}" onclick="location.href='/mypage'">
+            마이페이지
+        </button>
+    </div>
+</header>
+
+<main>
+
+    <!-- =========================
+         문제 기록 섹션
+    ========================= -->
+    <section class="problem-section">
+        <h2 class="section-title">📘 문제 기록</h2>
+
+        <div class="problem-history-action">
+            <button
+                    class="problem-history"
+                    onclick="location.href='/problems/new'">
+                ✏️ 문제 직접 기록하기
+            </button>
+        </div>
+        <div class="problem-history-action">
+            <button
+                    class="problem-history"
+                    onclick="location.href='/problems'">
+                📘 기록한 문제 확인
+            </button>
+        </div>
+    </section>
+
+    <!-- =========================
+         인터뷰 선택 섹션
+    ========================= -->
+    <section class="interview-section">
+        <h2 class="section-title">🎤 인터뷰 연습</h2>
+
+        <div class="button-container">
+            <button onclick="location.href='/interviews/start/computer_science'">
+                CS 인터뷰
+            </button>
+            <button onclick="location.href='/interviews/start/backend'">
+                서버 기술 인터뷰
+            </button>
+            <button onclick="location.href='/interviews/start/system_design'">
+                시스템 설계 인터뷰
+            </button>
+            <button onclick="location.href='/interviews/start/culture_fit'">
+                인성 인터뷰
+            </button>
+        </div>
+    </section>
+
+</main>
+
+</body>
+</html>

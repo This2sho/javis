@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${interviewTitle}">인터뷰</title>
+    <link rel="stylesheet" href="/css/chat.css">
+</head>
+<body>
+
+<h2 th:text="${interviewTitle}"></h2>
+
+<input type="hidden" th:value="${mainCategory}" id="mainCategory">
+<input type="hidden" value="-1" id="questionId"/>
+
+<div class="chat-container">
+    <div class="messages" id="chatContainer">
+
+        <!-- ✅ 시작 인사 (SSR) -->
+        <div class="message bot-message"
+             th:text="${welcomeMessage}">
+        </div>
+
+    </div>
+
+    <div class="input-container">
+        <textarea id="chatInput"
+                  class="chat-input"
+                  placeholder="답변을 입력하세요..."></textarea>
+
+        <button class="send-button" id="sendButton">
+            <svg viewBox="0 0 24 24">
+                <path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<script>
+    const chatInput = document.getElementById("chatInput");
+    const chatContainer = document.getElementById("chatContainer");
+    const sendButton = document.getElementById("sendButton");
+
+    const mainCategory = document.getElementById("mainCategory").value;
+
+    /* =========================
+       페이지 로드 → 즉시 시작
+    ========================= */
+    document.addEventListener("DOMContentLoaded", () => {
+        startInterview();
+    });
+
+    function startInterview() {
+        lockInput();
+
+        fetch(`/api/interviews/start/${mainCategory}`, {
+            method: "GET",
+            credentials: "include"
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.isFirst) {
+                    appendBotMessage("진행중이던 인터뷰를 이어서 진행합니다.");
+                }
+                appendBotMessage(data.question);
+                questionIdInput = document.getElementById("questionId");
+                questionIdInput.value = data.questionId;
+                unlockInput();
+            })
+            .catch(err => {
+                console.error(err);
+                appendBotMessage("⚠️ 인터뷰를 시작할 수 없습니다.");
+                unlockInput();
+            });
+    }
+
+    /* =========================
+       메시지 전송
+    ========================= */
+    function sendMessage() {
+        let userAnswer = chatInput.value.replace(/\n+$/, "");
+        questionId = document.getElementById("questionId").value;
+        if (!userAnswer.trim()) return;
+
+        const latestQuestion =
+            chatContainer.querySelector(".bot-message:last-child")?.innerText;
+
+        appendUserMessage(userAnswer);
+        resetInput();
+        lockInput();
+
+        const loadingMessage = appendLoadingMessage();
+
+        fetch(`/api/questions/${questionId}/answer`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+                problem: latestQuestion,
+                userAnswer: userAnswer
+            })
+        })
+            .then(res => res.json())
+            .then(data => {
+                loadingMessage.remove();
+
+                if (data.ended) {
+                    appendBotMessage("인터뷰가 종료되었습니다. 수고하셨습니다! 🎉");
+                    setTimeout(() => {
+                        window.location.href = `/interviews/${data.interviewId}`;
+                    }, 1500);
+                } else {
+                    appendBotMessage(data.interviewerMessage);
+                    questionIdInput.value = data.questionId;
+                    unlockInput();
+                }
+            })
+            .catch(err => {
+                loadingMessage.remove();
+                console.error(err);
+                appendBotMessage("⚠️ 서버 오류가 발생했습니다.");
+                unlockInput();
+            });
+    }
+
+    /* =========================
+       UI 헬퍼
+    ========================= */
+    function appendBotMessage(text) {
+        const div = document.createElement("div");
+        div.className = "message bot-message";
+        div.innerText = text;
+        chatContainer.appendChild(div);
+        scrollBottom();
+    }
+
+    function appendUserMessage(text) {
+        const div = document.createElement("div");
+        div.className = "message user-message";
+        div.innerText = text;
+        chatContainer.appendChild(div);
+        scrollBottom();
+    }
+
+    function appendLoadingMessage() {
+        const div = document.createElement("div");
+        div.className = "message bot-message loading";
+
+        const spinner = document.createElement("div");
+        spinner.className = "spinner";
+
+        const text = document.createElement("span");
+        text.innerText = "답변을 분석 중입니다";
+
+        div.appendChild(spinner);
+        div.appendChild(text);
+        chatContainer.appendChild(div);
+        scrollBottom();
+        return div;
+    }
+
+    function resetInput() {
+        chatInput.value = "";
+        chatInput.style.height = "40px";
+    }
+
+    function lockInput() {
+        chatInput.disabled = true;
+        sendButton.disabled = true;
+    }
+
+    function unlockInput() {
+        chatInput.disabled = false;
+        sendButton.disabled = false;
+        chatInput.focus();
+    }
+
+    function scrollBottom() {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    /* =========================
+       이벤트
+    ========================= */
+    chatInput.addEventListener("input", () => {
+        chatInput.style.height = "auto";
+        chatInput.style.height = Math.min(chatInput.scrollHeight, 150) + "px";
+    });
+
+    chatInput.addEventListener("keydown", e => {
+        if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    sendButton.addEventListener("click", sendMessage);
+</script>
+
+</body>
+</html>
