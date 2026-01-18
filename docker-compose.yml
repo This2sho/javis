@@ -1,0 +1,135 @@
+x-common-environment: &common_environment
+  TZ: Asia/Seoul
+
+  DB_USERNAME: ${DB_USERNAME}
+  DB_PASSWORD: ${DB_PASSWORD}
+
+  # Python Server
+  PYTHON_SERVER_URI: http://learn-hub-evaluation:8000/evaluate
+
+  # JWT / OAuth
+  JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+  KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
+  KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
+  KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI}
+
+services:
+  # =====================
+  # PROD MySQL
+  # =====================
+  learn-hub-mysql-prod:
+    image: mysql:8.4
+    container_name: learn-hub-mysql-prod
+    profiles: ["prod"]
+    networks:
+      - javis-net
+    environment:
+      MYSQL_DATABASE: learn_hub
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      TZ: Asia/Seoul
+    volumes:
+      - mysql-prod-volume:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+
+  # =====================
+  # TEST MySQL
+  # =====================
+  learn-hub-mysql-test:
+    image: mysql:8.4
+    container_name: learn-hub-mysql-test
+    profiles: ["test"]
+    networks:
+      - javis-net
+    environment:
+      MYSQL_DATABASE: learn_hub_test
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      TZ: Asia/Seoul
+    volumes:
+      - mysql-test-volume:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+
+  # =====================
+  # FastAPI
+  # =====================
+  learn-hub-evaluation:
+    image: leegeonho/evaluation-api:0.1.2
+    container_name: learn-hub-evaluation
+    networks:
+      - javis-net
+    environment:
+      TZ: Asia/Seoul
+      HF_HUB_TIMEOUT: 120
+      HF_HUB_READ_TIMEOUT: 120
+    volumes:
+      - hf-model-cache:/app/.cache/huggingface
+    ports:
+      - "8000:8000"
+    restart: on-failure
+
+  # =====================
+  # PROD Spring Backend
+  # =====================
+  learn-hub-backend-prod:
+    image: leegeonho/learn-hub-backend:0.1.0
+    container_name: learn-hub-backend-prod
+    profiles: ["prod"]
+    networks:
+      - javis-net
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:mysql://learn-hub-mysql-prod:3306/learn_hub?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Seoul
+      <<: *common_environment
+    depends_on:
+      learn-hub-mysql-prod:
+        condition: service_healthy
+      learn-hub-evaluation:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    restart: on-failure
+
+  # =====================
+  # TEST Spring Backend
+  # =====================
+  learn-hub-backend-test:
+    image: leegeonho/learn-hub-backend:0.1.0
+    container_name: learn-hub-backend-test
+    profiles: ["test"]
+    networks:
+      - javis-net
+    environment:
+      SPRING_PROFILES_ACTIVE: test
+      DB_URL: jdbc:mysql://learn-hub-mysql-test:3306/learn_hub_test?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Seoul
+      <<: *common_environment
+    depends_on:
+      learn-hub-mysql-test:
+        condition: service_healthy
+      learn-hub-evaluation:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    restart: on-failure
+
+networks:
+  javis-net:
+    name: javis-net
+    driver: bridge
+
+volumes:
+  mysql-prod-volume:
+  mysql-test-volume:
+  hf-model-cache:
