@@ -1,0 +1,47 @@
+package com.javis.learn_hub.answer.domain;
+
+import com.javis.learn_hub.interview.domain.Question;
+import com.javis.learn_hub.support.domain.Association;
+import com.javis.learn_hub.support.domain.CreatedOnlyEntity;
+import com.javis.learn_hub.support.infrastructure.AssociationConverter;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
+public class Answer extends CreatedOnlyEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Convert(converter = AssociationConverter.class)
+    private Association<Question> questionId;
+
+    @Lob
+    private String message;
+
+    private EvaluationResult evaluationResult;
+
+    public Answer(Association<Question> questionId, String message, EvaluationResult evaluationResult) {
+        this.questionId = questionId;
+        this.message = message;
+        this.evaluationResult = evaluationResult;
+    }
+
+    public int getScore() {
+        return evaluationResult.getScore();
+    }
+
+    public String getFeedback() {
+        return evaluationResult.getFeedback();
+    }
+}
