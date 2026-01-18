@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: learn-hub
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+    show-sql: true
+
+kakao:
+  client-id: ${KAKAO_CLIENT_ID}
+  client-secret: ${KAKAO_CLIENT_SECRET}
+  redirect-uri: ${KAKAO_REDIRECT_URI}
+  kauth-host: https://kauth.kakao.com
+  kapi-host: https://kapi.kakao.com
+
+jwt:
+  secret-key: ${JWT_SECRET_KEY}
+
+python-server-uri: ${PYTHON_SERVER_URI}
