@@ -15,7 +15,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
-    show-sql: true
+        show_sql: true
 
 kakao:
   client-id: ${KAKAO_CLIENT_ID}
@@ -28,3 +28,11 @@ jwt:
   secret-key: ${JWT_SECRET_KEY}
 
 python-server-uri: ${PYTHON_SERVER_URI}
+
+logging:
+  level:
+    root: WARN
+    com.javis.learn_hub: INFO
+  pattern:
+    console: "[%X{reqId}] %msg%n"
+
