@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 public enum Provider {
     KAKAO,
+    TEST
     ;
 
     public static Provider find(String name) {
