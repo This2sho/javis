@@ -12,7 +12,9 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Lob;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -22,6 +24,18 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @Entity
+@Table(
+        indexes = {
+                @Index(
+                        name = "idx_problem_writer_id_parent_problem_id_updated_at_id",
+                        columnList = "writer_id, parent_problem_id, updated_at, id"
+                ),
+                @Index(
+                        name = "idx_problem_parent_problem_id",
+                        columnList = "parent_problem_id"
+                )
+        }
+)
 public class Problem extends BaseEntity {
 
     @Id
