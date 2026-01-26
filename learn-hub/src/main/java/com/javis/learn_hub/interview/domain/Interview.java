@@ -12,6 +12,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +21,18 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
+@Table(
+        indexes = {
+                @Index(
+                        name = "idx_interview_member_id_status_updated_at_id",
+                        columnList = "member_id, status, updated_at, id"
+                ),
+                @Index(
+                        name = "idx_interview_member_id_main_category_status",
+                        columnList = "member_id, main_category, status"
+                )
+        }
+)
 public class Interview extends BaseEntity {
 
     @Id

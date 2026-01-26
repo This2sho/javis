@@ -55,7 +55,7 @@ services:
       TZ: Asia/Seoul
     volumes:
       - mysql-test-volume:/var/lib/mysql
-      - ./mysql/init:/docker-entrypoint-initdb.d
+#      - ./mysql/init:/docker-entrypoint-initdb.d
       - ./mysql/conf/my.cnf:/etc/mysql/conf.d/my.cnf
     ports:
       - "3307:3306"
@@ -108,7 +108,7 @@ services:
   # TEST Spring Backend
   # =====================
   learn-hub-backend-test:
-    image: leegeonho/learn-hub-backend-perf:0.1.4
+    image: leegeonho/learn-hub-backend-perf:0.1.5
     container_name: learn-hub-backend-test
     profiles: ["test"]
     networks:
