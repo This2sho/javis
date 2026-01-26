@@ -10,6 +10,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,6 +19,15 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
+@Table(
+        name = "answer",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_answer_question_id",
+                        columnNames = {"question_id"}
+                )
+        }
+)
 public class Answer extends CreatedOnlyEntity {
 
     @Id
