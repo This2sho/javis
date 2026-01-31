@@ -1,4 +1,4 @@
-package com.javis.learn_hub.answer.domain;
+package com.javis.learn_hub.evaluation.domain;
 
 import com.javis.learn_hub.problem.domain.Difficulty;
 import jakarta.persistence.Embeddable;

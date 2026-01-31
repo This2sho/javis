@@ -2,6 +2,7 @@ package com.javis.learn_hub.interview.service;
 
 import com.javis.learn_hub.category.domain.MainCategory;
 import com.javis.learn_hub.event.DomainEvent;
+import com.javis.learn_hub.event.EvaluationRetryEvent;
 import com.javis.learn_hub.interview.domain.Interview;
 import com.javis.learn_hub.interview.domain.Question;
 import com.javis.learn_hub.interview.domain.service.InterviewFinder;
@@ -32,6 +33,10 @@ public class InterviewCommandService {
         Optional<Interview> interview = interviewFinder.findActiveInterview(mainCategory, memberId);
         if (interview.isPresent()) {
             Question question = interviewReader.getCurrentQuestion(interview.get());
+            if (question.isPendingEvaluation()) {
+                applicationEventPublisher.publishEvent(new EvaluationRetryEvent(question.getId()));
+                return QuestionResponse.pendingEvaluation(question);
+            }
             return QuestionResponse.continueFrom(question);
         }
         List<Question> rootQuestions = interviewProcessor.initInterview(mainCategory, memberId);
@@ -54,8 +59,14 @@ public class InterviewCommandService {
     }
 
     @Transactional
-    public void completeCurrentQuestion(Long questionId) {
+    public void markQuestionAnswered(Long questionId) {
         Question question = interviewReader.getQuestion(questionId);
-        interviewProcessor.finalizeCurrentQuestion(question);
+        interviewProcessor.markQuestionAnswered(question);
+    }
+
+    @Transactional
+    public void markQuestionCompleted(Long questionId) {
+        Question question = interviewReader.getQuestion(questionId);
+        interviewProcessor.markQuestionCompleted(question);
     }
 }

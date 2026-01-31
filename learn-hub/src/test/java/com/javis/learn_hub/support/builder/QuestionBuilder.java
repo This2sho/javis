@@ -74,9 +74,7 @@ public class QuestionBuilder {
                 questionOrder,
                 message
         );
-        if (questionStatus == QuestionStatus.ANSWERED) {
-            question.complete();
-        }
+        applyQuestionStatus(question);
         return question;
     }
 
@@ -93,9 +91,7 @@ public class QuestionBuilder {
                 0,               // follow-up question은 order 0
                 message
         );
-        if (questionStatus == QuestionStatus.ANSWERED) {
-            question.complete();
-        }
+        applyQuestionStatus(question);
         return question;
     }
 
@@ -108,9 +104,15 @@ public class QuestionBuilder {
                 questionOrder,
                 message
         );
-        if (questionStatus == QuestionStatus.ANSWERED) {
-            question.complete();
-        }
+        applyQuestionStatus(question);
         return question;
+    }
+
+    private void applyQuestionStatus(Question question) {
+        if (questionStatus == QuestionStatus.ANSWERED) {
+            question.markAnswered();
+        } else if (questionStatus == QuestionStatus.COMPLETED) {
+            question.markCompleted();
+        }
     }
 }

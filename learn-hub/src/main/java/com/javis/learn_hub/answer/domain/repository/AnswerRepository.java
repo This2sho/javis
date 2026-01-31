@@ -4,11 +4,16 @@ import com.javis.learn_hub.answer.domain.Answer;
 import com.javis.learn_hub.interview.domain.Question;
 import com.javis.learn_hub.support.domain.Association;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.repository.Repository;
 
 public interface AnswerRepository extends Repository<Answer, Long> {
 
     Answer save(Answer answer);
 
+    Optional<Answer> findById(Long id);
+
     List<Answer> findAllByQuestionIdIn(List<Association<Question>> questionIds);
+
+    Optional<Answer> findByQuestionId(Association<Question> questionId);
 }

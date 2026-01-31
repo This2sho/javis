@@ -28,6 +28,8 @@ jwt:
   secret-key: ${JWT_SECRET_KEY}
 
 python-server-uri: ${PYTHON_SERVER_URI}
+callback:
+  base-url: ${CALLBACK_BASE_URL:http://localhost:8080}
 
 logging:
   level:

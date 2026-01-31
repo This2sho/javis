@@ -29,8 +29,9 @@ Learn-Hub는 인터뷰 연습 플랫폼의 Spring 기반 API 서버입니다.
 Package Structure
 
 프로젝트 최상위에는 도메인 패키지가 위치합니다.
-- answer : 인터뷰 답변 채점 및 저장을 위한 도메인
+- answer : 인터뷰에서 사용자 저장을 위한 도메인
 - category : 문제에서 사용되는 카테고리 조회 및 생성을 위한 도메인
+- evaluation : 채점 서버로 사용자 답변 전달 및 채점 결과 처리를 위한 도메인
 - interview : 인터뷰 진행 및 질문(Question: 인터뷰에서 사용한 Problem의 스냅샷) 관리하는 도메인
 - member : 사용자 관련 도메인
 - problem : 문제(카테고리, 연관 문제, 난이도, 작성자, 노출(visibility), 내용)와 문제 채점관련 정보(ProblemScoringInfo: 채점에 필요한 모범 답안, 핵심 키워드) 관리하는 도메인
@@ -83,7 +84,7 @@ presentation 패키지는 REST API 컨트롤러를 담당합니다.
 
 infrastructure 패키지는 외부 시스템 및 기술 의존 영역을 담당합니다.
 
-- PythonEvaluator (외부 채점 서버 연동)
+- EvaluationClient (외부 채점 서버 연동)
 - JPAConverter (영속성 변환)
 - JwtUtil (JWT 처리)
 - KakaoAuthProvider (OAuth 인증)

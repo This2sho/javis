@@ -28,4 +28,9 @@ public class InMemoryQuestionRepository extends InMemoryRepository<Question> imp
                         && q.getParentQuestionId().equals(parentQuestionId)
                         && q.getQuestionOrder() == questionOrder);
     }
+
+    @Override
+    public List<Question> findAllByInterviewIdAndQuestionStatusIn(Association<Interview> interviewId, List<QuestionStatus> questionStatuses) {
+        return findAll(q -> q.getInterviewId().equals(interviewId) && questionStatuses.contains(q.getQuestionStatus()));
+    }
 }

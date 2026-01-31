@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -62,5 +63,9 @@ public class ProblemScoringInfo {
             return false;
         }
         return true;
+    }
+
+    public Set<String> getKeywordsValue() {
+        return keywords.getKeywords();
     }
 }

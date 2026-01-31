@@ -39,11 +39,14 @@
     const chatInput = document.getElementById("chatInput");
     const chatContainer = document.getElementById("chatContainer");
     const sendButton = document.getElementById("sendButton");
-
     const mainCategory = document.getElementById("mainCategory").value;
 
+    let ws = null;
+    let loadingMessage = null;
+    let memberId = null;
+
     /* =========================
-       페이지 로드 → 즉시 시작
+       페이지 로드 → WebSocket 연결 + 인터뷰 시작
     ========================= */
     document.addEventListener("DOMContentLoaded", () => {
         startInterview();
@@ -58,27 +61,84 @@
         })
             .then(res => res.json())
             .then(data => {
+                connectWebSocket(data.interviewId);
+
                 if (!data.isFirst) {
                     appendBotMessage("진행중이던 인터뷰를 이어서 진행합니다.");
                 }
+                if (data.isPendingEvaluation) {
+                    appendBotMessage("이전 답변을 채점 중입니다. 잠시만 기다려주세요.");
+                    loadingMessage = appendLoadingMessage();
+                    return;
+                }
                 appendBotMessage(data.question);
-                questionIdInput = document.getElementById("questionId");
-                questionIdInput.value = data.questionId;
+                document.getElementById("questionId").value = data.questionId;
                 unlockInput();
             })
             .catch(err => {
                 console.error(err);
-                appendBotMessage("⚠️ 인터뷰를 시작할 수 없습니다.");
+                appendBotMessage("인터뷰를 시작할 수 없습니다.");
                 unlockInput();
             });
     }
 
     /* =========================
-       메시지 전송
+       WebSocket 연결
+    ========================= */
+    function connectWebSocket(interviewId) {
+        const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const wsUrl = `${wsProtocol}//${window.location.host}/ws/interview`;
+
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+            console.log("WebSocket 연결 성공");
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            handleNextQuestion(data);
+        };
+
+        ws.onclose = () => {
+            console.log("WebSocket 연결 종료");
+            setTimeout(() => {
+                if (interviewId) connectWebSocket(interviewId);
+            }, 3000);
+        };
+
+        ws.onerror = (error) => {
+            console.error("WebSocket 에러:", error);
+        };
+    }
+
+    /* =========================
+       다음 질문 수신 처리
+    ========================= */
+    function handleNextQuestion(data) {
+        if (loadingMessage) {
+            loadingMessage.remove();
+            loadingMessage = null;
+        }
+
+        if (data.ended) {
+            appendBotMessage("인터뷰가 종료되었습니다. 수고하셨습니다!");
+            setTimeout(() => {
+                window.location.href = `/interviews/${data.interviewId}`;
+            }, 1500);
+        } else {
+            appendBotMessage(data.interviewerMessage);
+            document.getElementById("questionId").value = data.questionId;
+            unlockInput();
+        }
+    }
+
+    /* =========================
+       답변 전송 (비동기)
     ========================= */
     function sendMessage() {
         let userAnswer = chatInput.value.replace(/\n+$/, "");
-        questionId = document.getElementById("questionId").value;
+        const questionId = document.getElementById("questionId").value;
         if (!userAnswer.trim()) return;
 
         const latestQuestion =
@@ -88,7 +148,7 @@
         resetInput();
         lockInput();
 
-        const loadingMessage = appendLoadingMessage();
+        loadingMessage = appendLoadingMessage();
 
         fetch(`/api/questions/${questionId}/answer`, {
             method: "POST",
@@ -99,25 +159,20 @@
                 userAnswer: userAnswer
             })
         })
-            .then(res => res.json())
-            .then(data => {
-                loadingMessage.remove();
-
-                if (data.ended) {
-                    appendBotMessage("인터뷰가 종료되었습니다. 수고하셨습니다! 🎉");
-                    setTimeout(() => {
-                        window.location.href = `/interviews/${data.interviewId}`;
-                    }, 1500);
+            .then(res => {
+                if (res.status === 202) {
+                    console.log("답변 제출 완료, 채점 대기 중...");
                 } else {
-                    appendBotMessage(data.interviewerMessage);
-                    questionIdInput.value = data.questionId;
-                    unlockInput();
+                    throw new Error("답변 제출 실패");
                 }
             })
             .catch(err => {
-                loadingMessage.remove();
+                if (loadingMessage) {
+                    loadingMessage.remove();
+                    loadingMessage = null;
+                }
                 console.error(err);
-                appendBotMessage("⚠️ 서버 오류가 발생했습니다.");
+                appendBotMessage("서버 오류가 발생했습니다.");
                 unlockInput();
             });
     }
@@ -194,6 +249,10 @@
     });
 
     sendButton.addEventListener("click", sendMessage);
+
+    window.addEventListener("beforeunload", () => {
+        if (ws) ws.close();
+    });
 </script>
 
 </body>

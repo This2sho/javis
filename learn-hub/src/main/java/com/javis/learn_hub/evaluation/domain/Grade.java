@@ -1,4 +1,4 @@
-package com.javis.learn_hub.answer.domain;
+package com.javis.learn_hub.evaluation.domain;
 
 import static com.javis.learn_hub.problem.domain.Difficulty.EASY;
 import static com.javis.learn_hub.problem.domain.Difficulty.HARD;
