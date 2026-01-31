@@ -28,3 +28,7 @@ jwt:
   secret-key: mysupersecretkeythatshouldbeatleast32byteslong
 
 python-server-uri: dummy
+
+callback:
+  base-url: ${CALLBACK_BASE_URL:http://localhost:8080}
+
