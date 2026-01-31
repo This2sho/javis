@@ -32,6 +32,7 @@ public class InterviewHistoryController {
         return ResponseEntity.ok(result);
     }
 
+    // todo Answer 도메인 쪽으로 변경
     @GetMapping("/interviews/{interviewId}")
     public ResponseEntity<InterviewHistoryDetailResponse> viewInterviewDetail(
             @PathVariable Long interviewId,

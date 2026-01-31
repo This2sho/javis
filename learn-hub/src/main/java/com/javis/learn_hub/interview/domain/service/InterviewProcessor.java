@@ -83,8 +83,13 @@ public class InterviewProcessor {
         return Optional.empty();
     }
 
-    public void finalizeCurrentQuestion(Question question) {
-        question.complete();
+    public void markQuestionAnswered(Question question) {
+        question.markAnswered();
+        questionRepository.save(question);
+    }
+
+    public void markQuestionCompleted(Question question) {
+        question.markCompleted();
         questionRepository.save(question);
     }
 

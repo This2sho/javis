@@ -40,19 +40,12 @@ public class Answer extends CreatedOnlyEntity {
     @Lob
     private String message;
 
-    private EvaluationResult evaluationResult;
-
-    public Answer(Association<Question> questionId, String message, EvaluationResult evaluationResult) {
+    public Answer(Association<Question> questionId, String message) {
         this.questionId = questionId;
         this.message = message;
-        this.evaluationResult = evaluationResult;
     }
 
-    public int getScore() {
-        return evaluationResult.getScore();
-    }
-
-    public String getFeedback() {
-        return evaluationResult.getFeedback();
+    public static Answer create(Long questionId, String message) {
+        return new Answer(Association.from(questionId), message);
     }
 }

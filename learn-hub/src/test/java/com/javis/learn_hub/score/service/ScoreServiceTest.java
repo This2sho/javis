@@ -5,7 +5,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
-import com.javis.learn_hub.answer.domain.Grade;
+import com.javis.learn_hub.evaluation.domain.Grade;
 import com.javis.learn_hub.answer.domain.service.AnswerFinder;
 import com.javis.learn_hub.answer.domain.service.dto.CategoryGrade;
 import com.javis.learn_hub.score.domain.Score;

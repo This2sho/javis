@@ -3,6 +3,8 @@ package com.javis.learn_hub.answer.domain.service;
 import com.javis.learn_hub.answer.domain.Answer;
 import com.javis.learn_hub.answer.domain.service.dto.CategoryGrade;
 import com.javis.learn_hub.answer.domain.service.dto.QnA;
+import com.javis.learn_hub.evaluation.domain.Evaluation;
+import com.javis.learn_hub.evaluation.domain.repository.EvaluationRepository;
 import com.javis.learn_hub.interview.domain.Interview;
 import com.javis.learn_hub.interview.domain.Question;
 import com.javis.learn_hub.interview.domain.service.InterviewReader;
@@ -22,6 +24,7 @@ public class AnswerFinder {
     private final AnswerReader answerReader;
     private final InterviewReader interviewReader;
     private final ProblemReader problemReader;
+    private final EvaluationRepository evaluationRepository;
 
     public List<CategoryGrade> findCategoryGrades(Association<Interview> interviewId) {
         List<Question> questions = interviewReader.getAllQuestions(interviewId);
@@ -32,7 +35,19 @@ public class AnswerFinder {
 
     public List<QnA> findQnA(List<Question> questions) {
         List<Answer> answers = answerReader.getAll(toQuestionIds(questions));
-        return toQnAs(questions, answers);
+        Map<Long, Evaluation> evaluationMap = getEvaluationMap(answers);
+        return toQnAs(questions, answers, evaluationMap);
+    }
+
+    private Map<Long, Evaluation> getEvaluationMap(List<Answer> answers) {
+        return answers.stream()
+                .map(answer -> evaluationRepository.findByAnswerId(Association.from(answer.getId())))
+                .filter(java.util.Optional::isPresent)
+                .map(java.util.Optional::get)
+                .collect(Collectors.toMap(
+                        evaluation -> evaluation.getAnswerId().getId(),
+                        evaluation -> evaluation
+                ));
     }
 
     private List<Association<Question>> toQuestionIds(List<Question> questions) {
@@ -47,13 +62,14 @@ public class AnswerFinder {
                 .toList();
     }
 
-    private List<QnA> toQnAs(List<Question> questions, List<Answer> answers) {
+    private List<QnA> toQnAs(List<Question> questions, List<Answer> answers, Map<Long, Evaluation> evaluationMap) {
         Map<Long, Question> questionMap = questions.stream()
                 .collect(Collectors.toMap(question -> question.getId(), question -> question));
         return answers.stream()
                 .map(answer -> {
                     Question question = questionMap.get(answer.getQuestionId().getId());
-                    return new QnA(question, answer);
+                    Evaluation evaluation = evaluationMap.get(answer.getId());
+                    return new QnA(question, answer, evaluation);
                 }).toList();
     }
 
@@ -64,9 +80,10 @@ public class AnswerFinder {
                         problem -> problem.getCategoryId().getId()
                 ));
         return qnAs.stream()
+                .filter(qna -> qna.evaluation() != null)
                 .map(qna -> new CategoryGrade(
                         categoriesByProblemId.get(qna.question().getProblemId().getId()),
-                        qna.answer().getEvaluationResult().getGrade()
+                        qna.evaluation().getResult().getGrade()
                         )
                 ).toList();
     }
