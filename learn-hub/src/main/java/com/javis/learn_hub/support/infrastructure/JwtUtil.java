@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class JwtUtil {
 
     private static final String ACCESS_TOKEN = "access-token";
-    private static final long accessTokenValiditySeconds = 1_000 * 60 * 30;
+    private static final long accessTokenValiditySeconds = 1_000 * 60 * 30 * 30;
 
     @Value("${jwt.secret-key}")
     private String secretKey;
