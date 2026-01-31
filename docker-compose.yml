@@ -116,7 +116,7 @@ services:
   # TEST Spring Backend
   # =====================
   learn-hub-backend-test:
-    image: leegeonho/learn-hub-backend-perf:0.2.8
+    image: leegeonho/learn-hub-backend:0.1.1
     container_name: learn-hub-backend-test
     profiles: ["test"]
     networks:
