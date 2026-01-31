@@ -84,6 +84,12 @@ body, html {
 }
 
 /* 채점 로딩 */
+.loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .spinner {
     width: 14px;
     height: 14px;
@@ -97,4 +103,57 @@ body, html {
     to {
         transform: rotate(360deg);
     }
+}
+
+/* 피드백 메시지 */
+.feedback {
+    background-color: #f8f9fa;
+    border-left: 4px solid #007bff;
+    border-radius: 4px;
+    padding: 12px 16px;
+}
+
+.feedback-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.grade {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.grade-perfect {
+    background-color: #28a745;
+    color: white;
+}
+
+.grade-good {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.grade-vague {
+    background-color: #ffc107;
+    color: #333;
+}
+
+.grade-incorrect {
+    background-color: #dc3545;
+    color: white;
+}
+
+.score {
+    font-size: 14px;
+    color: #666;
+}
+
+.feedback-content {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #333;
 }

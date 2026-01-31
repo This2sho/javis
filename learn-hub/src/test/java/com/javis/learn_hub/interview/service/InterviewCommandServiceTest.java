@@ -150,9 +150,9 @@ class InterviewCommandServiceTest {
         });
     }
 
-    @DisplayName("[질문에 답변이 완료 된 상황] 다음 질문으로 넘어가기 위해 답변 완료 처리를 한다.")
+    @DisplayName("[채점이 완료 된 상황] 질문을 완료 처리한다.")
     @Test
-    void testCompleteCurrentQuestion() {
+    void testMarkQuestionCompleted() {
         //given
         Interview interview = fixtureFactory.make(InterviewBuilder.builder().build());
         Question currentQuestion = fixtureFactory.make(QuestionBuilder.builder().withInterviewId(interview.getId()).build());
@@ -160,9 +160,9 @@ class InterviewCommandServiceTest {
         given(interviewReader.get(currentQuestion.getInterviewId())).willReturn(interview);
 
         //when
-        interviewCommandService.completeCurrentQuestion(currentQuestion.getId());
+        interviewCommandService.markQuestionCompleted(currentQuestion.getId());
 
         //then
-        verify(interviewProcessor).finalizeCurrentQuestion(currentQuestion);
+        verify(interviewProcessor).markQuestionCompleted(currentQuestion);
     }
 }

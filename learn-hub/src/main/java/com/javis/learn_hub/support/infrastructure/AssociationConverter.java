@@ -9,6 +9,7 @@ public class AssociationConverter implements AttributeConverter<Association, Lon
 
     @Override
     public Long convertToDatabaseColumn(Association attribute) {
+        if (attribute == null) return Association.getEmpty().getId();
         return attribute.getId();
     }
 

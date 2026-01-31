@@ -154,17 +154,17 @@ class InterviewProcessorTest {
         assertThat(nextRootQuestion).isEmpty();
     }
 
-    @DisplayName("[답변 완료 된 상황] 질문을 답변 완료 상태로 변경하고 인터뷰에서 질문 순서를 다음으로 변경한다.")
+    @DisplayName("[채점 완료 된 상황] 질문을 완료 상태로 변경한다.")
     @Test
-    void testFinalizeCurrentQuestion() {
+    void testMarkQuestionCompleted() {
         //given
         Question question = fixtureFactory.make(QuestionBuilder.builder().build());
 
         //when
-        interviewProcessor.finalizeCurrentQuestion(question);
+        interviewProcessor.markQuestionCompleted(question);
 
         //then
-        assertThat(question.getQuestionStatus()).isEqualTo(QuestionStatus.ANSWERED);
+        assertThat(question.getQuestionStatus()).isEqualTo(QuestionStatus.COMPLETED);
     }
 
     @DisplayName("[모든 질문이 완료 된 상황] 인터뷰 종료시 인터뷰 종료이벤트를 발행한다.")

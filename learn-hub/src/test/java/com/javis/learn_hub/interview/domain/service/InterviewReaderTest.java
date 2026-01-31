@@ -37,7 +37,7 @@ class InterviewReaderTest {
         Problem problem2 = fixtureFactory.make(ProblemBuilder.builder().build());
         Interview interview = fixtureFactory.make(InterviewBuilder.builder().build());
         Question question1 = fixtureFactory.make(
-                QuestionBuilder.builder().withQuestionStatus(QuestionStatus.ANSWERED).withProblemId(problem1.getId())
+                QuestionBuilder.builder().withQuestionStatus(QuestionStatus.COMPLETED).withProblemId(problem1.getId())
                         .withInterviewId(interview.getId()).build());
         Question question2 = fixtureFactory.make(
                 QuestionBuilder.builder().withQuestionStatus(QuestionStatus.UNANSWERED).withProblemId(problem2.getId())
@@ -83,7 +83,7 @@ class InterviewReaderTest {
         //given
         Interview interview = fixtureFactory.make(InterviewBuilder.builder().build());
         fixtureFactory.make(
-                QuestionBuilder.builder().withQuestionStatus(QuestionStatus.ANSWERED).withInterviewId(interview.getId())
+                QuestionBuilder.builder().withQuestionStatus(QuestionStatus.COMPLETED).withInterviewId(interview.getId())
                         .build());
         fixtureFactory.make(
                 QuestionBuilder.builder().withQuestionStatus(QuestionStatus.UNANSWERED)
@@ -109,7 +109,7 @@ class InterviewReaderTest {
         Interview interview = fixtureFactory.make(InterviewBuilder.builder().withTotalQuestions(3).build());
         interview.moveNextQuestion();
         fixtureFactory.make(
-                QuestionBuilder.builder().withQuestionStatus(QuestionStatus.ANSWERED)
+                QuestionBuilder.builder().withQuestionStatus(QuestionStatus.COMPLETED)
                         .withInterviewId(interview.getId()).withQuestionOrder(0).buildRoot());
         Question expected = fixtureFactory.make(
                 QuestionBuilder.builder().withQuestionStatus(QuestionStatus.UNANSWERED)
@@ -133,13 +133,13 @@ class InterviewReaderTest {
         Problem problem2 = fixtureFactory.make(ProblemBuilder.builder().build());
         Interview interview = fixtureFactory.make(InterviewBuilder.builder().build());
         fixtureFactory.make(
-                QuestionBuilder.builder().withQuestionStatus(QuestionStatus.ANSWERED).withProblemId(problem1.getId())
+                QuestionBuilder.builder().withQuestionStatus(QuestionStatus.COMPLETED).withProblemId(problem1.getId())
                         .withInterviewId(interview.getId()).build());
         fixtureFactory.make(
-                QuestionBuilder.builder().withQuestionStatus(QuestionStatus.ANSWERED).withProblemId(problem1.getId())
+                QuestionBuilder.builder().withQuestionStatus(QuestionStatus.COMPLETED).withProblemId(problem1.getId())
                         .withInterviewId(interview.getId()).build());
         fixtureFactory.make(
-                QuestionBuilder.builder().withQuestionStatus(QuestionStatus.ANSWERED).withProblemId(problem1.getId())
+                QuestionBuilder.builder().withQuestionStatus(QuestionStatus.COMPLETED).withProblemId(problem1.getId())
                         .withInterviewId(interview.getId()).build());
 
         //when, then

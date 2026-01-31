@@ -9,6 +9,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -18,6 +21,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EqualsAndHashCode(of = {"id"})
 @Entity
+@Table(
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_problem_scoring_info_problem_id",
+                        columnNames = "problem_id"
+                )
+        }
+)
 public class ProblemScoringInfo {
 
     @Id
@@ -52,5 +63,9 @@ public class ProblemScoringInfo {
             return false;
         }
         return true;
+    }
+
+    public Set<String> getKeywordsValue() {
+        return keywords.getKeywords();
     }
 }

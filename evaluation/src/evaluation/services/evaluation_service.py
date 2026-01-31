@@ -1,15 +1,15 @@
 from evaluation.core.evaluator import evaluate
-from evaluation.schemas.evaluation_schema import EvaluationResponse, EvaluationRequest
+from evaluation.schemas.evaluation_schema import EvaluationInput, EvaluationResult
 
 
-def evaluate_answer(req: EvaluationRequest) -> EvaluationResponse:
+def evaluate_answer(req: EvaluationInput) -> EvaluationResult:
     reference = {
         "answers": [req.referenceAnswer],
         "keywords": req.keywords,
     }
     result = evaluate(req.userAnswer, reference)
 
-    return EvaluationResponse(
+    return EvaluationResult(
         grade=result.grade.value,
         feedback=result.feedback,
     )
