@@ -59,10 +59,18 @@
             method: "GET",
             credentials: "include"
         })
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) {
+                    return res.json().then(err => {
+                        alert(err.message);
+                        window.location.href = "/";
+                        unlockInput();
+                    });
+                }
+                return res.json();
+            })
             .then(data => {
                 connectWebSocket(data.interviewId);
-
                 if (!data.isFirst) {
                     appendBotMessage("진행중이던 인터뷰를 이어서 진행합니다.");
                 }
@@ -77,7 +85,7 @@
             })
             .catch(err => {
                 console.error(err);
-                appendBotMessage("인터뷰를 시작할 수 없습니다.");
+                appendBotMessage("네트워크 문제가 발생하여 인터뷰를 시작할 수 없습니다.");
                 unlockInput();
             });
     }

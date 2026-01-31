@@ -3,6 +3,7 @@ package com.javis.learn_hub.interview.domain.service;
 import com.javis.learn_hub.category.domain.MainCategory;
 import com.javis.learn_hub.event.DomainEvent;
 import com.javis.learn_hub.event.InterviewFinishEvent;
+import com.javis.learn_hub.interview.domain.EmptyProblemException;
 import com.javis.learn_hub.interview.domain.Interview;
 import com.javis.learn_hub.interview.domain.Question;
 import com.javis.learn_hub.interview.domain.repository.InterviewRepository;
@@ -33,6 +34,9 @@ public class InterviewProcessor {
     public List<Question> initInterview(MainCategory mainCategory, Long memberId) {
         List<Problem> rootProblems = problemRecommender.recommendRootProblems(memberId, mainCategory,
                 STARTING_PROBLEM_SIZE);
+        if (rootProblems.isEmpty()) {
+            throw new EmptyProblemException();
+        }
         Interview interview = new Interview(Association.from(memberId), mainCategory, rootProblems.size());
         interviewRepository.save(interview);
         return createRootQuestions(rootProblems, interview.getId());
