@@ -3,7 +3,7 @@ package com.javis.learn_hub.score.domain.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
-import com.javis.learn_hub.answer.domain.Grade;
+import com.javis.learn_hub.evaluation.domain.Grade;
 import com.javis.learn_hub.answer.domain.service.dto.CategoryGrade;
 import com.javis.learn_hub.category.domain.Category;
 import com.javis.learn_hub.member.domain.Member;
