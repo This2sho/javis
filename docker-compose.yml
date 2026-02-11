@@ -68,7 +68,7 @@ services:
   # FastAPI
   # =====================
   learn-hub-evaluation:
-    image: leegeonho/evaluation-api:0.2.0
+    image: leegeonho/evaluation-api:0.2.1
     container_name: learn-hub-evaluation
     networks:
       - javis-net
@@ -93,7 +93,7 @@ services:
   # PROD Spring Backend
   # =====================
   learn-hub-backend-prod:
-    image: leegeonho/learn-hub-backend:0.1.1
+    image: leegeonho/learn-hub-backend:0.1.2
     container_name: learn-hub-backend-prod
     profiles: ["prod"]
     networks:

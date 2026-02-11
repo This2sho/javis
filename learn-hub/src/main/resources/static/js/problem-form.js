@@ -34,7 +34,7 @@ function createProblemNode(parentCategoryPath = "") {
         <div class="field">
             <label>핵심 키워드</label>
             <div class="keyword-input">
-                <input type="text" placeholder="키워드 입력">
+                <input type="text" placeholder="키워드 입력" onkeydown="handleKeywordEnter(event, this)">
                 <button type="button" onclick="addKeyword(this)">+</button>
             </div>
             <div class="keyword-list"></div>
@@ -143,6 +143,14 @@ function selectCategory(id, path, clickedItem) {
 /* =========================
    키워드
 ========================= */
+function handleKeywordEnter(event, input) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        const button = input.nextElementSibling;
+        addKeyword(button);
+    }
+}
+
 function addKeyword(button) {
     const field = button.closest(".field");
     const input = field.querySelector("input");
