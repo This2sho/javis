@@ -11,7 +11,8 @@ public record ProblemUpdateCommand(
         Keywords keywords,
         Difficulty difficulty,
         String categoryPath,
-        List<ProblemUpdateCommand> followUpProblems
+        List<ProblemUpdateCommand> followUpProblems,
+        List<Long> deletedProblemIds
 ) {
 
     public ProblemCreateCommand toCreateCommand() {
@@ -25,5 +26,9 @@ public record ProblemUpdateCommand(
 
     public boolean hasNoFollowUps() {
         return followUpProblems == null || followUpProblems.isEmpty();
+    }
+
+    public boolean hasDeletedProblems() {
+        return deletedProblemIds != null && !deletedProblemIds.isEmpty();
     }
 }

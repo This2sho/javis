@@ -52,6 +52,8 @@ public interface ProblemRepository extends Repository<Problem, Long> {
 
     Optional<Problem> findById(Long problemId);
 
+    void deleteById(Long problemId);
+
     @Query("""
         select p
         from Problem p

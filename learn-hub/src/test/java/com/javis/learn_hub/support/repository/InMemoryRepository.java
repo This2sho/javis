@@ -84,4 +84,12 @@ public abstract class InMemoryRepository<T> {
                 .filter(predicate)
                 .collect(Collectors.toCollection(ArrayList::new));
     }
+
+    public void deleteById(Long id) {
+        store.remove(id);
+    }
+
+    public void delete(Predicate<T> predicate) {
+        store.entrySet().removeIf(entry -> predicate.test(entry.getValue()));
+    }
 }
