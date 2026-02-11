@@ -44,6 +44,13 @@
 
 <script>
     let ROOT_RESPONSE = null;
+    let deletedProblemIds = [];
+
+    function trackDeletedProblem(id) {
+        if (id && !deletedProblemIds.includes(id)) {
+            deletedProblemIds.push(id);
+        }
+    }
 
     /* ===============================
        키워드
@@ -55,11 +62,12 @@
             list.className = "keyword-list";
             node.appendChild(list);
         }
-        if ([...list.children].some(el => el.innerText === value)) return;
+        if ([...list.children].some(el => el.textContent.trim() === value)) return;
 
         const span = document.createElement("span");
         span.className = "keyword-tag";
-        span.innerText = value;
+        span.innerHTML = `${value} <button type="button">×</button>`;
+        span.querySelector("button").addEventListener("click", () => span.remove());
         list.appendChild(span);
     }
 
@@ -113,19 +121,21 @@
         document.querySelector(".page-actions").style.display = "none";
         document.getElementById("edit-mode").style.display = "block";
 
+        deletedProblemIds = [];
+
         const editRoot = document.getElementById("edit-root");
         editRoot.innerHTML = "";
 
-        const rootNode = createProblemNode(ROOT_RESPONSE.category);
-        rootNode.dataset.root = "true"; // 🔥 루트 표시
+        const rootNode = createProblemNode(ROOT_RESPONSE.category, false);
+        rootNode.dataset.root = "true";
         ensureHiddenId(rootNode);
 
         editRoot.appendChild(rootNode);
-        fillEditTree(rootNode, ROOT_RESPONSE);
+        fillEditTree(rootNode, ROOT_RESPONSE, false);
     }
 
-    function fillEditTree(node, problem) {
-        node.dataset.problemId = problem.id; // 🔥 여기
+    function fillEditTree(node, problem, isFollowUp = false) {
+        node.dataset.problemId = problem.id;
 
         node.querySelector('[data-field="content"]').value = problem.content;
         node.querySelector('[data-field="expectedAnswer"]').value = problem.referenceAnswer;
@@ -139,9 +149,9 @@
 
         const children = node.querySelector(":scope > .children");
         problem.followUps.forEach(fu => {
-            const child = createProblemNode(fu.category);
+            const child = createProblemNode(fu.category, true);
             children.appendChild(child);
-            fillEditTree(child, fu);
+            fillEditTree(child, fu, true);
         });
     }
 
@@ -175,6 +185,7 @@
         );
 
         const payload = collectProblemNode(rootBox);
+        payload.deletedProblemIds = deletedProblemIds;
 
         fetch(`/api/problems/${ROOT_PROBLEM_ID}`, {
             method: "PUT",

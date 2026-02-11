@@ -109,7 +109,8 @@ class ProblemProcessorTest {
                 Keywords.from(Set.of("꼬리 문제 키워드1", "꼬리 문제 키워드2")),
                 followUpDifficulty,
                 category.getPath(),
-                Collections.emptyList()
+                Collections.emptyList(),
+                null
         );
         Difficulty problemDifficulty = Difficulty.EASY;
         ProblemUpdateCommand command = new ProblemUpdateCommand(
@@ -119,7 +120,8 @@ class ProblemProcessorTest {
                 Keywords.from(Set.of("문제 키워드1", "문제 키워드2")),
                 problemDifficulty,
                 category.getPath(),
-                List.of(followUpCommand)
+                List.of(followUpCommand),
+                null
         );
 
         //when
@@ -159,7 +161,8 @@ class ProblemProcessorTest {
                 Keywords.from(Set.of("꼬리 문제 키워드1", "꼬리 문제 키워드2")),
                 followUpDifficulty,
                 category.getPath(),
-                Collections.emptyList()
+                Collections.emptyList(),
+                null
         );
         Difficulty problemDifficulty = Difficulty.EASY;
         ProblemUpdateCommand command = new ProblemUpdateCommand(
@@ -169,7 +172,8 @@ class ProblemProcessorTest {
                 Keywords.from(Set.of("문제 키워드1", "문제 키워드2")),
                 problemDifficulty,
                 category.getPath(),
-                List.of(followUpCommand)
+                List.of(followUpCommand),
+                null
         );
 
         //when
@@ -205,7 +209,8 @@ class ProblemProcessorTest {
                 Keywords.from(Set.of("꼬리 문제 키워드1", "꼬리 문제 키워드2")),
                 followUpDifficulty,
                 category.getPath(),
-                Collections.emptyList()
+                Collections.emptyList(),
+                null
         );
         Difficulty problemDifficulty = Difficulty.EASY;
         ProblemUpdateCommand command = new ProblemUpdateCommand(
@@ -215,7 +220,8 @@ class ProblemProcessorTest {
                 Keywords.from(Set.of("문제 키워드1", "문제 키워드2")),
                 problemDifficulty,
                 category.getPath(),
-                List.of(followUpCommand)
+                List.of(followUpCommand),
+                null
         );
 
         //when, then

@@ -121,11 +121,11 @@ class ProblemFinderTest {
         ProblemUpdateCommand childCommand = new ProblemUpdateCommand(childProblem.getId(),
                 childProblem.getContent(), childScoringInfo.getReferenceAnswer(), childScoringInfo.getKeywords(),
                 childProblem.getDifficulty(),
-                category.getPath(), Collections.emptyList());
+                category.getPath(), Collections.emptyList(), null);
         ProblemUpdateCommand command = new ProblemUpdateCommand(problem.getId(),
                 problem.getContent(), scoringInfo.getReferenceAnswer(), scoringInfo.getKeywords(),
                 problem.getDifficulty(),
-                category.getPath(), List.of(childCommand));
+                category.getPath(), List.of(childCommand), null);
         //when
         Map<Long, ProblemDetailWithCategoryView> actual = problemFinder.findAll(command);
 

@@ -11,5 +11,7 @@ public interface ProblemScoringInfoRepository extends Repository<ProblemScoringI
     ProblemScoringInfo save(ProblemScoringInfo problemScoringInfo);
 
     Optional<ProblemScoringInfo> findByProblemId(Association<Problem> problemId);
+
+    void deleteByProblemId(Association<Problem> problemId);
 }
 

@@ -59,9 +59,12 @@ function fillForm(box, problem) {
     // keywords
     const list = box.querySelector(".keyword-list");
     problem.keywords.split(",").forEach(k => {
+        const keyword = k.trim();
+        if (!keyword) return;
         const tag = document.createElement("span");
         tag.className = "keyword-tag";
-        tag.innerHTML = `${k.trim()} <button type="button" onclick="this.parentElement.remove()">×</button>`;
+        tag.innerHTML = `${keyword} <button type="button">×</button>`;
+        tag.querySelector("button").addEventListener("click", () => tag.remove());
         list.appendChild(tag);
     });
 }
