@@ -7,14 +7,21 @@ let problemIdSeq = 0;
 /* =========================
    Problem Node 생성
 ========================= */
-function createProblemNode(parentCategoryPath = "") {
+function createProblemNode(parentCategoryPath = "", isFollowUp = false) {
     const problemId = problemIdSeq++;
 
     const box = document.createElement("div");
     box.className = "problem-box";
     box.dataset.id = problemId;
 
+    const deleteBtn = isFollowUp
+        ? `<button class="delete-followup" onclick="deleteFollowUpProblem(this)">🗑️ 삭제</button>`
+        : '';
+
     box.innerHTML = `
+        <div class="problem-header">
+            ${deleteBtn}
+        </div>
         <div class="field">
             <label>문제</label>
             <textarea data-field="content"></textarea>
@@ -34,7 +41,7 @@ function createProblemNode(parentCategoryPath = "") {
         <div class="field">
             <label>핵심 키워드</label>
             <div class="keyword-input">
-                <input type="text" placeholder="키워드 입력">
+                <input type="text" placeholder="키워드 입력" onkeydown="handleKeywordEnter(event, this)">
                 <button type="button" onclick="addKeyword(this)">+</button>
             </div>
             <div class="keyword-list"></div>
@@ -143,6 +150,15 @@ function selectCategory(id, path, clickedItem) {
 /* =========================
    키워드
 ========================= */
+function handleKeywordEnter(event, input) {
+    if (event.isComposing) return;
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        const button = input.nextElementSibling;
+        addKeyword(button);
+    }
+}
+
 function addKeyword(button) {
     const field = button.closest(".field");
     const input = field.querySelector("input");
@@ -168,8 +184,19 @@ function addFollowUpProblem(parentId) {
     const parentBox = document.querySelector(`[data-id="${parentId}"]`);
     const parentCategory = parentBox.querySelector('[data-field="category"]').value;
 
-    const child = createProblemNode(parentCategory);
+    const child = createProblemNode(parentCategory, true);
     document.getElementById(`children-${parentId}`).appendChild(child);
+}
+
+function deleteFollowUpProblem(button) {
+    const box = button.closest(".problem-box");
+    const problemId = box.dataset.problemId;
+
+    if (problemId && typeof trackDeletedProblem === 'function') {
+        trackDeletedProblem(Number(problemId));
+    }
+
+    box.remove();
 }
 
 /* =========================
@@ -194,7 +221,7 @@ function collectProblemNode(box) {
         .forEach(child => followUpProblems.push(collectProblemNode(child)));
 
     return {
-        id,
+        problemId: id,
         problem,
         referenceAnswer,
         difficulty,

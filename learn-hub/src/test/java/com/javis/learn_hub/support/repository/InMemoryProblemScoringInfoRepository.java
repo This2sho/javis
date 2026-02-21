@@ -13,4 +13,9 @@ public class InMemoryProblemScoringInfoRepository extends InMemoryRepository<Pro
     public Optional<ProblemScoringInfo> findByProblemId(Association<Problem> problemId) {
         return findOne(psi -> psi.getProblemId().equals(problemId));
     }
+
+    @Override
+    public void deleteByProblemId(Association<Problem> problemId) {
+        delete(psi -> psi.getProblemId().equals(problemId));
+    }
 }

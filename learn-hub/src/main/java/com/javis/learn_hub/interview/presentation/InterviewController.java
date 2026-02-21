@@ -6,8 +6,8 @@ import com.javis.learn_hub.support.domain.Authenticated;
 import com.javis.learn_hub.support.domain.MemberId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,7 +18,7 @@ public class InterviewController {
 
     private final InterviewCommandService interviewCommandService;
 
-    @GetMapping("/interviews/start/{mainCategory}")
+    @PostMapping("/interviews/start/{mainCategory}")
     public ResponseEntity<QuestionResponse> startInterview(
             @PathVariable String mainCategory,
             @Authenticated MemberId memberId

@@ -40,7 +40,7 @@ public class ProblemCommandService {
 
     @Transactional
     public void update(ProblemUpdateRequest request, Long memberId) {
-        Problem problem = problemReader.get(request.id());
+        Problem problem = problemReader.get(request.problemId());
         Association<Member> writerId = Association.from(memberId);
         problem.validateWriter(writerId);
         ProblemUpdateCommand command = toProblemUpdateCommand(request);
@@ -48,11 +48,12 @@ public class ProblemCommandService {
     }
 
     private ProblemUpdateCommand toProblemUpdateCommand(ProblemUpdateRequest request) {
-        return new ProblemUpdateCommand(request.id(), request.problem(), request.referenceAnswer(),
+        return new ProblemUpdateCommand(request.problemId(), request.problem(), request.referenceAnswer(),
                 Keywords.from(request.keywords()),
                 Difficulty.from(request.difficulty()), request.category(),
                 request.followUpProblems() == null ? List.of()
-                        : request.followUpProblems().stream().map(this::toProblemUpdateCommand).toList());
+                        : request.followUpProblems().stream().map(this::toProblemUpdateCommand).toList(),
+                request.deletedProblemIds());
     }
 
     /**

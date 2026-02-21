@@ -69,7 +69,19 @@ public class ProblemProcessor {
         if (map.isEmpty()) {
             throw new IllegalArgumentException("문제가 존재하지 않습니다.");
         }
+
+        if (command.hasDeletedProblems()) {
+            deleteProblems(command.deletedProblemIds());
+        }
+
         applyUpdateRecursively(command, map, Association.getEmpty(), writerId);
+    }
+
+    private void deleteProblems(List<Long> problemIds) {
+        for (Long problemId : problemIds) {
+            problemScoringInfoRepository.deleteByProblemId(Association.from(problemId));
+            problemRepository.deleteById(problemId);
+        }
     }
 
     private void applyUpdateRecursively(
