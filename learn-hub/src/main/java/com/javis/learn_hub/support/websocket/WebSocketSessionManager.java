@@ -1,9 +1,12 @@
 package com.javis.learn_hub.support.websocket;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.PingMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 @Slf4j
@@ -26,5 +29,24 @@ public class WebSocketSessionManager {
 
     public WebSocketSession getSession(Long memberId) {
         return sessions.get(memberId);
+    }
+
+    @Scheduled(fixedDelay = 30000)
+    public void pingAll() {
+        sessions.entrySet().removeIf(entry -> {
+            Long memberId = entry.getKey();
+            WebSocketSession session = entry.getValue();
+            if (!session.isOpen()) {
+                log.info("닫힌 세션 제거: memberId={}", memberId);
+                return true;
+            }
+            try {
+                session.sendMessage(new PingMessage());
+                return false;
+            } catch (IOException e) {
+                log.warn("Ping 실패, 세션 제거: memberId={}", memberId);
+                return true;
+            }
+        });
     }
 }

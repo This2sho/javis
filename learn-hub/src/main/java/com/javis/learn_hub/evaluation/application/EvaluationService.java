@@ -5,7 +5,9 @@ import com.javis.learn_hub.answer.domain.service.AnswerReader;
 import com.javis.learn_hub.evaluation.application.dto.EvaluationCallbackRequest;
 import com.javis.learn_hub.evaluation.domain.service.EvaluationProcessor;
 import com.javis.learn_hub.evaluation.infrastructure.EvaluationClient;
+import com.javis.learn_hub.evaluation.infrastructure.EvaluationRequestException;
 import com.javis.learn_hub.event.DomainEvent;
+import com.javis.learn_hub.event.EvaluationFailedEvent;
 import com.javis.learn_hub.interview.domain.Question;
 import com.javis.learn_hub.interview.domain.service.InterviewReader;
 import com.javis.learn_hub.problem.domain.ProblemScoringInfo;
@@ -34,17 +36,22 @@ public class EvaluationService {
     public void requestEvaluation(Long questionId) {
         Question question = interviewReader.getQuestion(questionId);
         Answer answer = answerReader.getByQuestionId(questionId);
+        Long memberId = interviewReader.get(question.getInterviewId()).getMemberId().getId();
         Long problemId = question.getProblemId().getId();
         ProblemScoringInfo scoringInfo = problemReader.getProblemScoringInfo(problemId);
 
-        evaluationClient.requestAsync(
-                answer.getId(),
-                scoringInfo.getReferenceAnswer(),
-                scoringInfo.getKeywordsValue(),
-                answer.getMessage()
-        );
-
-        log.info("채점 요청 전송 완료: answerId={}, questionId={}", answer.getId(), question.getId());
+        try {
+            evaluationClient.request(
+                    answer.getId(),
+                    scoringInfo.getReferenceAnswer(),
+                    scoringInfo.getKeywordsValue(),
+                    answer.getMessage()
+            );
+            log.info("채점 요청 전송 완료: answerId={}, questionId={}", answer.getId(), question.getId());
+        } catch (EvaluationRequestException e) {
+            log.error("채점 요청 최종 실패, 실패 이벤트 발행: questionId={}, memberId={}", questionId, memberId, e);
+            eventPublisher.publishEvent(new EvaluationFailedEvent(questionId, memberId));
+        }
     }
 
     @Transactional

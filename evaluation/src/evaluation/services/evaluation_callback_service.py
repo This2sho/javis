@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import time
 
@@ -12,6 +13,8 @@ from evaluation.services.evaluation_service import evaluate_answer
 
 logger = logging.getLogger(__name__)
 
+EVALUATION_TIMEOUT_SECONDS = 180
+
 
 async def process_and_callback(req: EvaluationRequest) -> None:
     """백그라운드에서 채점 수행 후 콜백 전송"""
@@ -19,9 +22,13 @@ async def process_and_callback(req: EvaluationRequest) -> None:
     try:
         logger.info(f"[CALLBACK] 백그라운드 채점 시작: answerId={req.answerId}")
 
-        # 1. 채점 수행
+        # 1. 채점 수행 (타임아웃 포함)
+        loop = asyncio.get_running_loop()
         eval_start = time.perf_counter()
-        result = _run_evaluation(req)
+        result = await asyncio.wait_for(
+            loop.run_in_executor(None, _run_evaluation, req),
+            timeout=EVALUATION_TIMEOUT_SECONDS,
+        )
         eval_time = (time.perf_counter() - eval_start) * 1000
         logger.info(f"[CALLBACK] 채점 완료: answerId={req.answerId}, {eval_time:.2f}ms, grade={result.grade}")
 
@@ -34,6 +41,11 @@ async def process_and_callback(req: EvaluationRequest) -> None:
         total_time = (time.perf_counter() - total_start) * 1000
         logger.info(f"[CALLBACK] 전체 완료: answerId={req.answerId}, 총 {total_time:.2f}ms")
 
+    except asyncio.TimeoutError:
+        total_time = (time.perf_counter() - total_start) * 1000
+        logger.error(
+            f"[CALLBACK] 채점 타임아웃 (>{EVALUATION_TIMEOUT_SECONDS}s): answerId={req.answerId}, {total_time:.2f}ms"
+        )
     except Exception as e:
         total_time = (time.perf_counter() - total_start) * 1000
         logger.error(f"[CALLBACK] 실패: answerId={req.answerId}, {total_time:.2f}ms, error={e}")
