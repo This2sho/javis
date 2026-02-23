@@ -44,6 +44,7 @@
     let ws = null;
     let loadingMessage = null;
     let memberId = null;
+    let evaluationTimeoutId = null;
 
     /* =========================
        페이지 로드 → WebSocket 연결 + 인터뷰 시작
@@ -77,6 +78,7 @@
                 if (data.isPendingEvaluation) {
                     appendBotMessage("이전 답변을 채점 중입니다. 잠시만 기다려주세요.");
                     loadingMessage = appendLoadingMessage();
+                    startEvaluationTimeout();
                     return;
                 }
                 appendBotMessage(data.question);
@@ -124,9 +126,17 @@
        다음 질문 수신 처리
     ========================= */
     function handleNextQuestion(data) {
+        clearEvaluationTimeout();
+
         if (loadingMessage) {
             loadingMessage.remove();
             loadingMessage = null;
+        }
+
+        if (data.failed) {
+            appendBotMessage(data.interviewerMessage);
+            appendRetryButton();
+            return;
         }
 
         if (data.ended) {
@@ -138,6 +148,27 @@
             appendBotMessage(data.interviewerMessage);
             document.getElementById("questionId").value = data.questionId;
             unlockInput();
+        }
+    }
+
+    /* =========================
+       채점 대기 타임아웃 (3분)
+    ========================= */
+    function startEvaluationTimeout() {
+        evaluationTimeoutId = setTimeout(() => {
+            if (loadingMessage) {
+                loadingMessage.remove();
+                loadingMessage = null;
+            }
+            appendBotMessage("채점에 시간이 오래 걸리고 있습니다. 잠시 후 다시 시도해주세요.");
+            appendRetryButton();
+        }, 180000);
+    }
+
+    function clearEvaluationTimeout() {
+        if (evaluationTimeoutId) {
+            clearTimeout(evaluationTimeoutId);
+            evaluationTimeoutId = null;
         }
     }
 
@@ -157,6 +188,7 @@
         lockInput();
 
         loadingMessage = appendLoadingMessage();
+        startEvaluationTimeout();
 
         fetch(`/api/questions/${questionId}/answer`, {
             method: "POST",
@@ -175,6 +207,7 @@
                 }
             })
             .catch(err => {
+                clearEvaluationTimeout();
                 if (loadingMessage) {
                     loadingMessage.remove();
                     loadingMessage = null;
@@ -219,6 +252,27 @@
         chatContainer.appendChild(div);
         scrollBottom();
         return div;
+    }
+
+    function appendRetryButton() {
+        const div = document.createElement("div");
+        div.className = "message bot-message";
+
+        const btn = document.createElement("button");
+        btn.innerText = "다시 시도";
+        btn.onclick = () => {
+            div.remove();
+            if (ws) {
+                ws.onclose = null;
+                ws.close();
+                ws = null;
+            }
+            startInterview();
+        };
+
+        div.appendChild(btn);
+        chatContainer.appendChild(div);
+        scrollBottom();
     }
 
     function resetInput() {

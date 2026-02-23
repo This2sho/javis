@@ -11,8 +11,13 @@ public class RestClientConfig {
 
     @Bean
     public RestClient restClient(RestClient.Builder builder) {
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
+        factory.setConnectTimeout(3000);
+        factory.setConnectionRequestTimeout(3000);
+        factory.setReadTimeout(5000);
+
         return builder
-                .requestFactory(new HttpComponentsClientHttpRequestFactory())
+                .requestFactory(factory)
                 .messageConverters(converters -> {
                     converters.add(new MappingJackson2HttpMessageConverter());
                 })

@@ -44,6 +44,10 @@ dependencies {
     // fast API 통신용
     implementation 'org.apache.httpcomponents.client5:httpclient5'
 
+    // 채점 요청 retry
+    implementation 'org.springframework.retry:spring-retry'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+
     testImplementation 'com.h2database:h2'
 }
 

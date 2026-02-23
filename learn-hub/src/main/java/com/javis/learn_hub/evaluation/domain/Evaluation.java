@@ -7,8 +7,6 @@ import com.javis.learn_hub.support.infrastructure.AssociationConverter;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -39,20 +37,16 @@ public class Evaluation extends CreatedOnlyEntity {
     @Convert(converter = AssociationConverter.class)
     private Association<Answer> answerId;
 
-    @Enumerated(EnumType.STRING)
-    private EvaluationStatus status;
-
     @Embedded
     private EvaluationResult result;
 
-    public Evaluation(Association<Answer> answerId, EvaluationStatus status, EvaluationResult result) {
+    public Evaluation(Association<Answer> answerId, EvaluationResult result) {
         this.answerId = answerId;
-        this.status = status;
         this.result = result;
     }
 
     public static Evaluation completed(Long answerId, EvaluationResult result) {
-        return new Evaluation(Association.from(answerId), EvaluationStatus.COMPLETED, result);
+        return new Evaluation(Association.from(answerId), result);
     }
 
     public int getScore() {
