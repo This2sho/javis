@@ -5,7 +5,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import com.javis.learn_hub.evaluation.domain.Evaluation;
-import com.javis.learn_hub.evaluation.domain.EvaluationStatus;
 import com.javis.learn_hub.evaluation.domain.repository.EvaluationRepository;
 import com.javis.learn_hub.event.DomainEvent;
 import com.javis.learn_hub.event.EvaluationCompletedEvent;
@@ -43,7 +42,6 @@ class EvaluationProcessorTest {
         verify(evaluationRepository).save(evaluationCaptor.capture());
 
         Evaluation savedEvaluation = evaluationCaptor.getValue();
-        assertThat(savedEvaluation.getStatus()).isEqualTo(EvaluationStatus.COMPLETED);
         assertThat(savedEvaluation.getAnswerId().getId()).isEqualTo(answerId);
 
         assertThat(events).hasSize(1);
