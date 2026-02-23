@@ -93,7 +93,7 @@ services:
   # PROD Spring Backend
   # =====================
   learn-hub-backend-prod:
-    image: leegeonho/learn-hub-backend:0.1.3
+    image: leegeonho/learn-hub-backend:0.1.4
     container_name: learn-hub-backend-prod
     profiles: ["prod"]
     networks:
@@ -116,7 +116,7 @@ services:
   # TEST Spring Backend
   # =====================
   learn-hub-backend-test:
-    image: leegeonho/learn-hub-backend:0.1.2
+    image: leegeonho/learn-hub-backend:0.1.4
     container_name: learn-hub-backend-test
     profiles: ["test"]
     networks:
