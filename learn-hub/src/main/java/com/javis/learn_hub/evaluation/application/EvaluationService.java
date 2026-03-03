@@ -49,7 +49,7 @@ public class EvaluationService {
         }
 
         ProblemScoringInfo scoringInfo = problemReader.getProblemScoringInfo(question.getProblemId().getId());
-        evaluationClient.requestAsync(answer.getId(), scoringInfo.getReferenceAnswer(),
+        evaluationClient.request(answer.getId(), scoringInfo.getReferenceAnswer(),
                 scoringInfo.getKeywordsValue(), answer.getMessage());
         log.info("채점 요청 전송: answerId={}, questionId={}", answer.getId(), question.getId());
     }
