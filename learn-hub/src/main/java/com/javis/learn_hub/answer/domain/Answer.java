@@ -6,12 +6,15 @@ import com.javis.learn_hub.support.domain.CreatedOnlyEntity;
 import com.javis.learn_hub.support.infrastructure.AssociationConverter;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,12 +43,40 @@ public class Answer extends CreatedOnlyEntity {
     @Lob
     private String message;
 
+    @Version
+    private Long version;
+
+    @Enumerated(EnumType.STRING)
+    private EvaluationStatus evaluationState;
+
     public Answer(Association<Question> questionId, String message) {
         this.questionId = questionId;
         this.message = message;
+        this.evaluationState = EvaluationStatus.PENDING;
     }
 
     public static Answer create(Long questionId, String message) {
         return new Answer(Association.from(questionId), message);
+    }
+
+    public void toScoring() {
+        this.evaluationState = this.evaluationState.toScoring();
+    }
+
+    public void success() {
+        this.evaluationState = this.evaluationState.success();
+    }
+
+    public void fail() {
+        this.evaluationState = this.evaluationState.fail();
+    }
+
+    public boolean needsEvaluation() {
+        return this.evaluationState == EvaluationStatus.PENDING
+            || this.evaluationState == EvaluationStatus.FAILED;
+    }
+
+    public boolean isPendingEvaluation() {
+        return this.evaluationState != EvaluationStatus.SCORED;
     }
 }

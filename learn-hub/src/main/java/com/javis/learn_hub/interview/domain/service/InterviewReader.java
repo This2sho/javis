@@ -1,5 +1,6 @@
 package com.javis.learn_hub.interview.domain.service;
 
+import com.javis.learn_hub.answer.domain.service.AnswerReader;
 import com.javis.learn_hub.interview.domain.Interview;
 import com.javis.learn_hub.interview.domain.InterviewStatus;
 import com.javis.learn_hub.interview.domain.Question;
@@ -21,6 +22,7 @@ public class InterviewReader {
 
     private final InterviewRepository interviewRepository;
     private final QuestionRepository questionRepository;
+    private final AnswerReader answerReader;
 
     public Interview get(Association<Interview> interviewId) {
         return get(interviewId.getId());
@@ -37,10 +39,8 @@ public class InterviewReader {
     }
 
     public List<Association<Problem>> getAllAnsweredProblemIds(Association<Interview> interviewId) {
-        List<Question> answeredQuestions = questionRepository.findAllByInterviewIdAndQuestionStatusIn(
-                interviewId,
-                List.of(QuestionStatus.ANSWERED, QuestionStatus.COMPLETED));
-        return answeredQuestions.stream()
+        return questionRepository.findAllByInterviewIdAndQuestionStatus(interviewId, QuestionStatus.ANSWERED)
+                .stream()
                 .map(Question::getProblemId)
                 .toList();
     }
@@ -60,35 +60,32 @@ public class InterviewReader {
     }
 
     public Question getCurrentQuestion(Interview interview) {
-        // ANSWERED 상태(답변은 됐지만 채점 안됨)인 질문이 있으면 우선 반환
         Optional<Question> pendingEvaluationQuestion = findPendingEvaluationQuestion(interview);
         if (pendingEvaluationQuestion.isPresent()) {
             return pendingEvaluationQuestion.get();
         }
 
-        List<Question> unAnsweredQuestions = questionRepository.findAllByInterviewIdAndQuestionStatus(
-                Association.from(interview.getId()),
-                QuestionStatus.UNANSWERED
-        );
-        Optional<Question> followUpQuestion = unAnsweredQuestions.stream()
+        List<Question> unansweredQuestions = questionRepository.findAllByInterviewIdAndQuestionStatus(
+                Association.from(interview.getId()), QuestionStatus.UNANSWERED);
+
+        Optional<Question> followUpQuestion = unansweredQuestions.stream()
                 .filter(Question::isFollowUpQuestion)
                 .findAny();
-
         if (followUpQuestion.isPresent()) {
             return followUpQuestion.get();
         }
 
-        return unAnsweredQuestions.stream()
+        return unansweredQuestions.stream()
                 .filter(question -> question.getQuestionOrder() == interview.getCurrentQuestionOrder())
                 .findAny()
                 .orElseThrow(() -> new IllegalStateException("현재 인터뷰 상태가 잘못되었습니다."));
     }
 
     public Optional<Question> findPendingEvaluationQuestion(Interview interview) {
-        List<Question> answeredQuestions = questionRepository.findAllByInterviewIdAndQuestionStatus(
-                Association.from(interview.getId()),
-                QuestionStatus.ANSWERED
-        );
-        return answeredQuestions.stream().findFirst();
+        return questionRepository.findAllByInterviewIdAndQuestionStatus(
+                        Association.from(interview.getId()), QuestionStatus.ANSWERED)
+                .stream()
+                .filter(q -> answerReader.getByQuestionId(q.getId()).isPendingEvaluation())
+                .findFirst();
     }
 }
