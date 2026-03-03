@@ -19,7 +19,6 @@ public class QuestionBuilder {
         return new QuestionBuilder();
     }
 
-    // ---- with 메서드들 ----
     public QuestionBuilder withProblemId(Long problemId) {
         this.problemId = Association.from(problemId);
         return this;
@@ -65,54 +64,30 @@ public class QuestionBuilder {
         return this;
     }
 
-
-    // ---- root question 생성 ----
     public Question buildRoot() {
-        Question question = Question.rootQuestionOf(
-                problemId,
-                interviewId,
-                questionOrder,
-                message
-        );
-        applyQuestionStatus(question);
+        Question question = Question.rootQuestionOf(problemId, interviewId, questionOrder, message);
+        applyStatus(question);
         return question;
     }
 
-    // ---- follow-up question 생성 ----
     public Question buildFollowUp() {
         if (parentQuestionId.isEmpty()) {
             throw new IllegalStateException("follow-up question을 만들려면 parentQuestionId가 필요합니다.");
         }
-
-        Question question = new Question(
-                problemId,
-                interviewId,
-                parentQuestionId,
-                0,               // follow-up question은 order 0
-                message
-        );
-        applyQuestionStatus(question);
+        Question question = new Question(problemId, interviewId, parentQuestionId, 0, message);
+        applyStatus(question);
         return question;
     }
 
-    // 일반적인 build (root/follow-up 구분 없이)
     public Question build() {
-        Question question = new Question(
-                problemId,
-                interviewId,
-                parentQuestionId,
-                questionOrder,
-                message
-        );
-        applyQuestionStatus(question);
+        Question question = new Question(problemId, interviewId, parentQuestionId, questionOrder, message);
+        applyStatus(question);
         return question;
     }
 
-    private void applyQuestionStatus(Question question) {
+    private void applyStatus(Question question) {
         if (questionStatus == QuestionStatus.ANSWERED) {
             question.markAnswered();
-        } else if (questionStatus == QuestionStatus.COMPLETED) {
-            question.markCompleted();
         }
     }
 }

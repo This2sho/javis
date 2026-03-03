@@ -1,10 +1,12 @@
 package com.javis.learn_hub.interview.service;
 
+import com.javis.learn_hub.answer.domain.service.AnswerReader;
 import com.javis.learn_hub.category.domain.MainCategory;
 import com.javis.learn_hub.event.DomainEvent;
 import com.javis.learn_hub.event.EvaluationRetryEvent;
 import com.javis.learn_hub.interview.domain.Interview;
 import com.javis.learn_hub.interview.domain.Question;
+import com.javis.learn_hub.interview.domain.QuestionStatus;
 import com.javis.learn_hub.interview.domain.service.InterviewFinder;
 import com.javis.learn_hub.interview.domain.service.InterviewProcessor;
 import com.javis.learn_hub.interview.domain.service.InterviewReader;
@@ -25,6 +27,7 @@ public class InterviewCommandService {
     private final InterviewProcessor interviewProcessor;
     private final InterviewReader interviewReader;
     private final InterviewFinder interviewFinder;
+    private final AnswerReader answerReader;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
@@ -33,8 +36,10 @@ public class InterviewCommandService {
         Optional<Interview> interview = interviewFinder.findActiveInterview(mainCategory, memberId);
         if (interview.isPresent()) {
             Question question = interviewReader.getCurrentQuestion(interview.get());
-            if (question.isPendingEvaluation()) {
-                applicationEventPublisher.publishEvent(new EvaluationRetryEvent(question.getId()));
+            if (question.getQuestionStatus() == QuestionStatus.ANSWERED) {
+                if (answerReader.getByQuestionId(question.getId()).needsEvaluation()) {
+                    applicationEventPublisher.publishEvent(new EvaluationRetryEvent(question.getId()));
+                }
                 return QuestionResponse.pendingEvaluation(question);
             }
             return QuestionResponse.continueFrom(question);
@@ -62,11 +67,5 @@ public class InterviewCommandService {
     public void markQuestionAnswered(Long questionId) {
         Question question = interviewReader.getQuestion(questionId);
         interviewProcessor.markQuestionAnswered(question);
-    }
-
-    @Transactional
-    public void markQuestionCompleted(Long questionId) {
-        Question question = interviewReader.getQuestion(questionId);
-        interviewProcessor.markQuestionCompleted(question);
     }
 }

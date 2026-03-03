@@ -1,6 +1,7 @@
 package com.javis.learn_hub.support.repository;
 
 import com.javis.learn_hub.answer.domain.Answer;
+import com.javis.learn_hub.answer.domain.EvaluationStatus;
 import com.javis.learn_hub.answer.domain.repository.AnswerRepository;
 import com.javis.learn_hub.interview.domain.Question;
 import com.javis.learn_hub.support.domain.Association;
@@ -17,5 +18,10 @@ public class InMemoryAnswerRepository extends InMemoryRepository<Answer> impleme
     @Override
     public Optional<Answer> findByQuestionId(Association<Question> questionId) {
         return findOne(answer -> answer.getQuestionId().equals(questionId));
+    }
+
+    @Override
+    public List<Answer> findAllByEvaluationStatus(EvaluationStatus evaluationStatus) {
+        return findAll(answer -> answer.getEvaluationStatus() == evaluationStatus);
     }
 }

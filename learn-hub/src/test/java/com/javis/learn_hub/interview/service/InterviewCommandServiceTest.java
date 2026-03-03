@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
-
 import com.javis.learn_hub.category.domain.MainCategory;
 import com.javis.learn_hub.event.InterviewFinishEvent;
 import com.javis.learn_hub.interview.domain.Interview;
@@ -150,19 +149,4 @@ class InterviewCommandServiceTest {
         });
     }
 
-    @DisplayName("[채점이 완료 된 상황] 질문을 완료 처리한다.")
-    @Test
-    void testMarkQuestionCompleted() {
-        //given
-        Interview interview = fixtureFactory.make(InterviewBuilder.builder().build());
-        Question currentQuestion = fixtureFactory.make(QuestionBuilder.builder().withInterviewId(interview.getId()).build());
-        given(interviewReader.getQuestion(currentQuestion.getId())).willReturn(currentQuestion);
-        given(interviewReader.get(currentQuestion.getInterviewId())).willReturn(interview);
-
-        //when
-        interviewCommandService.markQuestionCompleted(currentQuestion.getId());
-
-        //then
-        verify(interviewProcessor).markQuestionCompleted(currentQuestion);
-    }
 }

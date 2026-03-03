@@ -92,12 +92,6 @@ public class InterviewProcessor {
         questionRepository.save(question);
     }
 
-    public void markQuestionCompleted(Question question) {
-        question.markCompleted();
-        questionRepository.save(question);
-    }
-
-
     public List<DomainEvent> finish(Interview interview) {
         interview.finish();
         List<DomainEvent> events = new ArrayList<>();

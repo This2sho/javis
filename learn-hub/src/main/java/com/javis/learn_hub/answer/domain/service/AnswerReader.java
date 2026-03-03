@@ -5,6 +5,7 @@ import com.javis.learn_hub.answer.domain.repository.AnswerRepository;
 import com.javis.learn_hub.interview.domain.Question;
 import com.javis.learn_hub.support.domain.Association;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,5 +27,9 @@ public class AnswerReader {
     public Answer getByQuestionId(Long questionId) {
         return answerRepository.findByQuestionId(Association.from(questionId))
                 .orElseThrow(() -> new IllegalArgumentException("해당 질문에 대한 답변이 존재하지 않습니다: " + questionId));
+    }
+
+    public Optional<Answer> findByQuestionId(Long questionId) {
+        return answerRepository.findByQuestionId(Association.from(questionId));
     }
 }
