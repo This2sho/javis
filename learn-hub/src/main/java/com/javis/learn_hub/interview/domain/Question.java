@@ -84,15 +84,7 @@ public class Question extends BaseEntity {
         this.questionStatus = QuestionStatus.ANSWERED;
     }
 
-    public void markCompleted() {
-        this.questionStatus = QuestionStatus.COMPLETED;
-    }
-
     public boolean isFollowUpQuestion() {
         return this.parentQuestionId != Association.getEmpty();
-    }
-
-    public boolean isPendingEvaluation() {
-        return this.questionStatus == QuestionStatus.ANSWERED;
     }
 }

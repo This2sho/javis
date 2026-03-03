@@ -31,4 +31,11 @@ public class AnswerBuilder {
     public Answer build() {
         return new Answer(questionId, message);
     }
+
+    public Answer buildScored() {
+        Answer answer = build();
+        answer.toScoring();
+        answer.success();
+        return answer;
+    }
 }

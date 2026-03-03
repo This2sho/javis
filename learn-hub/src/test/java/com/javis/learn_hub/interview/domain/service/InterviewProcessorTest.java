@@ -8,9 +8,9 @@ import com.javis.learn_hub.category.domain.MainCategory;
 import com.javis.learn_hub.category.domain.service.CategoryReader;
 import com.javis.learn_hub.event.DomainEvent;
 import com.javis.learn_hub.event.InterviewFinishEvent;
+import com.javis.learn_hub.answer.domain.service.AnswerReader;
 import com.javis.learn_hub.interview.domain.Interview;
 import com.javis.learn_hub.interview.domain.Question;
-import com.javis.learn_hub.interview.domain.QuestionStatus;
 import com.javis.learn_hub.member.domain.Member;
 import com.javis.learn_hub.problem.domain.Difficulty;
 import com.javis.learn_hub.problem.domain.Problem;
@@ -33,8 +33,12 @@ import org.junit.jupiter.api.Test;
 class InterviewProcessorTest {
 
     private final TestFixtureFactory fixtureFactory = new TestFixtureFactory();
-    private final InterviewReader interviewReader = new InterviewReader(fixtureFactory.getInterviewRepository(),
-            fixtureFactory.getQuestionRepository());
+    private final AnswerReader answerReader = new AnswerReader(fixtureFactory.getAnswerRepository());
+    private final InterviewReader interviewReader = new InterviewReader(
+            fixtureFactory.getInterviewRepository(),
+            fixtureFactory.getQuestionRepository(),
+            answerReader
+    );
 
     private final CategoryReader categoryReader = new CategoryReader(fixtureFactory.getCategoryRepository());
     private final CategoryRecommender categoryRecommender = new CategoryRecommender(
@@ -152,19 +156,6 @@ class InterviewProcessorTest {
 
         //then
         assertThat(nextRootQuestion).isEmpty();
-    }
-
-    @DisplayName("[채점 완료 된 상황] 질문을 완료 상태로 변경한다.")
-    @Test
-    void testMarkQuestionCompleted() {
-        //given
-        Question question = fixtureFactory.make(QuestionBuilder.builder().build());
-
-        //when
-        interviewProcessor.markQuestionCompleted(question);
-
-        //then
-        assertThat(question.getQuestionStatus()).isEqualTo(QuestionStatus.COMPLETED);
     }
 
     @DisplayName("[모든 질문이 완료 된 상황] 인터뷰 종료시 인터뷰 종료이벤트를 발행한다.")

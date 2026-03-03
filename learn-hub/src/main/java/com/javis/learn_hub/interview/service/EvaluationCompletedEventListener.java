@@ -20,8 +20,6 @@ public class EvaluationCompletedEventListener {
     public void onEvaluationCompleted(EvaluationCompletedEvent event) {
         log.info("채점 완료 이벤트 수신: answerId={}, questionId={}", event.answerId(), event.questionId());
 
-        interviewCommandService.markQuestionCompleted(event.questionId());
-
         InterviewerResponse response = interviewCommandService.continueNextQuestion(
                 event.questionId(),
                 event.preferences()
