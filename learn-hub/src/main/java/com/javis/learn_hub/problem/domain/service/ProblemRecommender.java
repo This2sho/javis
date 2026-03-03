@@ -32,6 +32,10 @@ public class ProblemRecommender {
         List<Association<Category>> categories = categoryRecommender.recommendCategoryIdsByScore(mainCategory,
                 memberId, recommendSize);
         List<Problem> rootProblems = problemRepository.findRecommendableRootProblems(categories, Association.getEmpty(), Association.from(memberId));
+        if (rootProblems.isEmpty()) {
+            List<Association<Category>> allCategories = categoryRecommender.getAllCategoryIds(mainCategory);
+            rootProblems = problemRepository.findRecommendableRootProblems(allCategories, Association.getEmpty(), Association.from(memberId));
+        }
         return sortByRecommended(rootProblems, recommendSize);
     }
 
