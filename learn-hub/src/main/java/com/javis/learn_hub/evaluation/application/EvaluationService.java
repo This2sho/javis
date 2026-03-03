@@ -46,24 +46,10 @@ public class EvaluationService {
             return;
         }
 
-        Long memberId = interviewReader.get(question.getInterviewId()).getMemberId().getId();
         ProblemScoringInfo scoringInfo = problemReader.getProblemScoringInfo(question.getProblemId().getId());
-        sendEvaluationRequest(answer, question, memberId, scoringInfo);
-    }
-
-    private void sendEvaluationRequest(Answer answer, Question question, Long memberId, ProblemScoringInfo scoringInfo) {
-        try {
-            evaluationClient.request(
-                    answer.getId(),
-                    scoringInfo.getReferenceAnswer(),
-                    scoringInfo.getKeywordsValue(),
-                    answer.getMessage()
-            );
-            log.info("채점 요청 전송 완료: answerId={}, questionId={}", answer.getId(), question.getId());
-        } catch (EvaluationRequestException e) {
-            log.error("채점 요청 실패: questionId={}", question.getId(), e);
-            eventPublisher.publishEvent(new EvaluationFailedEvent(answer.getId(), question.getId(), memberId));
-        }
+        evaluationClient.requestAsync(answer.getId(), scoringInfo.getReferenceAnswer(),
+                scoringInfo.getKeywordsValue(), answer.getMessage());
+        log.info("채점 요청 전송: answerId={}, questionId={}", answer.getId(), question.getId());
     }
 
     @Transactional
