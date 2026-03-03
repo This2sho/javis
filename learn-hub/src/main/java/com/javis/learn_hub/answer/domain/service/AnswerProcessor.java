@@ -43,7 +43,7 @@ public class AnswerProcessor {
 
     @Transactional
     public void recoverScoringAnswers() {
-        List<Answer> scoringAnswers = answerRepository.findAllByEvaluationStatus(EvaluationStatus.SCORING);
+        List<Answer> scoringAnswers = answerRepository.findAllByEvaluationState(EvaluationStatus.SCORING);
         scoringAnswers.forEach(answer -> {
             answer.fail();
             answerRepository.save(answer);

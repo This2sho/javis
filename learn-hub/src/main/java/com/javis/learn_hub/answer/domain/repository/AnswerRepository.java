@@ -18,5 +18,5 @@ public interface AnswerRepository extends Repository<Answer, Long> {
 
     Optional<Answer> findByQuestionId(Association<Question> questionId);
 
-    List<Answer> findAllByEvaluationStatus(EvaluationStatus evaluationStatus);
+    List<Answer> findAllByEvaluationState(EvaluationStatus evaluationState);
 }

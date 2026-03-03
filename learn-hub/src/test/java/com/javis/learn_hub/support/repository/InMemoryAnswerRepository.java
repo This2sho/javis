@@ -21,7 +21,7 @@ public class InMemoryAnswerRepository extends InMemoryRepository<Answer> impleme
     }
 
     @Override
-    public List<Answer> findAllByEvaluationStatus(EvaluationStatus evaluationStatus) {
-        return findAll(answer -> answer.getEvaluationStatus() == evaluationStatus);
+    public List<Answer> findAllByEvaluationState(EvaluationStatus evaluationState) {
+        return findAll(answer -> answer.getEvaluationState() == evaluationState);
     }
 }

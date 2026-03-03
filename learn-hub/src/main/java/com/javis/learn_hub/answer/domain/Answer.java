@@ -47,12 +47,12 @@ public class Answer extends CreatedOnlyEntity {
     private Long version;
 
     @Enumerated(EnumType.STRING)
-    private EvaluationStatus evaluationStatus;
+    private EvaluationStatus evaluationState;
 
     public Answer(Association<Question> questionId, String message) {
         this.questionId = questionId;
         this.message = message;
-        this.evaluationStatus = EvaluationStatus.PENDING;
+        this.evaluationState = EvaluationStatus.PENDING;
     }
 
     public static Answer create(Long questionId, String message) {
@@ -60,23 +60,23 @@ public class Answer extends CreatedOnlyEntity {
     }
 
     public void toScoring() {
-        this.evaluationStatus = this.evaluationStatus.toScoring();
+        this.evaluationState = this.evaluationState.toScoring();
     }
 
     public void success() {
-        this.evaluationStatus = this.evaluationStatus.success();
+        this.evaluationState = this.evaluationState.success();
     }
 
     public void fail() {
-        this.evaluationStatus = this.evaluationStatus.fail();
+        this.evaluationState = this.evaluationState.fail();
     }
 
     public boolean needsEvaluation() {
-        return this.evaluationStatus == EvaluationStatus.PENDING
-            || this.evaluationStatus == EvaluationStatus.FAILED;
+        return this.evaluationState == EvaluationStatus.PENDING
+            || this.evaluationState == EvaluationStatus.FAILED;
     }
 
     public boolean isPendingEvaluation() {
-        return this.evaluationStatus != EvaluationStatus.SCORED;
+        return this.evaluationState != EvaluationStatus.SCORED;
     }
 }

@@ -59,7 +59,7 @@ public class EvaluationService {
         try {
             answerProcessor.success(answer);
         } catch (IllegalStateException e) {
-            log.warn("중복/늦은 콜백 무시: answerId={}, status={}", request.answerId(), answer.getEvaluationStatus());
+            log.warn("중복/늦은 콜백 무시: answerId={}, status={}", request.answerId(), answer.getEvaluationState());
             return;
         }
 

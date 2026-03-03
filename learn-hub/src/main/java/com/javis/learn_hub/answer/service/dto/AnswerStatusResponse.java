@@ -1,12 +1,12 @@
 package com.javis.learn_hub.answer.service.dto;
 
 import com.javis.learn_hub.answer.domain.Answer;
+import com.javis.learn_hub.answer.domain.EvaluationStatus;
 import com.javis.learn_hub.evaluation.domain.Evaluation;
-import com.javis.learn_hub.evaluation.domain.EvaluationStatus;
 
 public record AnswerStatusResponse(
         Long answerId,
-        EvaluationStatus status,
+        EvaluationStatus evaluationState,
         String grade,
         String feedback,
         Integer score
@@ -14,7 +14,7 @@ public record AnswerStatusResponse(
     public static AnswerStatusResponse pending(Answer answer) {
         return new AnswerStatusResponse(
                 answer.getId(),
-                EvaluationStatus.PENDING,
+                answer.getEvaluationState(),
                 null,
                 null,
                 null
@@ -24,7 +24,7 @@ public record AnswerStatusResponse(
     public static AnswerStatusResponse from(Answer answer, Evaluation evaluation) {
         return new AnswerStatusResponse(
                 answer.getId(),
-                evaluation.getStatus(),
+                answer.getEvaluationState(),
                 evaluation.getResult().getGrade().name(),
                 evaluation.getFeedback(),
                 evaluation.getScore()
