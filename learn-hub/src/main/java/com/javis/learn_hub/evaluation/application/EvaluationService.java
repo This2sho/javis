@@ -41,27 +41,19 @@ public class EvaluationService {
         Question question = interviewReader.getQuestion(questionId);
         Answer answer = answerReader.getByQuestionId(questionId);
 
-        try {
-            answerProcessor.prepareScoring(answer.getId());
-        } catch (IllegalStateException | ObjectOptimisticLockingFailureException e) {
-            log.info("이미 채점 진행 중, 중복 요청 무시: answerId={}", answer.getId());
+        if (!prepareScoringOrSkip(answer)) {
             return;
         }
 
         ProblemScoringInfo scoringInfo = problemReader.getProblemScoringInfo(question.getProblemId().getId());
-        evaluationClient.request(answer.getId(), scoringInfo.getReferenceAnswer(),
-                scoringInfo.getKeywordsValue(), answer.getMessage());
-        log.info("채점 요청 전송: answerId={}, questionId={}", answer.getId(), question.getId());
+        sendEvaluationRequest(question, answer, scoringInfo);
     }
 
     @Transactional
     public void completeEvaluation(EvaluationCallbackRequest request) {
         Answer answer = answerReader.get(request.answerId());
 
-        try {
-            answerProcessor.success(answer);
-        } catch (IllegalStateException e) {
-            log.warn("중복/늦은 콜백 무시: answerId={}, status={}", request.answerId(), answer.getEvaluationState());
+        if (!markScoredOrSkip(answer, request.answerId())) {
             return;
         }
 
@@ -78,5 +70,37 @@ public class EvaluationService {
 
         events.forEach(eventPublisher::publishEvent);
         log.info("채점 완료: answerId={}, grade={}", request.answerId(), request.grade());
+    }
+
+    private boolean prepareScoringOrSkip(Answer answer) {
+        try {
+            answerProcessor.prepareScoring(answer.getId());
+            return true;
+        } catch (IllegalStateException | ObjectOptimisticLockingFailureException e) {
+            log.info("이미 채점 진행 중, 중복 요청 무시: answerId={}", answer.getId());
+            return false;
+        }
+    }
+
+    private void sendEvaluationRequest(Question question, Answer answer, ProblemScoringInfo scoringInfo) {
+        try {
+            evaluationClient.request(answer.getId(), scoringInfo.getReferenceAnswer(),
+                    scoringInfo.getKeywordsValue(), answer.getMessage());
+            log.info("채점 요청 전송: answerId={}, questionId={}", answer.getId(), question.getId());
+        } catch (EvaluationRequestException e) {
+            Long memberId = interviewReader.get(question.getInterviewId()).getMemberId().getId();
+            eventPublisher.publishEvent(new EvaluationFailedEvent(answer.getId(), question.getId(), memberId));
+            log.error("채점 요청 최종 실패, 실패 이벤트 발행: answerId={}", answer.getId());
+        }
+    }
+
+    private boolean markScoredOrSkip(Answer answer, Long answerId) {
+        try {
+            answerProcessor.success(answer);
+            return true;
+        } catch (IllegalStateException e) {
+            log.warn("중복/늦은 콜백 무시: answerId={}, status={}", answerId, answer.getEvaluationState());
+            return false;
+        }
     }
 }
