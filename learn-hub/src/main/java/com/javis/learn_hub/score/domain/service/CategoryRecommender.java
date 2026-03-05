@@ -33,6 +33,12 @@ public class CategoryRecommender {
         return result;
     }
 
+    public List<Association<Category>> getAllCategoryIds(MainCategory mainCategory) {
+        return categoryReader.getAllSubCategoriesFrom(mainCategory).stream()
+                .map(category -> Association.<Category>from(category.getId()))
+                .toList();
+    }
+
     private List<Association<Category>> getZeroScoreCategories(List<Association<Category>> categoryIds,
                                                         List<Category> subCategories) {
         Set<Association<Category>> existingCategories = new HashSet<>(categoryIds);

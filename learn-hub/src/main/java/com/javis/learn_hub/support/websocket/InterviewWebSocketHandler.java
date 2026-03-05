@@ -44,22 +44,38 @@ public class InterviewWebSocketHandler extends TextWebSocketHandler {
     }
 
     public void sendNextQuestion(Long memberId, InterviewerResponse response) {
+        InterviewProgressMessage message = new InterviewProgressMessage(
+                response.ended(),
+                false,
+                response.interviewId(),
+                response.questionId(),
+                response.interviewerMessage()
+        );
+        sendMessage(memberId, message);
+        log.info("다음 질문 WebSocket 전송: memberId={}, ended={}", memberId, response.ended());
+    }
+
+    public void sendEvaluationFailed(Long memberId) {
+        InterviewProgressMessage message = new InterviewProgressMessage(
+                false,
+                true,
+                null,
+                null,
+                "채점 중 오류가 발생했습니다."
+        );
+        sendMessage(memberId, message);
+        log.warn("채점 실패 WebSocket 전송: memberId={}", memberId);
+    }
+
+    private void sendMessage(Long memberId, InterviewProgressMessage message) {
         WebSocketSession session = sessionManager.getSession(memberId);
         if (session == null || !session.isOpen()) {
             log.warn("WebSocket 세션 없음 또는 닫힘: memberId={}", memberId);
             return;
         }
-
         try {
-            InterviewProgressMessage message = new InterviewProgressMessage(
-                    response.ended(),
-                    response.interviewId(),
-                    response.questionId(),
-                    response.interviewerMessage()
-            );
             String json = objectMapper.writeValueAsString(message);
             session.sendMessage(new TextMessage(json));
-            log.info("다음 질문 WebSocket 전송: memberId={}, ended={}", memberId, response.ended());
         } catch (IOException e) {
             log.error("WebSocket 메시지 전송 실패: memberId={}", memberId, e);
         }

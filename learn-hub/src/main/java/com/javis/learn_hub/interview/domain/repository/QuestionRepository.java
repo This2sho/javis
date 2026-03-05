@@ -20,8 +20,6 @@ public interface QuestionRepository extends Repository<Question, Long> {
 
     List<Question> findAllByInterviewIdAndQuestionStatus(Association<Interview> interviewId, QuestionStatus questionStatus);
 
-    List<Question> findAllByInterviewIdAndQuestionStatusIn(Association<Interview> interviewId, List<QuestionStatus> questionStatuses);
-
     Optional<Question> findByInterviewIdAndParentQuestionIdAndQuestionOrder(Association<Interview> interviewId,
                                                                             Association<Question> parentQuestionId,
                                                                             int questionOrder);

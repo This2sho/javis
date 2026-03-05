@@ -6,9 +6,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -23,12 +28,16 @@ public class EvaluationClient {
     @Value("${callback.base-url}")
     private String callbackBaseUrl;
 
-    @Async
-    public void requestAsync(Long answerId, String referenceAnswer,
-                             Set<String> keywords, String userAnswer) {
+    @Retryable(
+            retryFor = {ResourceAccessException.class, HttpServerErrorException.class},
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 1000, multiplier = 2.0, maxDelay = 2000)
+    )
+    public void request(Long answerId, String referenceAnswer,
+                        Set<String> keywords, String userAnswer) {
         String callbackUrl = callbackBaseUrl + "/internal/evaluation/callback";
 
-        EvaluationAsyncRequest request = new EvaluationAsyncRequest(
+        EvaluationAsyncRequest evaluationRequest = new EvaluationAsyncRequest(
                 answerId,
                 referenceAnswer,
                 keywords,
@@ -36,16 +45,19 @@ public class EvaluationClient {
                 callbackUrl
         );
 
-        try {
-            restClient.post()
-                    .uri(pythonServerUri + "/evaluate")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(request)
-                    .retrieve()
-                    .toBodilessEntity();
-            log.info("채점 요청 전송 완료: answerId={}", answerId);
-        } catch (Exception e) {
-            log.error("채점 요청 실패: answerId={}", answerId, e);
-        }
+        restClient.post()
+                .uri(pythonServerUri + "/evaluate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(evaluationRequest)
+                .retrieve()
+                .toBodilessEntity();
+        log.info("채점 요청 전송 완료: answerId={}", answerId);
+    }
+
+    @Recover
+    public void recover(RestClientException e, Long answerId, String referenceAnswer,
+                        Set<String> keywords, String userAnswer) {
+        log.error("채점 요청 최종 실패 (3회 재시도 소진): answerId={}", answerId, e);
+        throw new EvaluationRequestException(answerId);
     }
 }
