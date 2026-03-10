@@ -20,12 +20,20 @@ MODEL_ID = "this2sho/klue-nli-finetuned"
 LABEL_MAP = {0: "entailment", 1: "neutral", 2: "contradiction"}
 
 
+def get_device() -> torch.device:
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if torch.backends.mps.is_available():
+        return torch.device("mps")
+    return torch.device("cpu")
+
+
 class NLIClassifier:
     """NLI 분류기 (싱글톤)"""
 
     def __init__(self):
         logger.info(f"[NLI] 모델 로드 시작: {MODEL_ID}")
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = get_device()
         self.tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
         self.model = AutoModelForSequenceClassification.from_pretrained(
             MODEL_ID,
