@@ -2,7 +2,7 @@ package com.javis.learn_hub.answer.domain;
 
 import com.javis.learn_hub.interview.domain.Question;
 import com.javis.learn_hub.support.domain.Association;
-import com.javis.learn_hub.support.domain.CreatedOnlyEntity;
+import com.javis.learn_hub.support.domain.BaseEntity;
 import com.javis.learn_hub.support.infrastructure.AssociationConverter;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -30,7 +30,7 @@ import lombok.NoArgsConstructor;
                 )
         }
 )
-public class Answer extends CreatedOnlyEntity {
+public class Answer extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -4,6 +4,7 @@ import com.javis.learn_hub.answer.domain.Answer;
 import com.javis.learn_hub.answer.domain.EvaluationState;
 import com.javis.learn_hub.answer.domain.repository.AnswerRepository;
 import com.javis.learn_hub.event.AnswerCreatedEvent;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -40,6 +41,11 @@ public class AnswerProcessor {
         Answer answer = answerReader.get(answerId);
         answer.validateCanChangeFailed();
         answerRepository.failScoring(answerId);
+    }
+
+    @Transactional
+    public int recoverStuckAnswers(LocalDateTime threshold) {
+        return answerRepository.failStuckScoringAnswers(threshold);
     }
 
     @Transactional
