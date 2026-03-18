@@ -55,7 +55,7 @@ class EvaluationServiceConcurrencyTest {
 
         AnswerCreatedEvent createdEvent = answerProcessor.create(questionId, "테스트 답변");
         answerProcessor.prepareScoring(createdEvent.answerId()); // PENDING → SCORING
-        answerProcessor.fail(createdEvent.answerId());         // SCORING → FAILED
+        answerProcessor.failScoring(createdEvent.answerId());         // SCORING → FAILED
 
         Question question = QuestionBuilder.builder().withInterviewId(1L).withProblemId(1L).build();
         Interview mockInterview = Mockito.mock(Interview.class);

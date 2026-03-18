@@ -14,7 +14,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -43,40 +42,40 @@ public class Answer extends CreatedOnlyEntity {
     @Lob
     private String message;
 
-    @Version
-    private Long version;
-
     @Enumerated(EnumType.STRING)
-    private EvaluationStatus evaluationState;
+    private EvaluationState evaluationState;
 
     public Answer(Association<Question> questionId, String message) {
         this.questionId = questionId;
         this.message = message;
-        this.evaluationState = EvaluationStatus.PENDING;
+        this.evaluationState = EvaluationState.PENDING;
     }
 
     public static Answer create(Long questionId, String message) {
         return new Answer(Association.from(questionId), message);
     }
 
-    public void toScoring() {
-        this.evaluationState = this.evaluationState.toScoring();
+    public void validateCanStartScoring() {
+        if (evaluationState.canChangeTo(EvaluationState.SCORING)) return;
+        throw new IllegalStateException(evaluationState + " 상태에서 채점 요청 불가");
     }
 
-    public void success() {
-        this.evaluationState = this.evaluationState.success();
+    public void validateCanChangeScored() {
+        if (evaluationState.canChangeTo(EvaluationState.SCORED)) return;
+        throw new IllegalStateException(evaluationState + " 상태에서 채점 완료 처리 불가");
     }
 
-    public void fail() {
-        this.evaluationState = this.evaluationState.fail();
+    public void validateCanChangeFailed() {
+        if (evaluationState.canChangeTo(EvaluationState.FAILED)) return;
+        throw new IllegalStateException(evaluationState + " 상태에서 채점 실패 처리 불가");
     }
 
     public boolean needsEvaluation() {
-        return this.evaluationState == EvaluationStatus.PENDING
-            || this.evaluationState == EvaluationStatus.FAILED;
+        return this.evaluationState == EvaluationState.PENDING
+            || this.evaluationState == EvaluationState.FAILED;
     }
 
     public boolean isPendingEvaluation() {
-        return this.evaluationState != EvaluationStatus.SCORED;
+        return this.evaluationState != EvaluationState.SCORED;
     }
 }

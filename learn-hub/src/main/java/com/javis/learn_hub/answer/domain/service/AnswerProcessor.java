@@ -1,7 +1,7 @@
 package com.javis.learn_hub.answer.domain.service;
 
 import com.javis.learn_hub.answer.domain.Answer;
-import com.javis.learn_hub.answer.domain.EvaluationStatus;
+import com.javis.learn_hub.answer.domain.EvaluationState;
 import com.javis.learn_hub.answer.domain.repository.AnswerRepository;
 import com.javis.learn_hub.event.AnswerCreatedEvent;
 import java.util.List;
@@ -23,30 +23,31 @@ public class AnswerProcessor {
     }
 
     @Transactional
-    public void prepareScoring(Long answerId) {
+    public boolean prepareScoring(Long answerId) {
         Answer answer = answerReader.get(answerId);
-        answer.toScoring();
-        answerRepository.save(answer);
-    }
-
-    public void success(Answer answer) {
-        answer.success();
-        answerRepository.save(answer);
+        answer.validateCanStartScoring();
+        return answerRepository.startScoring(answerId);
     }
 
     @Transactional
-    public void fail(Long answerId) {
+    public boolean completeScoring(Answer answer) {
+        answer.validateCanChangeScored();
+        return answerRepository.completeScoring(answer.getId());
+    }
+
+    @Transactional
+    public void failScoring(Long answerId) {
         Answer answer = answerReader.get(answerId);
-        answer.fail();
-        answerRepository.save(answer);
+        answer.validateCanChangeFailed();
+        answerRepository.failScoring(answerId);
     }
 
     @Transactional
     public void recoverScoringAnswers() {
-        List<Answer> scoringAnswers = answerRepository.findAllByEvaluationState(EvaluationStatus.SCORING);
+        List<Answer> scoringAnswers = answerRepository.findAllByEvaluationState(EvaluationState.SCORING);
         scoringAnswers.forEach(answer -> {
-            answer.fail();
-            answerRepository.save(answer);
+            answer.validateCanChangeFailed();
+            answerRepository.failScoring(answer.getId());
         });
     }
 }
