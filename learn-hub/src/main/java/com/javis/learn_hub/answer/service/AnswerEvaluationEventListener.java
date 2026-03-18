@@ -17,6 +17,6 @@ public class AnswerEvaluationEventListener {
     @EventListener
     public void onEvaluationFailed(EvaluationFailedEvent event) {
         log.info("채점 실패 이벤트 수신, 답변 실패 처리: answerId={}", event.answerId());
-        answerProcessor.fail(event.answerId());
+        answerProcessor.failScoring(event.answerId());
     }
 }

@@ -17,7 +17,6 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,8 +39,8 @@ public class EvaluationService {
     public void requestEvaluation(Long questionId) {
         Question question = interviewReader.getQuestion(questionId);
         Answer answer = answerReader.getByQuestionId(questionId);
-
-        if (!prepareScoringOrSkip(answer)) {
+        if (!answerProcessor.prepareScoring(answer.getId())) {
+            log.info("이미 채점 진행 중 혹은 완료됨, 중복 요청 무시: answerId={}", answer.getId());
             return;
         }
 
@@ -53,7 +52,8 @@ public class EvaluationService {
     public void completeEvaluation(EvaluationCallbackRequest request) {
         Answer answer = answerReader.get(request.answerId());
 
-        if (!markScoredOrSkip(answer, request.answerId())) {
+        if (!answerProcessor.completeScoring(answer)) {
+            log.warn("중복/늦은 콜백 무시: answerId={}, status={}", answer.getId(), answer.getEvaluationState());
             return;
         }
 
@@ -72,16 +72,6 @@ public class EvaluationService {
         log.info("채점 완료: answerId={}, grade={}", request.answerId(), request.grade());
     }
 
-    private boolean prepareScoringOrSkip(Answer answer) {
-        try {
-            answerProcessor.prepareScoring(answer.getId());
-            return true;
-        } catch (IllegalStateException | ObjectOptimisticLockingFailureException e) {
-            log.info("이미 채점 진행 중, 중복 요청 무시: answerId={}", answer.getId());
-            return false;
-        }
-    }
-
     private void sendEvaluationRequest(Question question, Answer answer, ProblemScoringInfo scoringInfo) {
         try {
             evaluationClient.request(answer.getId(), scoringInfo.getReferenceAnswer(),
@@ -91,16 +81,6 @@ public class EvaluationService {
             Long memberId = interviewReader.get(question.getInterviewId()).getMemberId().getId();
             eventPublisher.publishEvent(new EvaluationFailedEvent(answer.getId(), question.getId(), memberId));
             log.error("채점 요청 최종 실패, 실패 이벤트 발행: answerId={}", answer.getId());
-        }
-    }
-
-    private boolean markScoredOrSkip(Answer answer, Long answerId) {
-        try {
-            answerProcessor.success(answer);
-            return true;
-        } catch (IllegalStateException e) {
-            log.warn("중복/늦은 콜백 무시: answerId={}, status={}", answerId, answer.getEvaluationState());
-            return false;
         }
     }
 }

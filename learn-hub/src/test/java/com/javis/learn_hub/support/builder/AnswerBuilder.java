@@ -1,8 +1,10 @@
 package com.javis.learn_hub.support.builder;
 
 import com.javis.learn_hub.answer.domain.Answer;
+import com.javis.learn_hub.answer.domain.EvaluationState;
 import com.javis.learn_hub.interview.domain.Question;
 import com.javis.learn_hub.support.domain.Association;
+import org.springframework.test.util.ReflectionTestUtils;
 
 public class AnswerBuilder {
 
@@ -34,8 +36,7 @@ public class AnswerBuilder {
 
     public Answer buildScored() {
         Answer answer = build();
-        answer.toScoring();
-        answer.success();
+        ReflectionTestUtils.setField(answer, "evaluationState", EvaluationState.SCORED);
         return answer;
     }
 }
