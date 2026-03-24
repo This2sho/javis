@@ -5,6 +5,7 @@ import com.javis.learn_hub.answer.domain.service.AnswerProcessor;
 import com.javis.learn_hub.answer.service.dto.AnswerRequest;
 import com.javis.learn_hub.answer.service.dto.AnswerSubmitResponse;
 import com.javis.learn_hub.event.AnswerCreatedEvent;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +51,8 @@ public class AnswerCommandService {
     }
 
     @Transactional
-    public void recoverScoringAnswers() {
-        answerProcessor.recoverScoringAnswers();
+    public int recoverScoringAnswers() {
+        LocalDateTime now = LocalDateTime.now();
+        return answerProcessor.recoverScoringAnswers(now.minusMinutes(5), now);
     }
 }

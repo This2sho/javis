@@ -4,7 +4,7 @@ import com.javis.learn_hub.answer.domain.Answer;
 import com.javis.learn_hub.answer.domain.EvaluationState;
 import com.javis.learn_hub.answer.domain.repository.AnswerRepository;
 import com.javis.learn_hub.event.AnswerCreatedEvent;
-import java.util.List;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -40,11 +40,12 @@ public class AnswerProcessor {
         answerRepository.save(answer);
     }
 
-    public void recoverScoringAnswers() {
-        List<Answer> scoringAnswers = answerRepository.findAllByEvaluationState(EvaluationState.SCORING);
-        scoringAnswers.forEach(answer -> {
-            answer.fail();
-            answerRepository.save(answer);
-        });
+    public int recoverScoringAnswers(LocalDateTime staleThreshold, LocalDateTime now) {
+        return answerRepository.failStaleScoringAnswers(
+                EvaluationState.SCORING,
+                EvaluationState.FAILED,
+                staleThreshold,
+                now
+        );
     }
 }
