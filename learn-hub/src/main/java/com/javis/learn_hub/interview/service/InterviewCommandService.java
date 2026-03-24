@@ -11,7 +11,6 @@ import com.javis.learn_hub.interview.domain.QuestionStatus;
 import com.javis.learn_hub.interview.domain.service.InterviewFinder;
 import com.javis.learn_hub.interview.domain.service.InterviewProcessor;
 import com.javis.learn_hub.interview.domain.service.InterviewReader;
-import com.javis.learn_hub.interview.service.dto.InterviewerResponse;
 import com.javis.learn_hub.interview.service.dto.QuestionResponse;
 import com.javis.learn_hub.problem.domain.Difficulty;
 import java.util.List;

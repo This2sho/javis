@@ -31,7 +31,7 @@ public class NextQuestionService {
                 .proceedToFollowUpQuestion(previousQuestion, preferences)
                 .or(() -> interviewProcessor.proceedToNextRootQuestion(interview));
         InterviewerResponse response = nextQuestion
-                .map(q -> new InterviewerResponse(false, interview.getId(), q.getId(), q.getMessage()))
+                .map(q -> InterviewerResponse.nextQuestion(interview.getId(), q.getId(), q.getMessage()))
                 .orElseGet(() -> {
                     InterviewFinishEvent finishEvent = interviewProcessor.finish(interview);
                     applicationEventPublisher.publishEvent(finishEvent);

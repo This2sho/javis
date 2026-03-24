@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
+
 import com.javis.learn_hub.category.domain.MainCategory;
 import com.javis.learn_hub.event.InterviewFinishEvent;
 import com.javis.learn_hub.event.NextQuestionReadyEvent;
@@ -95,7 +96,7 @@ class InterviewCommandServiceTest {
         verify(applicationEventPublisher).publishEvent(
                 new NextQuestionReadyEvent(
                         interview.getMemberId().getId(),
-                        new InterviewerResponse(false, interview.getId(), followUpQuestion.getId(), followUpQuestion.getMessage())
+                        InterviewerResponse.nextQuestion(interview.getId(), followUpQuestion.getId(), followUpQuestion.getMessage())
                 )
         );
     }
@@ -124,7 +125,7 @@ class InterviewCommandServiceTest {
         verify(applicationEventPublisher).publishEvent(
                 new NextQuestionReadyEvent(
                         interview.getMemberId().getId(),
-                        new InterviewerResponse(false, interview.getId(), nextRootQuestion.getId(), nextRootQuestion.getMessage())
+                        InterviewerResponse.nextQuestion(interview.getId(), nextRootQuestion.getId(), nextRootQuestion.getMessage())
                 )
         );
     }

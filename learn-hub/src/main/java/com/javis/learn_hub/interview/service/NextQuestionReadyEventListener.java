@@ -16,10 +16,10 @@ public class NextQuestionReadyEventListener {
 
     private final InterviewWebSocketHandler webSocketHandler;
 
-    @Async
+    @Async("messageExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onNextQuestionReady(NextQuestionReadyEvent event) {
         log.info("다음 질문 전송: memberId={}", event.memberId());
-        webSocketHandler.sendNextQuestion(event.memberId(), event.response());
+        webSocketHandler.sendInterviewerMessage(event.memberId(), event.response());
     }
 }

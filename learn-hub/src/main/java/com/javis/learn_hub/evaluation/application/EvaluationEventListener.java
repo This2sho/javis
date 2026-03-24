@@ -23,7 +23,7 @@ public class EvaluationEventListener {
     private final EvaluationService evaluationService;
     private final ApplicationEventPublisher eventPublisher;
 
-    @Async
+    @Async("evaluationExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onAnswerCreated(AnswerCreatedEvent event) {
         log.info("답변 생성 이벤트 수신, 채점 요청: answerId={}, questionId={}", event.answerId(), event.questionId());
@@ -31,7 +31,7 @@ public class EvaluationEventListener {
                         .ifPresent(answer -> evaluate(answer, event.questionId()));
     }
 
-    @Async
+    @Async("evaluationExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onEvaluationRetry(EvaluationRetryEvent event) {
         log.info("재채점 요청: questionId={}", event.questionId());
@@ -45,7 +45,7 @@ public class EvaluationEventListener {
             EvaluationResponse result = evaluationService.evaluate(answer, questionId);
             evaluationService.completeEvaluation(answer.getId(), questionId, result);
         } catch (Exception e) {
-            eventPublisher.publishEvent(new EvaluationFailedEvent(answer.getId(), questionId));
+            eventPublisher.publishEvent(EvaluationFailedEvent.of(answer.getId(), questionId));
             log.error("채점 요청 최종 실패, 실패 이벤트 발행: answerId={}", answer.getId());
         }
     }

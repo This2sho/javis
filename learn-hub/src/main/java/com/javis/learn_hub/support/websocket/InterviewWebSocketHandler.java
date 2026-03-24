@@ -43,7 +43,7 @@ public class InterviewWebSocketHandler extends TextWebSocketHandler {
         log.debug("WebSocket 메시지 수신: {}", message.getPayload());
     }
 
-    public void sendNextQuestion(Long memberId, InterviewerResponse response) {
+    public void sendInterviewerMessage(Long memberId, InterviewerResponse response) {
         InterviewProgressMessage message = new InterviewProgressMessage(
                 response.ended(),
                 false,
@@ -52,19 +52,7 @@ public class InterviewWebSocketHandler extends TextWebSocketHandler {
                 response.interviewerMessage()
         );
         sendMessage(memberId, message);
-        log.info("다음 질문 WebSocket 전송: memberId={}, ended={}", memberId, response.ended());
-    }
-
-    public void sendEvaluationFailed(Long memberId) {
-        InterviewProgressMessage message = new InterviewProgressMessage(
-                false,
-                true,
-                null,
-                null,
-                "채점 중 오류가 발생했습니다."
-        );
-        sendMessage(memberId, message);
-        log.warn("채점 실패 WebSocket 전송: memberId={}", memberId);
+        log.info("인터뷰어 메시지 WebSocket 전송: memberId={}, ended={}", memberId, response.ended());
     }
 
     private void sendMessage(Long memberId, InterviewProgressMessage message) {
