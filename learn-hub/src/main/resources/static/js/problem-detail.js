@@ -14,7 +14,6 @@ function renderViewMode(problem) {
             <p><strong>카테고리:</strong> ${problem.category}</p>
             <p><strong>예상 답변</strong></p>
             <pre>${problem.referenceAnswer}</pre>
-            <p><strong>키워드:</strong> ${problem.keywords}</p>
 
             <button onclick="enterEditMode()">수정</button>
         </div>
@@ -56,17 +55,6 @@ function fillForm(box, problem) {
         }
     });
 
-    // keywords
-    const list = box.querySelector(".keyword-list");
-    problem.keywords.split(",").forEach(k => {
-        const keyword = k.trim();
-        if (!keyword) return;
-        const tag = document.createElement("span");
-        tag.className = "keyword-tag";
-        tag.innerHTML = `${keyword} <button type="button">×</button>`;
-        tag.querySelector("button").addEventListener("click", () => tag.remove());
-        list.appendChild(tag);
-    });
 }
 
 /* =========================
