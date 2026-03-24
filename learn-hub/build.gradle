@@ -23,6 +23,7 @@ configurations {
 
 repositories {
 	mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
 }
 
 dependencies {
@@ -41,8 +42,9 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
-    // fast API 통신용
-    implementation 'org.apache.httpcomponents.client5:httpclient5'
+    // Spring AI - Gemini 채점
+    implementation platform('org.springframework.ai:spring-ai-bom:1.1.0')
+    implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
 
     // 채점 요청 retry
     implementation 'org.springframework.retry:spring-retry'

@@ -17,6 +17,14 @@ spring:
         format_sql: true
     show-sql: true
 
+  ai:
+    google:
+      genai:
+        api-key: dummy
+        chat:
+          options:
+            model: dummy
+
 kakao:
   client-id: dummy
   client-secret: dummy
@@ -26,8 +34,6 @@ kakao:
 
 jwt:
   secret-key: mysupersecretkeythatshouldbeatleast32byteslong
-
-python-server-uri: dummy
 
 callback:
   base-url: ${CALLBACK_BASE_URL:http://localhost:8080}
