@@ -39,4 +39,14 @@ public record QuestionResponse(
                 null
         );
     }
+
+    public static QuestionResponse waitingForNextQuestion(Question question) {
+        return new QuestionResponse(
+                question.getId(),
+                question.getInterviewId().getId(),
+                false,
+                false,
+                null
+        );
+    }
 }

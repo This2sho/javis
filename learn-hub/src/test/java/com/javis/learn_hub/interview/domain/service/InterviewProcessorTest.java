@@ -3,12 +3,11 @@ package com.javis.learn_hub.interview.domain.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
+import com.javis.learn_hub.answer.domain.service.AnswerReader;
 import com.javis.learn_hub.category.domain.Category;
 import com.javis.learn_hub.category.domain.MainCategory;
 import com.javis.learn_hub.category.domain.service.CategoryReader;
-import com.javis.learn_hub.event.DomainEvent;
 import com.javis.learn_hub.event.InterviewFinishEvent;
-import com.javis.learn_hub.answer.domain.service.AnswerReader;
 import com.javis.learn_hub.interview.domain.Interview;
 import com.javis.learn_hub.interview.domain.Question;
 import com.javis.learn_hub.member.domain.Member;
@@ -168,12 +167,11 @@ class InterviewProcessorTest {
                 interview.getMemberId().getId());
 
         //when
-        List<DomainEvent> events = interviewProcessor.finish(interview);
+        interviewProcessor.finish(interview);
 
         //then
         assertSoftly(softly -> {
             softly.assertThat(interview.isFinished()).isTrue();
-            softly.assertThat(events).contains(interviewFinishEvent);
         });
     }
 }

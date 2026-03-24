@@ -1,7 +1,6 @@
 package com.javis.learn_hub.interview.domain.service;
 
 import com.javis.learn_hub.category.domain.MainCategory;
-import com.javis.learn_hub.event.DomainEvent;
 import com.javis.learn_hub.event.InterviewFinishEvent;
 import com.javis.learn_hub.interview.domain.EmptyProblemException;
 import com.javis.learn_hub.interview.domain.Interview;
@@ -12,7 +11,6 @@ import com.javis.learn_hub.problem.domain.Difficulty;
 import com.javis.learn_hub.problem.domain.Problem;
 import com.javis.learn_hub.problem.domain.service.ProblemRecommender;
 import com.javis.learn_hub.support.domain.Association;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
@@ -92,10 +90,8 @@ public class InterviewProcessor {
         questionRepository.save(question);
     }
 
-    public List<DomainEvent> finish(Interview interview) {
+    public InterviewFinishEvent finish(Interview interview) {
         interview.finish();
-        List<DomainEvent> events = new ArrayList<>();
-        events.add(new InterviewFinishEvent(interview.getId(), interview.getMemberId().getId()));
-        return events;
+        return new InterviewFinishEvent(interview.getId(), interview.getMemberId().getId());
     }
 }
