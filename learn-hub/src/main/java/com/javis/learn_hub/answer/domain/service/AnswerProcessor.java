@@ -1,7 +1,7 @@
 package com.javis.learn_hub.answer.domain.service;
 
 import com.javis.learn_hub.answer.domain.Answer;
-import com.javis.learn_hub.answer.domain.EvaluationStatus;
+import com.javis.learn_hub.answer.domain.EvaluationState;
 import com.javis.learn_hub.answer.domain.repository.AnswerRepository;
 import com.javis.learn_hub.event.AnswerCreatedEvent;
 import java.util.List;
@@ -43,7 +43,7 @@ public class AnswerProcessor {
 
     @Transactional
     public void recoverScoringAnswers() {
-        List<Answer> scoringAnswers = answerRepository.findAllByEvaluationState(EvaluationStatus.SCORING);
+        List<Answer> scoringAnswers = answerRepository.findAllByEvaluationState(EvaluationState.SCORING);
         scoringAnswers.forEach(answer -> {
             answer.fail();
             answerRepository.save(answer);
