@@ -119,11 +119,11 @@ class ProblemFinderTest {
                 ProblemScoringInfoBuilder.builder().withProblemId(childProblem.getId()).build());
 
         ProblemUpdateCommand childCommand = new ProblemUpdateCommand(childProblem.getId(),
-                childProblem.getContent(), childScoringInfo.getReferenceAnswer(), childScoringInfo.getKeywords(),
+                childProblem.getContent(), childScoringInfo.getReferenceAnswer(),
                 childProblem.getDifficulty(),
                 category.getPath(), Collections.emptyList(), null);
         ProblemUpdateCommand command = new ProblemUpdateCommand(problem.getId(),
-                problem.getContent(), scoringInfo.getReferenceAnswer(), scoringInfo.getKeywords(),
+                problem.getContent(), scoringInfo.getReferenceAnswer(),
                 problem.getDifficulty(),
                 category.getPath(), List.of(childCommand), null);
         //when

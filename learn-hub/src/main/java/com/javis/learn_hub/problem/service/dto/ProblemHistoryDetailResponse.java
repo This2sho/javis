@@ -6,7 +6,6 @@ import com.javis.learn_hub.problem.domain.ProblemScoringInfo;
 import com.javis.learn_hub.problem.domain.service.dto.ProblemDetailWithCategoryView;
 import com.javis.learn_hub.problem.domain.service.dto.ProblemTreeView;
 import java.util.List;
-import java.util.Set;
 
 public record ProblemHistoryDetailResponse(
         Long id,
@@ -14,7 +13,6 @@ public record ProblemHistoryDetailResponse(
         String difficulty,
         String category,
         String referenceAnswer,
-        Set<String> keywords,
         List<ProblemHistoryDetailResponse> followUps
 ) {
 
@@ -35,9 +33,7 @@ public record ProblemHistoryDetailResponse(
                 problem.getDifficulty().name(),
                 category.getPath(),
                 scoringInfo.getReferenceAnswer(),
-                scoringInfo.getKeywords().getKeywords(),
                 followUps
         );
-
     }
 }
