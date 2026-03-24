@@ -2,18 +2,24 @@ package com.javis.learn_hub.interview.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
+import com.javis.learn_hub.answer.domain.Answer;
+import com.javis.learn_hub.answer.domain.service.AnswerReader;
 import com.javis.learn_hub.category.domain.MainCategory;
-import com.javis.learn_hub.event.InterviewFinishEvent;
-import com.javis.learn_hub.event.NextQuestionReadyEvent;
+import com.javis.learn_hub.evaluation.domain.Evaluation;
+import com.javis.learn_hub.evaluation.domain.service.EvaluationReader;
+import com.javis.learn_hub.event.EvaluationRetryEvent;
 import com.javis.learn_hub.interview.domain.Interview;
 import com.javis.learn_hub.interview.domain.Question;
+import com.javis.learn_hub.interview.domain.QuestionStatus;
+import com.javis.learn_hub.interview.domain.service.InterviewFinder;
 import com.javis.learn_hub.interview.domain.service.InterviewProcessor;
 import com.javis.learn_hub.interview.domain.service.InterviewReader;
-import com.javis.learn_hub.interview.service.dto.InterviewerResponse;
 import com.javis.learn_hub.interview.service.dto.QuestionResponse;
 import com.javis.learn_hub.problem.domain.Difficulty;
 import com.javis.learn_hub.score.service.ScoreService;
@@ -44,6 +50,18 @@ class InterviewCommandServiceTest {
     private InterviewReader interviewReader;
 
     @MockitoBean
+    private InterviewFinder interviewFinder;
+
+    @MockitoBean
+    private AnswerReader answerReader;
+
+    @MockitoBean
+    private EvaluationReader evaluationReader;
+
+    @MockitoBean
+    private NextQuestionService nextQuestionService;
+
+    @MockitoBean
     private ScoreService scoreService;
 
     @Autowired
@@ -61,6 +79,7 @@ class InterviewCommandServiceTest {
     @Test
     void testStart() {
         //given
+        given(interviewFinder.findActiveInterview(MainCategory.COMPUTER_SCIENCE, 1L)).willReturn(Optional.empty());
         List<Question> rootQuestions = List.of(fixtureFactory.make(QuestionBuilder.builder().build()), fixtureFactory.make(QuestionBuilder.builder().build()),
                 fixtureFactory.make(QuestionBuilder.builder().build()));
         Question firstQuestion = rootQuestions.get(0);
@@ -75,30 +94,74 @@ class InterviewCommandServiceTest {
         assertThat(actual).isEqualTo(expected);
     }
 
+    @DisplayName("채점 요청 후 서버가 중단된 상태로 재접속하면 재채점 이벤트를 발행하고 pending 응답을 반환한다.")
+    @Test
+    void testStartWhenAnsweredQuestionNeedsEvaluation() {
+        // given
+        Interview interview = fixtureFactory.make(InterviewBuilder.builder().build());
+        Question answeredQuestion = fixtureFactory.make(
+                QuestionBuilder.builder()
+                        .withInterviewId(interview.getId())
+                        .withQuestionStatus(QuestionStatus.ANSWERED)
+                        .buildRoot()
+        );
+        Answer failedAnswer = mock(Answer.class);
+        given(failedAnswer.needsEvaluation()).willReturn(true);
+
+        given(interviewFinder.findActiveInterview(MainCategory.COMPUTER_SCIENCE, 1L)).willReturn(Optional.of(interview));
+        given(interviewReader.getCurrentQuestion(interview)).willReturn(answeredQuestion);
+        given(answerReader.getByQuestionId(answeredQuestion.getId())).willReturn(failedAnswer);
+
+        // when
+        QuestionResponse actual = interviewCommandService.start(MainCategory.COMPUTER_SCIENCE.name(), 1L);
+
+        // then
+        assertThat(actual).isEqualTo(QuestionResponse.pendingEvaluation(answeredQuestion));
+        verify(applicationEventPublisher).publishEvent(new EvaluationRetryEvent(answeredQuestion.getId()));
+    }
+
+    @DisplayName("채점은 완료됐지만 다음 질문 생성 전에 서버가 중단되면 재접속 시 다음 질문 진행을 재개한다.")
+    @Test
+    void testStartWhenAnsweredQuestionAlreadyScored() {
+        // given
+        Interview interview = fixtureFactory.make(InterviewBuilder.builder().build());
+        Question answeredQuestion = fixtureFactory.make(
+                QuestionBuilder.builder()
+                        .withInterviewId(interview.getId())
+                        .withQuestionStatus(QuestionStatus.ANSWERED)
+                        .buildRoot()
+        );
+        Answer scoredAnswer = mock(Answer.class);
+        Evaluation evaluation = mock(Evaluation.class);
+        given(scoredAnswer.needsEvaluation()).willReturn(false);
+        given(scoredAnswer.getId()).willReturn(10L);
+        given(evaluation.getPreferences()).willReturn(List.of(Difficulty.MEDIUM, Difficulty.HARD, Difficulty.EASY));
+
+        given(interviewFinder.findActiveInterview(MainCategory.COMPUTER_SCIENCE, 1L)).willReturn(Optional.of(interview));
+        given(interviewReader.getCurrentQuestion(interview)).willReturn(answeredQuestion);
+        given(answerReader.getByQuestionId(answeredQuestion.getId())).willReturn(scoredAnswer);
+        given(evaluationReader.getByAnswerId(scoredAnswer.getId())).willReturn(evaluation);
+
+        // when
+        QuestionResponse actual = interviewCommandService.start(MainCategory.COMPUTER_SCIENCE.name(), 1L);
+
+        // then
+        assertThat(actual).isEqualTo(QuestionResponse.waitingForNextQuestion(answeredQuestion));
+        verify(nextQuestionService).continueNextQuestion(eq(answeredQuestion.getId()), any());
+    }
+
     @DisplayName("[꼬리 질문이 있는 경우] 다음 문제로 꼬리 질문으로 인터뷰를 진행한다.")
     @Test
     void testContinueNextQuestion() {
         //given
         List<Difficulty> preferences = List.of(Difficulty.EASY, Difficulty.MEDIUM, Difficulty.HARD);
-        Interview interview = fixtureFactory.make(InterviewBuilder.builder().build());
-        Question previousQuestion = fixtureFactory.make(QuestionBuilder.builder().withInterviewId(interview.getId()).build());
-        Question followUpQuestion = fixtureFactory.make(QuestionBuilder.builder().withInterviewId(interview.getId())
-                .withParentQuestionId(previousQuestion.getId()).build());
-        given(interviewReader.getQuestion(previousQuestion.getId())).willReturn(previousQuestion);
-        given(interviewReader.get(previousQuestion.getInterviewId())).willReturn(interview);
-        given(interviewProcessor.proceedToFollowUpQuestion(previousQuestion, preferences))
-                .willReturn(Optional.of(followUpQuestion));
+        Long questionId = 1L;
 
         //when
-        interviewCommandService.continueNextQuestion(previousQuestion.getId(), preferences);
+        interviewCommandService.continueNextQuestion(questionId, preferences);
 
         //then
-        verify(applicationEventPublisher).publishEvent(
-                new NextQuestionReadyEvent(
-                        interview.getMemberId().getId(),
-                        InterviewerResponse.nextQuestion(interview.getId(), followUpQuestion.getId(), followUpQuestion.getMessage())
-                )
-        );
+        verify(nextQuestionService).continueNextQuestion(questionId, preferences);
     }
 
     @DisplayName("[꼬리 질문이 없는 경우] 다음 시작 질문으로 인터뷰를 진행한다.")
@@ -106,54 +169,27 @@ class InterviewCommandServiceTest {
     void testContinueNextQuestion2() {
         //given
         List<Difficulty> preferences = List.of(Difficulty.EASY, Difficulty.MEDIUM, Difficulty.HARD);
-        Interview interview = fixtureFactory.make(InterviewBuilder.builder().build());
-        Question previousQuestion = fixtureFactory.make(QuestionBuilder.builder().withInterviewId(interview.getId()).build());
-        Question nextRootQuestion = fixtureFactory.make(QuestionBuilder.builder().withInterviewId(interview.getId())
-                .withParentQuestionId(previousQuestion.getId()).build());
-
-        given(interviewReader.getQuestion(previousQuestion.getId())).willReturn(previousQuestion);
-        given(interviewReader.get(previousQuestion.getInterviewId())).willReturn(interview);
-        given(interviewProcessor.proceedToFollowUpQuestion(previousQuestion, preferences))
-                .willReturn(Optional.empty());
-        given(interviewProcessor.proceedToNextRootQuestion(interview))
-                .willReturn(Optional.of(nextRootQuestion));
+        Long questionId = 2L;
 
         //when
-        interviewCommandService.continueNextQuestion(previousQuestion.getId(), preferences);
+        interviewCommandService.continueNextQuestion(questionId, preferences);
 
         //then
-        verify(applicationEventPublisher).publishEvent(
-                new NextQuestionReadyEvent(
-                        interview.getMemberId().getId(),
-                        InterviewerResponse.nextQuestion(interview.getId(), nextRootQuestion.getId(), nextRootQuestion.getMessage())
-                )
-        );
+        verify(nextQuestionService).continueNextQuestion(questionId, preferences);
     }
 
-    @DisplayName("[인터뷰가 종료된 경우] 인터뷰 종료 이벤트와 NextQuestionReadyEvent를 발행한다.")
+    @DisplayName("다음 질문 진행 요청은 NextQuestionService에 위임한다.")
     @Test
     void testContinueNextQuestion3() {
         //given
         List<Difficulty> preferences = List.of(Difficulty.EASY, Difficulty.MEDIUM, Difficulty.HARD);
-        Interview interview = fixtureFactory.make(InterviewBuilder.builder().build());
-        Long memberId = interview.getMemberId().getId();
-        Question previousQuestion = fixtureFactory.make(QuestionBuilder.builder().withInterviewId(interview.getId()).build());
-        InterviewFinishEvent finishEvent = new InterviewFinishEvent(interview.getId(), memberId);
-
-        given(interviewReader.getQuestion(previousQuestion.getId())).willReturn(previousQuestion);
-        given(interviewReader.get(previousQuestion.getInterviewId())).willReturn(interview);
-        given(interviewProcessor.proceedToFollowUpQuestion(previousQuestion, preferences)).willReturn(Optional.empty());
-        given(interviewProcessor.proceedToNextRootQuestion(interview)).willReturn(Optional.empty());
-        given(interviewProcessor.finish(interview)).willReturn(finishEvent);
+        Long questionId = 3L;
 
         //when
-        interviewCommandService.continueNextQuestion(previousQuestion.getId(), preferences);
+        interviewCommandService.continueNextQuestion(questionId, preferences);
 
         //then
-        verify(applicationEventPublisher).publishEvent(finishEvent);
-        verify(applicationEventPublisher).publishEvent(
-                new NextQuestionReadyEvent(memberId, InterviewerResponse.finished(interview.getId()))
-        );
+        verify(nextQuestionService).continueNextQuestion(questionId, preferences);
     }
 
 }
