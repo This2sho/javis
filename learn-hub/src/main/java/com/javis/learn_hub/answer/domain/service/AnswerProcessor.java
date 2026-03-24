@@ -7,7 +7,6 @@ import com.javis.learn_hub.event.AnswerCreatedEvent;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Component
@@ -19,29 +18,28 @@ public class AnswerProcessor {
     public AnswerCreatedEvent create(Long questionId, String userAnswer) {
         Answer answer = Answer.create(questionId, userAnswer);
         answerRepository.save(answer);
-        return new AnswerCreatedEvent(answer.getId(), questionId, userAnswer);
+        return new AnswerCreatedEvent(answer.getId(), questionId);
     }
 
-    @Transactional
-    public void prepareScoring(Long answerId) {
-        Answer answer = answerReader.get(answerId);
+    public Answer prepareScoring(Long questionId) {
+        Answer answer = answerReader.getByQuestionId(questionId);
         answer.toScoring();
         answerRepository.save(answer);
+        return answer;
     }
 
-    public void success(Answer answer) {
+    public void success(Long answerId) {
+        Answer answer = answerReader.get(answerId);
         answer.success();
         answerRepository.save(answer);
     }
 
-    @Transactional
     public void fail(Long answerId) {
         Answer answer = answerReader.get(answerId);
         answer.fail();
         answerRepository.save(answer);
     }
 
-    @Transactional
     public void recoverScoringAnswers() {
         List<Answer> scoringAnswers = answerRepository.findAllByEvaluationState(EvaluationState.SCORING);
         scoringAnswers.forEach(answer -> {

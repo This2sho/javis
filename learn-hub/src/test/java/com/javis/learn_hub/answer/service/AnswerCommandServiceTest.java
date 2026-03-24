@@ -36,7 +36,7 @@ class AnswerCommandServiceTest {
         String userAnswer = "REST는 Representational State Transfer의 약자입니다.";
         AnswerRequest request = new AnswerRequest(problem, userAnswer);
 
-        AnswerCreatedEvent mockEvent = new AnswerCreatedEvent(10L, questionId, userAnswer);
+        AnswerCreatedEvent mockEvent = new AnswerCreatedEvent(10L, questionId);
         when(answerProcessor.create(questionId, userAnswer)).thenReturn(mockEvent);
 
         AnswerSubmitResponse response = answerCommandService.submitAnswer(questionId, request);
@@ -48,6 +48,5 @@ class AnswerCommandServiceTest {
         AnswerCreatedEvent capturedEvent = eventCaptor.getValue();
         assertThat(capturedEvent.answerId()).isEqualTo(10L);
         assertThat(capturedEvent.questionId()).isEqualTo(questionId);
-        assertThat(capturedEvent.userAnswer()).isEqualTo(userAnswer);
     }
 }
