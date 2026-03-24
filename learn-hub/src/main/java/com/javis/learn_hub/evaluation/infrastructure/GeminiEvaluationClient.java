@@ -28,7 +28,10 @@ public class GeminiEvaluationClient implements AnswerEvaluator {
             - INCORRECT: 내용이 틀렸거나 '모름'과 같은 무성의한 답변
             
             [피드백 기준]
-            - 사용자 답변에서 틀린 내용이 있거나 핵심 키워드 부분이 빠져있다면 해당 부분에 대해서 보충하라고 1~2문장으로 피드백 작성
+            - PERFECT: 어떤 부분이 좋았는지 피드백 1줄
+            - GOOD: '기준 답변'과 비교해서 부족했던 개념 추가하면 좋을 거 같다는 피드백 1줄
+            - VAGUE: 핵심이 무엇인지 설명하는 피드백 1줄
+            - INCORRECT: 왜 틀렸는지 설명하는 피드백 1줄
 
             [입력 데이터]
             - 기준 답변: {referenceAnswer}
