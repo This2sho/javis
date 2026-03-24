@@ -1,23 +1,15 @@
 package com.javis.learn_hub.evaluation.application;
 
 import com.javis.learn_hub.answer.domain.Answer;
-import com.javis.learn_hub.answer.domain.service.AnswerProcessor;
-import com.javis.learn_hub.answer.domain.service.AnswerReader;
-import com.javis.learn_hub.evaluation.application.dto.EvaluationCallbackRequest;
 import com.javis.learn_hub.evaluation.domain.service.EvaluationProcessor;
-import com.javis.learn_hub.evaluation.infrastructure.EvaluationClient;
-import com.javis.learn_hub.evaluation.infrastructure.EvaluationRequestException;
-import com.javis.learn_hub.event.DomainEvent;
-import com.javis.learn_hub.event.EvaluationFailedEvent;
-import com.javis.learn_hub.interview.domain.Question;
-import com.javis.learn_hub.interview.domain.service.InterviewReader;
+import com.javis.learn_hub.evaluation.infrastructure.AnswerEvaluator;
+import com.javis.learn_hub.evaluation.infrastructure.dto.EvaluationResponse;
+import com.javis.learn_hub.event.EvaluationCompletedEvent;
 import com.javis.learn_hub.problem.domain.ProblemScoringInfo;
 import com.javis.learn_hub.problem.domain.service.ProblemReader;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,81 +18,20 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class EvaluationService {
 
-    private final EvaluationClient evaluationClient;
-
+    private final AnswerEvaluator answerEvaluator;
     private final EvaluationProcessor evaluationProcessor;
-    private final AnswerProcessor answerProcessor;
-
     private final ProblemReader problemReader;
-    private final InterviewReader interviewReader;
-    private final AnswerReader answerReader;
-
     private final ApplicationEventPublisher eventPublisher;
 
-    public void requestEvaluation(Long questionId) {
-        Question question = interviewReader.getQuestion(questionId);
-        Answer answer = answerReader.getByQuestionId(questionId);
-
-        if (!prepareScoringOrSkip(answer)) {
-            return;
-        }
-
-        ProblemScoringInfo scoringInfo = problemReader.getProblemScoringInfo(question.getProblemId().getId());
-        sendEvaluationRequest(question, answer, scoringInfo);
+    public EvaluationResponse evaluate(Answer answer, Long questionId) {
+        ProblemScoringInfo scoringInfo = problemReader.getProblemScoringInfoByQuestionId(questionId);
+        return answerEvaluator.evaluate(scoringInfo.getReferenceAnswer(), answer.getMessage());
     }
 
     @Transactional
-    public void completeEvaluation(EvaluationCallbackRequest request) {
-        Answer answer = answerReader.get(request.answerId());
-
-        if (!markScoredOrSkip(answer, request.answerId())) {
-            return;
-        }
-
-        Question question = interviewReader.getQuestion(answer.getQuestionId().getId());
-        Long memberId = interviewReader.get(question.getInterviewId()).getMemberId().getId();
-
-        List<DomainEvent> events = evaluationProcessor.complete(
-                answer.getId(),
-                answer.getQuestionId().getId(),
-                memberId,
-                request.grade(),
-                request.feedback()
-        );
-
-        events.forEach(eventPublisher::publishEvent);
-        log.info("채점 완료: answerId={}, grade={}", request.answerId(), request.grade());
-    }
-
-    private boolean prepareScoringOrSkip(Answer answer) {
-        try {
-            answerProcessor.prepareScoring(answer.getId());
-            return true;
-        } catch (IllegalStateException | ObjectOptimisticLockingFailureException e) {
-            log.info("이미 채점 진행 중, 중복 요청 무시: answerId={}", answer.getId());
-            return false;
-        }
-    }
-
-    private void sendEvaluationRequest(Question question, Answer answer, ProblemScoringInfo scoringInfo) {
-        try {
-            evaluationClient.request(answer.getId(), scoringInfo.getReferenceAnswer(),
-                    scoringInfo.getKeywordsValue(), answer.getMessage());
-            log.info("채점 요청 전송: answerId={}, questionId={}", answer.getId(), question.getId());
-        } catch (EvaluationRequestException e) {
-            Long memberId = interviewReader.get(question.getInterviewId()).getMemberId().getId();
-            eventPublisher.publishEvent(new EvaluationFailedEvent(answer.getId(), question.getId(), memberId));
-            log.error("채점 요청 최종 실패, 실패 이벤트 발행: answerId={}", answer.getId());
-        }
-    }
-
-    private boolean markScoredOrSkip(Answer answer, Long answerId) {
-        try {
-            answerProcessor.success(answer);
-            return true;
-        } catch (IllegalStateException e) {
-            log.warn("중복/늦은 콜백 무시: answerId={}, status={}", answerId, answer.getEvaluationState());
-            return false;
-        }
+    public void completeEvaluation(Long answerId, Long questionId, EvaluationResponse result) {
+        EvaluationCompletedEvent completedEvent = evaluationProcessor.complete(answerId, questionId, result);
+        eventPublisher.publishEvent(completedEvent);
+        log.info("채점 완료: answerId={}, grade={}", answerId, result.grade());
     }
 }

@@ -6,9 +6,8 @@ import static org.mockito.Mockito.verify;
 
 import com.javis.learn_hub.evaluation.domain.Evaluation;
 import com.javis.learn_hub.evaluation.domain.repository.EvaluationRepository;
-import com.javis.learn_hub.event.DomainEvent;
+import com.javis.learn_hub.evaluation.infrastructure.dto.EvaluationResponse;
 import com.javis.learn_hub.event.EvaluationCompletedEvent;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,12 +29,9 @@ class EvaluationProcessorTest {
     void complete_createsEvaluationAndReturnsEvent() {
         Long answerId = 10L;
         Long questionId = 1L;
-        Long memberId = 100L;
-        String grade = "GOOD";
-        String feedback = "잘 설명했습니다.";
-
-        List<DomainEvent> events = evaluationProcessor.complete(
-                answerId, questionId, memberId, grade, feedback
+        EvaluationResponse response = new EvaluationResponse("GOOD", "잘 설명했습니다.");
+        EvaluationCompletedEvent event = evaluationProcessor.complete(
+                answerId, questionId, response
         );
 
         ArgumentCaptor<Evaluation> evaluationCaptor = ArgumentCaptor.forClass(Evaluation.class);
@@ -44,13 +40,8 @@ class EvaluationProcessorTest {
         Evaluation savedEvaluation = evaluationCaptor.getValue();
         assertThat(savedEvaluation.getAnswerId().getId()).isEqualTo(answerId);
 
-        assertThat(events).hasSize(1);
-        assertThat(events.get(0)).isInstanceOf(EvaluationCompletedEvent.class);
-
-        EvaluationCompletedEvent event = (EvaluationCompletedEvent) events.get(0);
         assertThat(event.answerId()).isEqualTo(answerId);
         assertThat(event.questionId()).isEqualTo(questionId);
-        assertThat(event.memberId()).isEqualTo(memberId);
         assertThat(event.preferences()).isNotEmpty();
     }
 }

@@ -46,7 +46,7 @@ public class ProblemProcessor {
         );
         problemRepository.save(problem);
         ProblemScoringInfo problemScoringInfo = new ProblemScoringInfo(Association.from(problem.getId()),
-                command.referenceAnswer(), command.keywords());
+                command.referenceAnswer());
         problemScoringInfoRepository.save(problemScoringInfo);
         return problem;
     }
@@ -113,7 +113,7 @@ public class ProblemProcessor {
         Category category = view.category();
 
         problem.update(Association.from(category.getId()), command.difficulty(), command.problem());
-        scoringInfo.update(command.referenceAnswer(), command.keywords());
+        scoringInfo.update(command.referenceAnswer());
         return problem;
     }
 

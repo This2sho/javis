@@ -1,8 +1,9 @@
 package com.javis.learn_hub.support.config;
 
+import java.time.Duration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestClient;
 
@@ -11,10 +12,9 @@ public class RestClientConfig {
 
     @Bean
     public RestClient restClient(RestClient.Builder builder) {
-        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
-        factory.setConnectTimeout(3000);
-        factory.setConnectionRequestTimeout(3000);
-        factory.setReadTimeout(5000);
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(3));
+        factory.setReadTimeout(Duration.ofSeconds(5));
 
         return builder
                 .requestFactory(factory)

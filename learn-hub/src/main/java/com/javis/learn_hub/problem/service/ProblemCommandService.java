@@ -2,7 +2,6 @@ package com.javis.learn_hub.problem.service;
 
 import com.javis.learn_hub.member.domain.Member;
 import com.javis.learn_hub.problem.domain.Difficulty;
-import com.javis.learn_hub.problem.domain.Keywords;
 import com.javis.learn_hub.problem.domain.Problem;
 import com.javis.learn_hub.problem.domain.Visibility;
 import com.javis.learn_hub.problem.domain.service.ProblemProcessor;
@@ -32,7 +31,7 @@ public class ProblemCommandService {
     }
 
     private ProblemCreateCommand toProblemCreateCommand(ProblemCreateRequest request) {
-        return new ProblemCreateCommand(request.problem(), request.referenceAnswer(), Keywords.from(request.keywords()),
+        return new ProblemCreateCommand(request.problem(), request.referenceAnswer(),
                 Difficulty.from(request.difficulty()), request.category(),
                 request.followUpProblems() == null ? List.of()
                         : request.followUpProblems().stream().map(this::toProblemCreateCommand).toList());
@@ -49,7 +48,6 @@ public class ProblemCommandService {
 
     private ProblemUpdateCommand toProblemUpdateCommand(ProblemUpdateRequest request) {
         return new ProblemUpdateCommand(request.problemId(), request.problem(), request.referenceAnswer(),
-                Keywords.from(request.keywords()),
                 Difficulty.from(request.difficulty()), request.category(),
                 request.followUpProblems() == null ? List.of()
                         : request.followUpProblems().stream().map(this::toProblemUpdateCommand).toList(),

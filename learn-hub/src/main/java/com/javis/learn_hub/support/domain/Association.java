@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Embeddable
 public class Association<T> {
 
-    private static Association EMPTY = new Association(-1L);
+    private static final Association<?> EMPTY = new Association<>(-1L);
 
     private Long id;
 
@@ -20,12 +20,15 @@ public class Association<T> {
 
     public static <T> Association<T> from(Long id) {
         if (id == null || id == -1) {
-            return EMPTY;
+            return getEmpty();
         }
         return new Association<>(id);
     }
 
-    public static Association getEmpty() {return EMPTY;}
+    @SuppressWarnings("unchecked")
+    public static <T> Association<T> getEmpty() {
+        return (Association<T>) EMPTY;
+    }
 
     public Long getId() {
         return id;

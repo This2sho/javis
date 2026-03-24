@@ -75,10 +75,22 @@ public class InterviewReader {
             return followUpQuestion.get();
         }
 
-        return unansweredQuestions.stream()
+        Optional<Question> currentQuestion = unansweredQuestions.stream()
                 .filter(question -> question.getQuestionOrder() == interview.getCurrentQuestionOrder())
-                .findAny()
+                .findAny();
+        if (currentQuestion.isPresent()) {
+            return currentQuestion.get();
+        }
+        return questionRepository.findByInterviewIdAndParentQuestionIdAndQuestionOrder(
+                        Association.from(interview.getId()),
+                        Association.getEmpty(),
+                        interview.getCurrentQuestionOrder())
                 .orElseThrow(() -> new IllegalStateException("현재 인터뷰 상태가 잘못되었습니다."));
+    }
+
+    public Long getMemberIdByQuestionId(Long questionId) {
+        Question question = getQuestion(questionId);
+        return get(question.getInterviewId()).getMemberId().getId();
     }
 
     public Optional<Question> findPendingEvaluationQuestion(Interview interview) {

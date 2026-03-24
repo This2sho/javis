@@ -6,7 +6,6 @@ import java.util.List;
 public record EvaluationCompletedEvent(
         Long answerId,
         Long questionId,
-        Long memberId,
         List<Difficulty> preferences
 ) implements DomainEvent {
 }

@@ -4,8 +4,10 @@ import com.javis.learn_hub.answer.domain.Answer;
 import com.javis.learn_hub.support.domain.Association;
 import com.javis.learn_hub.support.domain.CreatedOnlyEntity;
 import com.javis.learn_hub.support.infrastructure.AssociationConverter;
+import com.javis.learn_hub.problem.domain.Difficulty;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Embedded;
+import java.util.List;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -55,5 +57,9 @@ public class Evaluation extends CreatedOnlyEntity {
 
     public String getFeedback() {
         return result.getFeedback();
+    }
+
+    public List<Difficulty> getPreferences() {
+        return result.getPreferences();
     }
 }
