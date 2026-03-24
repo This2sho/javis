@@ -53,25 +53,6 @@
     }
 
     /* ===============================
-       키워드
-    =============================== */
-    function addKeywordByValue(node, value) {
-        let list = node.querySelector(".keyword-list");
-        if (!list) {
-            list = document.createElement("div");
-            list.className = "keyword-list";
-            node.appendChild(list);
-        }
-        if ([...list.children].some(el => el.textContent.trim() === value)) return;
-
-        const span = document.createElement("span");
-        span.className = "keyword-tag";
-        span.innerHTML = `${value} <button type="button">×</button>`;
-        span.querySelector("button").addEventListener("click", () => span.remove());
-        list.appendChild(span);
-    }
-
-    /* ===============================
        상세 조회
     =============================== */
     fetch(`/api/problems/${ROOT_PROBLEM_ID}`, { credentials: "include" })
@@ -98,16 +79,7 @@
                 <h4>예상 답변</h4>
                 <p>${problem.referenceAnswer}</p>
             </div>
-            <div class="section keyword-list"></div>
         `;
-
-        const kw = box.querySelector(".keyword-list");
-        problem.keywords?.forEach(k => {
-            const span = document.createElement("span");
-            span.className = "keyword-tag";
-            span.innerText = k;
-            kw.appendChild(span);
-        });
 
         container.appendChild(box);
         problem.followUps?.forEach(fu => renderView(container, fu, depth + 1));
@@ -143,7 +115,6 @@
         node.querySelector('[data-field="category"]').value = problem.category;
 
         selectDifficulty(node, problem.difficulty);
-        problem.keywords?.forEach(k => addKeywordByValue(node, k));
 
         if (!problem.followUps) return;
 
