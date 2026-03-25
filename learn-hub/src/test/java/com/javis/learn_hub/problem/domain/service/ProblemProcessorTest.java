@@ -40,7 +40,8 @@ class ProblemProcessorTest {
             ),
             new CategoryProcessor(
                     testFixtureFactory.getCategoryRepository()
-            )
+            ),
+            testFixtureFactory.getReviewRepository()
     );
 
     @DisplayName("문제 생성 커맨드, 사용자 id, 가시성 정보를 통해서 문제와 이하 꼬리 문제를 생성한다.")

@@ -11,6 +11,7 @@ import com.javis.learn_hub.problem.domain.repository.ProblemScoringInfoRepositor
 import com.javis.learn_hub.problem.domain.service.dto.ProblemCreateCommand;
 import com.javis.learn_hub.problem.domain.service.dto.ProblemDetailWithCategoryView;
 import com.javis.learn_hub.problem.domain.service.dto.ProblemUpdateCommand;
+import com.javis.learn_hub.review.domain.repository.ReviewRepository;
 import com.javis.learn_hub.support.domain.Association;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ public class ProblemProcessor {
     private final ProblemScoringInfoRepository problemScoringInfoRepository;
     private final ProblemFinder problemFinder;
     private final CategoryProcessor categoryProcessor;
+    private final ReviewRepository reviewRepository;
 
     public Problem create(ProblemCreateCommand command, Long writerId, Visibility visibility) {
         Problem rootProblem = create(command, Association.from(writerId), Association.getEmpty(),
@@ -52,7 +54,7 @@ public class ProblemProcessor {
     }
 
     private void createFollowUpProblems(List<ProblemCreateCommand> commands, Problem parentProblem) {
-        if (commands == null || commands.size() == 0) {
+        if (commands == null || commands.isEmpty()) {
             return;
         }
 
@@ -77,11 +79,26 @@ public class ProblemProcessor {
         applyUpdateRecursively(command, map, Association.getEmpty(), writerId);
     }
 
+    public void delete(Long rootProblemId) {
+        deleteRecursively(Association.from(rootProblemId));
+        reviewRepository.deleteByRootProblemId(Association.from(rootProblemId));
+    }
+
     private void deleteProblems(List<Long> problemIds) {
         for (Long problemId : problemIds) {
             problemScoringInfoRepository.deleteByProblemId(Association.from(problemId));
             problemRepository.deleteById(problemId);
         }
+    }
+
+    private void deleteRecursively(Association<Problem> problemId) {
+        List<Problem> followUpProblems = problemRepository.findAllByParentProblemId(problemId);
+        for (Problem followUpProblem : followUpProblems) {
+            deleteRecursively(Association.from(followUpProblem.getId()));
+        }
+
+        problemScoringInfoRepository.deleteByProblemId(problemId);
+        problemRepository.deleteById(problemId.getId());
     }
 
     private void applyUpdateRecursively(

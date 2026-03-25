@@ -88,4 +88,9 @@ public class InMemoryReviewRepository extends InMemoryRepository<Review> impleme
     public boolean existsByRootProblemId(Association<Problem> rootProblemId) {
         return findOne(review -> review.getRootProblemId().equals(rootProblemId)).isPresent();
     }
+
+    @Override
+    public void deleteByRootProblemId(Association<Problem> rootProblemId) {
+        delete(review -> review.getRootProblemId().equals(rootProblemId));
+    }
 }

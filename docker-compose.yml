@@ -33,7 +33,7 @@ services:
     volumes:
       - mysql-prod-volume:/var/lib/mysql
     ports:
-      - "3306:3306"
+      - "3307:3306"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -69,7 +69,7 @@ services:
   # PROD Spring Backend
   # =====================
   learn-hub-backend-prod:
-    image: leegeonho/learn-hub-backend:0.1.5
+    image: leegeonho/learn-hub-backend:0.1.6
     container_name: learn-hub-backend-prod
     profiles: ["prod"]
     networks:
@@ -89,7 +89,7 @@ services:
   # TEST Spring Backend
   # =====================
   learn-hub-backend-test:
-    image: leegeonho/learn-hub-backend:0.1.5
+    image: leegeonho/learn-hub-backend:0.1.6
     container_name: learn-hub-backend-test
     profiles: ["test"]
     networks:

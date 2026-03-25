@@ -46,6 +46,14 @@ public class ProblemCommandService {
         problemProcessor.update(command, writerId);
     }
 
+    @Transactional
+    public void delete(Long problemId, Long memberId) {
+        Problem problem = problemReader.get(problemId);
+        Association<Member> writerId = Association.from(memberId);
+        problem.validateWriter(writerId);
+        problemProcessor.delete(problemId);
+    }
+
     private ProblemUpdateCommand toProblemUpdateCommand(ProblemUpdateRequest request) {
         return new ProblemUpdateCommand(request.problemId(), request.problem(), request.referenceAnswer(),
                 Difficulty.from(request.difficulty()), request.category(),
