@@ -76,4 +76,6 @@ public interface ReviewRepository extends Repository<Review, Long> {
     Optional<Review> findById(Long reviewId);
 
     boolean existsByRootProblemId(Association<Problem> rootProblemId);
+
+    void deleteByRootProblemId(Association<Problem> rootProblemId);
 }

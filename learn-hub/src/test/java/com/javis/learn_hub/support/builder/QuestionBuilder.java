@@ -80,7 +80,8 @@ public class QuestionBuilder {
         if (parentQuestionId.isEmpty()) {
             throw new IllegalStateException("follow-up question을 만들려면 parentQuestionId가 필요합니다.");
         }
-        Question question = new Question(problemId, interviewId, parentQuestionId, depth, 0, message);
+        int followUpDepth = depth > 0 ? depth : 1;
+        Question question = new Question(problemId, interviewId, parentQuestionId, followUpDepth, 0, message);
         applyStatus(question);
         return question;
     }

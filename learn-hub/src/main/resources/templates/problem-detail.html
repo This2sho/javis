@@ -19,6 +19,7 @@
     <div class="page-actions">
         <button class="primary-action" onclick="requestReview()">리뷰요청</button>
         <button class="primary-action" onclick="enterEditModeAll()">수정하기</button>
+        <button class="secondary-btn" onclick="deleteProblem()">삭제하기</button>
     </div>
 
     <!-- 편집 모드 -->
@@ -177,6 +178,19 @@
             const location = res.headers.get("Location");
             if (location) window.location.href = location;
         });
+    }
+
+    function deleteProblem() {
+        const confirmed = window.confirm("이 문제와 꼬리 문제를 모두 삭제합니다. 계속할까요?");
+        if (!confirmed) return;
+
+        fetch(`/api/problems/${ROOT_PROBLEM_ID}`, {
+            method: "DELETE",
+            credentials: "include"
+        }).then(res => {
+            if (!res.ok) throw new Error("삭제 실패");
+            window.location.href = "/problems";
+        }).catch(() => alert("문제 삭제 실패"));
     }
 </script>
 
