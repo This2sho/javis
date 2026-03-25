@@ -17,6 +17,14 @@ spring:
         format_sql: true
         show_sql: true
 
+  ai:
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY}
+        chat:
+          options:
+            model: ${GEMINI_MODEL_NAME}
+
 kakao:
   client-id: ${KAKAO_CLIENT_ID}
   client-secret: ${KAKAO_CLIENT_SECRET}
@@ -27,14 +35,9 @@ kakao:
 jwt:
   secret-key: ${JWT_SECRET_KEY}
 
-python-server-uri: ${PYTHON_SERVER_URI}
-callback:
-  base-url: ${CALLBACK_BASE_URL:http://localhost:8080}
-
 logging:
   level:
     root: WARN
     com.javis.learn_hub: INFO
   pattern:
     console: "[%X{reqId}] %msg%n"
-

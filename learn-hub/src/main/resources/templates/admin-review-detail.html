@@ -65,17 +65,7 @@
                 <h4>예상 답변</h4>
                 <p>${problem.referenceAnswer}</p>
             </div>
-
-            <div class="section keyword-list"></div>
         `;
-
-        const kw = box.querySelector(".keyword-list");
-        problem.keywords?.forEach(k => {
-            const span = document.createElement("span");
-            span.className = "keyword-tag";
-            span.innerText = k;
-            kw.appendChild(span);
-        });
 
         container.appendChild(box);
 

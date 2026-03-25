@@ -1,6 +1,7 @@
 package com.javis.learn_hub.evaluation.domain;
 
 import com.javis.learn_hub.problem.domain.Difficulty;
+import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -16,6 +17,8 @@ public class EvaluationResult {
 
     @Enumerated(EnumType.STRING)
     private Grade grade;
+
+    @Column(columnDefinition = "TEXT")
     private String feedback;
 
     public EvaluationResult(Grade grade, String feedback) {

@@ -5,7 +5,6 @@ import com.javis.learn_hub.category.domain.service.CategoryProcessor;
 import com.javis.learn_hub.category.domain.service.CategoryReader;
 import com.javis.learn_hub.member.domain.Member;
 import com.javis.learn_hub.problem.domain.Difficulty;
-import com.javis.learn_hub.problem.domain.Keywords;
 import com.javis.learn_hub.problem.domain.Problem;
 import com.javis.learn_hub.problem.domain.Visibility;
 import com.javis.learn_hub.problem.domain.service.dto.ProblemCreateCommand;
@@ -18,7 +17,6 @@ import com.javis.learn_hub.support.builder.ProblemScoringInfoBuilder;
 import com.javis.learn_hub.support.domain.Association;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
@@ -53,7 +51,6 @@ class ProblemProcessorTest {
         ProblemCreateCommand followUpCommand = new ProblemCreateCommand(
                 "꼬리 문제",
                 "꼬리 문제 예상 답변",
-                Keywords.from(Set.of("꼬리 문제 키워드1", "꼬리 문제 키워드2")),
                 followUpDifficulty,
                 "COMPUTER_SCIENCE:NETWORK",
                 Collections.emptyList()
@@ -62,7 +59,6 @@ class ProblemProcessorTest {
         ProblemCreateCommand command = new ProblemCreateCommand(
                 "문제",
                 "문제 예상 답변",
-                Keywords.from(Set.of("문제 키워드1", "문제 키워드2")),
                 problemDifficulty,
                 "COMPUTER_SCIENCE:NETWORK",
                 List.of(followUpCommand)
@@ -106,7 +102,6 @@ class ProblemProcessorTest {
                 followUpProblem.getId(),
                 "꼬리 문제",
                 "꼬리 문제 예상 답변",
-                Keywords.from(Set.of("꼬리 문제 키워드1", "꼬리 문제 키워드2")),
                 followUpDifficulty,
                 category.getPath(),
                 Collections.emptyList(),
@@ -117,7 +112,6 @@ class ProblemProcessorTest {
                 problem.getId(),
                 "문제",
                 "문제 예상 답변",
-                Keywords.from(Set.of("문제 키워드1", "문제 키워드2")),
                 problemDifficulty,
                 category.getPath(),
                 List.of(followUpCommand),
@@ -158,7 +152,6 @@ class ProblemProcessorTest {
                 null,
                 "꼬리 문제",
                 "꼬리 문제 예상 답변",
-                Keywords.from(Set.of("꼬리 문제 키워드1", "꼬리 문제 키워드2")),
                 followUpDifficulty,
                 category.getPath(),
                 Collections.emptyList(),
@@ -169,7 +162,6 @@ class ProblemProcessorTest {
                 problem.getId(),
                 "문제",
                 "문제 예상 답변",
-                Keywords.from(Set.of("문제 키워드1", "문제 키워드2")),
                 problemDifficulty,
                 category.getPath(),
                 List.of(followUpCommand),
@@ -206,7 +198,6 @@ class ProblemProcessorTest {
                 null,
                 "꼬리 문제",
                 "꼬리 문제 예상 답변",
-                Keywords.from(Set.of("꼬리 문제 키워드1", "꼬리 문제 키워드2")),
                 followUpDifficulty,
                 category.getPath(),
                 Collections.emptyList(),
@@ -217,7 +208,6 @@ class ProblemProcessorTest {
                 null,
                 "문제",
                 "문제 예상 답변",
-                Keywords.from(Set.of("문제 키워드1", "문제 키워드2")),
                 problemDifficulty,
                 category.getPath(),
                 List.of(followUpCommand),

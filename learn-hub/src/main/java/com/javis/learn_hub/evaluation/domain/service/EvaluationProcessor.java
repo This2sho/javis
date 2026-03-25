@@ -4,10 +4,8 @@ import com.javis.learn_hub.evaluation.domain.Evaluation;
 import com.javis.learn_hub.evaluation.domain.EvaluationResult;
 import com.javis.learn_hub.evaluation.domain.Grade;
 import com.javis.learn_hub.evaluation.domain.repository.EvaluationRepository;
-import com.javis.learn_hub.event.DomainEvent;
+import com.javis.learn_hub.evaluation.infrastructure.dto.EvaluationResponse;
 import com.javis.learn_hub.event.EvaluationCompletedEvent;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -21,14 +19,11 @@ public class EvaluationProcessor {
      * 채점 완료 처리 (InterviewProcessor.finish 패턴)
      * Evaluation 생성 후 발행할 이벤트 목록 반환
      */
-    public List<DomainEvent> complete(Long answerId, Long questionId, Long memberId, String grade, String feedback) {
-        EvaluationResult result = new EvaluationResult(toGrade(grade), feedback);
+    public EvaluationCompletedEvent complete(Long answerId, Long questionId, EvaluationResponse response) {
+        EvaluationResult result = new EvaluationResult(toGrade(response.grade()), response.feedback());
         Evaluation evaluation = Evaluation.completed(answerId, result);
         evaluationRepository.save(evaluation);
-
-        List<DomainEvent> events = new ArrayList<>();
-        events.add(new EvaluationCompletedEvent(answerId, questionId, memberId, result.getPreferences()));
-        return events;
+        return new EvaluationCompletedEvent(answerId, questionId, result.getPreferences());
     }
 
     private Grade toGrade(String grade) {

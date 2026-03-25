@@ -2,7 +2,7 @@ package com.javis.learn_hub.answer.domain;
 
 import com.javis.learn_hub.interview.domain.Question;
 import com.javis.learn_hub.support.domain.Association;
-import com.javis.learn_hub.support.domain.CreatedOnlyEntity;
+import com.javis.learn_hub.support.domain.BaseEntity;
 import com.javis.learn_hub.support.infrastructure.AssociationConverter;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -31,7 +31,7 @@ import lombok.NoArgsConstructor;
                 )
         }
 )
-public class Answer extends CreatedOnlyEntity {
+public class Answer extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -47,12 +47,12 @@ public class Answer extends CreatedOnlyEntity {
     private Long version;
 
     @Enumerated(EnumType.STRING)
-    private EvaluationStatus evaluationState;
+    private EvaluationState evaluationState;
 
     public Answer(Association<Question> questionId, String message) {
         this.questionId = questionId;
         this.message = message;
-        this.evaluationState = EvaluationStatus.PENDING;
+        this.evaluationState = EvaluationState.PENDING;
     }
 
     public static Answer create(Long questionId, String message) {
@@ -72,11 +72,11 @@ public class Answer extends CreatedOnlyEntity {
     }
 
     public boolean needsEvaluation() {
-        return this.evaluationState == EvaluationStatus.PENDING
-            || this.evaluationState == EvaluationStatus.FAILED;
+        return this.evaluationState == EvaluationState.PENDING
+            || this.evaluationState == EvaluationState.FAILED;
     }
 
     public boolean isPendingEvaluation() {
-        return this.evaluationState != EvaluationStatus.SCORED;
+        return this.evaluationState != EvaluationState.SCORED;
     }
 }

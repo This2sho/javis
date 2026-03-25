@@ -45,4 +45,9 @@ public class ProblemReader {
         return problemScoringInfoRepository.findByProblemId(Association.from(problemId))
                 .orElseThrow(() -> new IllegalStateException("존재하지 않는 문제입니다."));
     }
+
+    public ProblemScoringInfo getProblemScoringInfoByQuestionId(Long questionId) {
+        return problemScoringInfoRepository.findByQuestionId(questionId)
+                .orElseThrow(() -> new IllegalStateException("존재하지 않는 문제입니다."));
+    }
 }

@@ -4,14 +4,15 @@ x-common-environment: &common_environment
   DB_USERNAME: ${DB_USERNAME}
   DB_PASSWORD: ${DB_PASSWORD}
 
-  # Python Server
-  PYTHON_SERVER_URI: http://learn-hub-evaluation:8000
-
   # JWT / OAuth
   JWT_SECRET_KEY: ${JWT_SECRET_KEY}
   KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
   KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
   KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI}
+
+  # GEMINI
+  GEMINI_API_KEY: ${GEMINI_API_KEY}
+  GEMINI_MODEL_NAME: ${GEMINI_MODEL_NAME}
 
 services:
   # =====================
@@ -65,49 +66,21 @@ services:
       retries: 5
 
   # =====================
-  # FastAPI
-  # =====================
-  learn-hub-evaluation:
-    image: leegeonho/evaluation-api:0.2.1
-    container_name: learn-hub-evaluation
-    networks:
-      - javis-net
-    environment:
-      TZ: Asia/Seoul
-      HF_HUB_TIMEOUT: 120
-      HF_HUB_READ_TIMEOUT: 120
-      SPRING_API_URL: http://learn-hub-backend-test:8080
-    deploy:
-      resources:
-        limits:
-          memory: 6G
-
-    volumes:
-      - hf-model-cache:/app/.cache/huggingface
-    ports:
-      - "8000:8000"
-    restart: on-failure
-    command: ["uvicorn", "evaluation.main:app", "--app-dir", "src", "--host", "0.0.0.0", "--port", "8000"]
-
-  # =====================
   # PROD Spring Backend
   # =====================
   learn-hub-backend-prod:
-    image: leegeonho/learn-hub-backend:0.1.4
+    image: leegeonho/learn-hub-backend:0.1.5
     container_name: learn-hub-backend-prod
     profiles: ["prod"]
     networks:
       - javis-net
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      CALLBACK_BASE_URL: http://learn-hub-backend-prod:8080
       DB_URL: jdbc:mysql://learn-hub-mysql-prod:3306/learn_hub?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Seoul
       <<: *common_environment
     depends_on:
       learn-hub-mysql-prod:
         condition: service_healthy
-      learn-hub-evaluation:
-        condition: service_started
     ports:
       - "8080:8080"
     restart: on-failure
@@ -116,14 +89,13 @@ services:
   # TEST Spring Backend
   # =====================
   learn-hub-backend-test:
-    image: leegeonho/learn-hub-backend:0.1.4
+    image: leegeonho/learn-hub-backend:0.1.5
     container_name: learn-hub-backend-test
     profiles: ["test"]
     networks:
       - javis-net
     environment:
       SPRING_PROFILES_ACTIVE: test
-      CALLBACK_BASE_URL: http://learn-hub-backend-test:8080
       DB_URL: jdbc:mysql://learn-hub-mysql-test:3306/learn_hub_test?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Seoul
       JAVA_OPTS: >
         -Xms512m
@@ -133,8 +105,6 @@ services:
     depends_on:
       learn-hub-mysql-test:
         condition: service_healthy
-      learn-hub-evaluation:
-        condition: service_started
     ports:
       - "8080:8080"
     restart: on-failure
@@ -149,4 +119,3 @@ networks:
 volumes:
   mysql-prod-volume:
   mysql-test-volume:
-  hf-model-cache:

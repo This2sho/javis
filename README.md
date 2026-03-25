@@ -28,7 +28,7 @@
 
 사용자는 학습한 내용을 기반으로 문제(질문)를 직접 작성합니다.
 
-문제에는 답변에 반드시 포함되어야 할 핵심 키워드를 함께 정의합니다.
+문제에는 인터뷰 채점에 사용할 모범 답변(reference answer)을 함께 정의합니다.
 
 작성된 문제는 관리자 리뷰를 거쳐 승인되며,
 
@@ -41,6 +41,41 @@
 문제는 개인 학습용(PRIVATE)과 서비스 공용(PUBLIC)으로 구분됩니다.
 
 ### 3. 인터뷰 & 채점
+인터뷰 플로우
+```mermaid
+flowchart TD
+    Start([인터뷰 시작]) --> Branch{기존 인터뷰\n존재 여부}
+
+    %% ── 기존 인터뷰 ──────────────────────────────
+    Branch -->|기존 인터뷰| FindQ[현재 질문 조회\n꼬리 질문 => 루트 질문 순]
+    FindQ --> HasAnswer{현재 질문에\n답변 여부}
+
+    HasAnswer -->|답변 없음| ReturnQ[현재 질문 재제공]
+    ReturnQ --> UserAnswer
+
+    HasAnswer -->|답변 있음| HasEval{채점 완료\n여부}
+
+    HasEval -->|채점 미완료| Evaluate[채점 진행]
+    Evaluate --> NextQ
+
+    HasEval -->|채점 완료| NextQ[다음 질문 제공]
+    NextQ --> UserAnswer[사용자 답변 입력]
+
+    %% ── 새 인터뷰 ────────────────────────────────
+    Branch -->|새 인터뷰| Recommend[카테고리 기반\n추천 질문 생성]
+    Recommend --> FirstQ[첫 번째 루트 질문 반환]
+    FirstQ --> UserAnswer
+
+    %% ── 공통 답변 처리 ───────────────────────────
+    UserAnswer --> Score[답변 채점]
+    Score --> ScoreResult{채점 결과}
+
+    ScoreResult -->|높은 점수\nGOOD / PERFECT| FollowUp[꼬리 질문 생성]
+    ScoreResult -->|낮은 점수\nVAGUE / INCORRECT| NextRoot[다음 루트 질문 생성]
+
+    NextRoot --> UserAnswer
+    FollowUp --> UserAnswer
+```
 
 사용자는 학습한 내용을 인터뷰 형식으로 진행할 수 있습니다.
 
@@ -48,15 +83,11 @@
 
 #### 채점 방식
 
-1. **NLI(자연어 추론) 분류**: 모범 답변과 사용자 답변 간의 논리적 관계 판단
-   - 함의(entailment): 정답과 일치 → 높은 점수
-   - 중립(neutral): 부분 일치 → 중간 점수
-   - 모순(contradiction): 오답 → 즉시 실패 처리
+제출한 답변은 Gemini 기반 채점 로직을 통해 평가됩니다.
 
-2. **키워드 매칭**: FastText 단어 유사도 기반 키워드 포함 여부 확인
-   - 원문 텍스트 직접 매칭
-   - 한글→영어 번역 후 FastText 유사도 계산
-   - 유사도 임계값(0.65) 이상이면 키워드 포함으로 판단
+- 모범 답변과 사용자 답변을 비교해 등급(예: PERFECT, GOOD, VAGUE, INCORRECT)을 산정합니다.
+- 답변의 부족한 부분을 보완할 수 있도록 피드백을 생성합니다.
+- 채점 결과는 후속 꼬리질문 난이도 선택과 카테고리 점수 산정에 활용됩니다.
 
 채점 결과는 문제의 카테고리별 점수로 기록되며,
 
@@ -87,19 +118,15 @@
 
 
 ## Project Structure
-해당 프로젝트는 Spring 기반 웹 애플리케이션과 Python 기반 Fast-api 채점 서버로 구성된 멀티 서버 아키텍처를 사용합니다.
+해당 프로젝트는 Spring 기반 웹 애플리케이션을 중심으로 구성되어 있습니다.
 
-Spring 서버는 웹 뷰 제공과 비즈니스 로직 처리를 담당하며,
-Python 채점 서버는 사용자 질문에 대한 대답을 채점을 담당합니다.
+Spring 서버는 웹 뷰 제공, 비즈니스 로직 처리, 인터뷰 진행, 문제 관리, 채점 결과 반영을 담당합니다.
 
-각 서버는 독립적으로 책임을 가지며,
-자세한 설명은 하위 README를 참고합니다.
+답변 평가는 서버 내부의 Gemini 연동 채점 흐름을 통해 처리됩니다.
 
 ### Documentation
 
 👉 [Spring API Server](./learn-hub/README.md)
-
-👉 [Python Evaluation Server](./evaluation/README.md)
 
 ## How to Run
 
@@ -109,7 +136,7 @@ Python 채점 서버는 사용자 질문에 대한 대답을 채점을 담당합
 
 2. 프로젝트 루트에서 아래 명령어 수행
 
-    - ``docker compose --profile test up -d'``
+    - `docker compose --profile test up -d`
 
 각 서버의 세부 실행 방법 및 환경 설정은
 하위 README를 참고하세요.

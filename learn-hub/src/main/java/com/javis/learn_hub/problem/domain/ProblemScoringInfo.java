@@ -1,6 +1,5 @@
 package com.javis.learn_hub.problem.domain;
 
-import com.javis.learn_hub.problem.domain.infrastructure.KeywordsConverter;
 import com.javis.learn_hub.support.domain.Association;
 import com.javis.learn_hub.support.infrastructure.AssociationConverter;
 import jakarta.persistence.Convert;
@@ -11,7 +10,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.util.Set;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -41,31 +39,15 @@ public class ProblemScoringInfo {
     @Lob
     private String referenceAnswer;
 
-    @Convert(converter = KeywordsConverter.class)
-    private Keywords keywords;
-
-    public ProblemScoringInfo(Association<Problem> problemId, String referenceAnswer, Keywords keywords) {
+    public ProblemScoringInfo(Association<Problem> problemId, String referenceAnswer) {
         this.problemId = problemId;
         this.referenceAnswer = referenceAnswer;
-        this.keywords = keywords;
     }
 
-    public void update(String referenceAnswer, Keywords keywords) {
-        if (!isUpdated(referenceAnswer, keywords)) {
+    public void update(String referenceAnswer) {
+        if (this.referenceAnswer.equals(referenceAnswer)) {
             return;
         }
         this.referenceAnswer = referenceAnswer;
-        this.keywords = keywords;
-    }
-
-    private boolean isUpdated(String referenceAnswer, Keywords keywords) {
-        if (this.referenceAnswer.equals(referenceAnswer) && this.keywords.equals(keywords)) {
-            return false;
-        }
-        return true;
-    }
-
-    public Set<String> getKeywordsValue() {
-        return keywords.getKeywords();
     }
 }

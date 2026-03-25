@@ -1,8 +1,6 @@
 package com.javis.learn_hub.interview.domain.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import com.javis.learn_hub.answer.domain.service.AnswerReader;
 import com.javis.learn_hub.interview.domain.Interview;
 import com.javis.learn_hub.interview.domain.Question;
@@ -122,22 +120,35 @@ class InterviewReaderTest {
         assertThat(actual).isEqualTo(expected);
     }
 
-    @DisplayName("인터뷰에서 미답변 질문이 없을 경우 예외를 발생시킨다.")
+    @DisplayName("인터뷰에서 미답변 질문이 없으면 현재 순서의 루트 질문을 가져온다.")
     @Test
     void testGetCurrentQuestion3() {
         //given
-        Interview interview = fixtureFactory.make(InterviewBuilder.builder().build());
+        Interview interview = fixtureFactory.make(InterviewBuilder.builder().withTotalQuestions(3).build());
+        interview.moveNextQuestion();
         Question q1 = fixtureFactory.make(QuestionBuilder.builder()
-                .withQuestionStatus(QuestionStatus.ANSWERED).withInterviewId(interview.getId()).build());
-        Question q2 = fixtureFactory.make(QuestionBuilder.builder()
-                .withQuestionStatus(QuestionStatus.ANSWERED).withInterviewId(interview.getId()).build());
+                .withQuestionStatus(QuestionStatus.ANSWERED)
+                .withInterviewId(interview.getId())
+                .withQuestionOrder(0)
+                .buildRoot());
+        Question expected = fixtureFactory.make(QuestionBuilder.builder()
+                .withQuestionStatus(QuestionStatus.ANSWERED)
+                .withInterviewId(interview.getId())
+                .withQuestionOrder(1)
+                .buildRoot());
         Question q3 = fixtureFactory.make(QuestionBuilder.builder()
-                .withQuestionStatus(QuestionStatus.ANSWERED).withInterviewId(interview.getId()).build());
+                .withQuestionStatus(QuestionStatus.ANSWERED)
+                .withInterviewId(interview.getId())
+                .withQuestionOrder(2)
+                .buildRoot());
         fixtureFactory.make(AnswerBuilder.builder().withQuestionId(q1.getId()).buildScored());
-        fixtureFactory.make(AnswerBuilder.builder().withQuestionId(q2.getId()).buildScored());
+        fixtureFactory.make(AnswerBuilder.builder().withQuestionId(expected.getId()).buildScored());
         fixtureFactory.make(AnswerBuilder.builder().withQuestionId(q3.getId()).buildScored());
 
-        //when, then
-        assertThatThrownBy(() -> interviewReader.getCurrentQuestion(interview));
+        //when
+        Question actual = interviewReader.getCurrentQuestion(interview);
+
+        //then
+        assertThat(actual).isEqualTo(expected);
     }
 }

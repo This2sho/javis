@@ -33,11 +33,6 @@
         const rootBox = document.querySelector('#root .problem-box');
         const payload = collectProblemNode(rootBox);
 
-        if (!payload.keywords || payload.keywords.length === 0) {
-            alert("키워드는 최소 1개 이상 입력해야 합니다.");
-            return;
-        }
-
         fetch("/api/problems", {
             method: "POST",
             headers: { "Content-Type": "application/json" },

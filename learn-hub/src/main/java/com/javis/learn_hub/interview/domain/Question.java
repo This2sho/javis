@@ -85,6 +85,10 @@ public class Question extends BaseEntity {
     }
 
     public boolean isFollowUpQuestion() {
-        return this.parentQuestionId != Association.getEmpty();
+        return !this.parentQuestionId.isEmpty();
+    }
+
+    public boolean isNotAnswered() {
+        return questionStatus == QuestionStatus.UNANSWERED;
     }
 }

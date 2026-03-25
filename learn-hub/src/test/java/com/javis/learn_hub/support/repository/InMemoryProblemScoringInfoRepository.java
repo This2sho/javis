@@ -18,4 +18,9 @@ public class InMemoryProblemScoringInfoRepository extends InMemoryRepository<Pro
     public void deleteByProblemId(Association<Problem> problemId) {
         delete(psi -> psi.getProblemId().equals(problemId));
     }
+
+    @Override
+    public Optional<ProblemScoringInfo> findByQuestionId(Long questionId) {
+        throw new UnsupportedOperationException("인메모리 구현 미지원");
+    }
 }

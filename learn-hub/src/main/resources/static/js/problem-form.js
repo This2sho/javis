@@ -39,15 +39,6 @@ function createProblemNode(parentCategoryPath = "", isFollowUp = false) {
         </div>
 
         <div class="field">
-            <label>핵심 키워드</label>
-            <div class="keyword-input">
-                <input type="text" placeholder="키워드 입력" onkeydown="handleKeywordEnter(event, this)">
-                <button type="button" onclick="addKeyword(this)">+</button>
-            </div>
-            <div class="keyword-list"></div>
-        </div>
-
-        <div class="field">
             <label>카테고리 선택</label>
             <div class="category-selector" id="category-selector-${problemId}"></div>
             <div class="selected-category" id="selected-category-${problemId}">
@@ -148,36 +139,6 @@ function selectCategory(id, path, clickedItem) {
 }
 
 /* =========================
-   키워드
-========================= */
-function handleKeywordEnter(event, input) {
-    if (event.isComposing) return;
-    if (event.key === 'Enter') {
-        event.preventDefault();
-        const button = input.nextElementSibling;
-        addKeyword(button);
-    }
-}
-
-function addKeyword(button) {
-    const field = button.closest(".field");
-    const input = field.querySelector("input");
-    const list = field.querySelector(".keyword-list");
-    const value = input.value.trim();
-    if (!value) return;
-
-    const tag = document.createElement("span");
-    tag.className = "keyword-tag";
-    tag.innerHTML = `
-        ${value}
-        <button type="button" onclick="this.parentElement.remove()">×</button>
-    `;
-
-    list.appendChild(tag);
-    input.value = "";
-}
-
-/* =========================
    꼬리 문제
 ========================= */
 function addFollowUpProblem(parentId) {
@@ -212,10 +173,6 @@ function collectProblemNode(box) {
     const category = box.querySelector('[data-field="category"]').value;
     const difficulty = box.querySelector('[data-field="difficulty"]').value;
 
-    const keywords = Array.from(
-        box.querySelector(".keyword-list")?.querySelectorAll(".keyword-tag") || []
-    ).map(tag => tag.firstChild.textContent.trim());
-
     const followUpProblems = [];
     box.querySelectorAll(':scope > .children > .problem-box')
         .forEach(child => followUpProblems.push(collectProblemNode(child)));
@@ -225,9 +182,7 @@ function collectProblemNode(box) {
         problem,
         referenceAnswer,
         difficulty,
-        keywords,
         category,
         followUpProblems
     };
 }
-
