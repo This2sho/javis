@@ -29,7 +29,7 @@ class EvaluationProcessorTest {
     void complete_createsEvaluationAndReturnsEvent() {
         Long answerId = 10L;
         Long questionId = 1L;
-        EvaluationResponse response = new EvaluationResponse("GOOD", "잘 설명했습니다.");
+        EvaluationResponse response = new EvaluationResponse("판단 근거", "GOOD", "잘 설명했습니다.");
         EvaluationCompletedEvent event = evaluationProcessor.complete(
                 answerId, questionId, response
         );
