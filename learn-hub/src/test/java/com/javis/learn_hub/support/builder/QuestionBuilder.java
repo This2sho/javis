@@ -12,6 +12,7 @@ public class QuestionBuilder {
     private Association<Interview> interviewId = Association.from(1L);
     private Association<Question> parentQuestionId = Association.getEmpty();
     private QuestionStatus questionStatus = QuestionStatus.UNANSWERED;
+    private int depth = 0;
     private int questionOrder = 0;
     private String message = "기본 질문입니다.";
 
@@ -59,6 +60,11 @@ public class QuestionBuilder {
         return this;
     }
 
+    public QuestionBuilder withDepth(int depth) {
+        this.depth = depth;
+        return this;
+    }
+
     public QuestionBuilder withMessage(String message) {
         this.message = message;
         return this;
@@ -74,13 +80,13 @@ public class QuestionBuilder {
         if (parentQuestionId.isEmpty()) {
             throw new IllegalStateException("follow-up question을 만들려면 parentQuestionId가 필요합니다.");
         }
-        Question question = new Question(problemId, interviewId, parentQuestionId, 0, message);
+        Question question = new Question(problemId, interviewId, parentQuestionId, depth, 0, message);
         applyStatus(question);
         return question;
     }
 
     public Question build() {
-        Question question = new Question(problemId, interviewId, parentQuestionId, questionOrder, message);
+        Question question = new Question(problemId, interviewId, parentQuestionId, depth, questionOrder, message);
         applyStatus(question);
         return question;
     }

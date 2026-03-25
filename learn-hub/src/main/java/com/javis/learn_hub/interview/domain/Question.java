@@ -50,6 +50,8 @@ public class Question extends BaseEntity {
     @Convert(converter = AssociationConverter.class)
     private Association<Question> parentQuestionId;
 
+    private int depth;
+
     private int questionOrder;
 
     @Enumerated(EnumType.STRING)
@@ -59,10 +61,11 @@ public class Question extends BaseEntity {
     private String message;
 
     public Question(Association<Problem> problemId, Association<Interview> interviewId,
-                    Association<Question> parentQuestionId, int questionOrder, String message) {
+                    Association<Question> parentQuestionId, int depth, int questionOrder, String message) {
         this.problemId = problemId;
         this.interviewId = interviewId;
         this.parentQuestionId = parentQuestionId;
+        this.depth = depth;
         this.questionOrder = questionOrder;
         this.message = message;
         this.questionStatus = QuestionStatus.UNANSWERED;
@@ -72,11 +75,11 @@ public class Question extends BaseEntity {
             Association<Problem> problemId, Association<Interview> interviewId,
             int questionOrder, String message
     ) {
-        return new Question(problemId, interviewId, Association.getEmpty(), questionOrder, message);
+        return new Question(problemId, interviewId, Association.getEmpty(), 0, questionOrder, message);
     }
 
     public Question makeFollowUpQuestion(Problem problem) {
-        return new Question(Association.from(problem.getId()), interviewId, Association.from(this.id), 0,
+        return new Question(Association.from(problem.getId()), interviewId, Association.from(this.id), this.depth + 1, 0,
                 problem.getContent());
     }
 
@@ -85,7 +88,7 @@ public class Question extends BaseEntity {
     }
 
     public boolean isFollowUpQuestion() {
-        return !this.parentQuestionId.isEmpty();
+        return depth > 0;
     }
 
     public boolean isNotAnswered() {

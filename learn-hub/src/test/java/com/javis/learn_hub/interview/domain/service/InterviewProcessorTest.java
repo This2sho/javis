@@ -49,7 +49,8 @@ class InterviewProcessorTest {
     private final InterviewProcessor interviewProcessor = new InterviewProcessor(
             fixtureFactory.getInterviewRepository(),
             problemRecommender,
-            questionFlowProcessor
+            questionFlowProcessor,
+            new InterviewStartPolicy(fixtureFactory.getMemberRepository(), fixtureFactory.getInterviewRepository())
     );
 
     @DisplayName("[인터뷰 시작 상황] 메인 카테고리로 5개의 문제를 추천 받아 질문을 생성한다.")
@@ -57,6 +58,7 @@ class InterviewProcessorTest {
     void testInitInterview() {
         //given
         MainCategory mainCategory = MainCategory.COMPUTER_SCIENCE;
+        fixtureFactory.make(com.javis.learn_hub.support.builder.MemberBuilder.builder().withSocialId(1L).build());
         Category category = fixtureFactory.make(CategoryBuilder.builder().withMainCategory(mainCategory).build());
         List<Problem> problems = fixtureFactory.make5ProblemsWithCategory(category);
         List<Long> expectedProblemIds = problems.stream().map(Problem::getId)

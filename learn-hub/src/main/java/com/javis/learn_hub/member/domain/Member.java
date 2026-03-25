@@ -41,8 +41,12 @@ public class Member {
     private Long socialId;
 
     public Member(Provider provider, Long socialId) {
+        this(provider, socialId, Role.USER);
+    }
+
+    public Member(Provider provider, Long socialId, Role role) {
         this.provider = provider;
         this.socialId = socialId;
-        this.role = Role.USER;
+        this.role = role;
     }
 }
