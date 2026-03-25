@@ -22,8 +22,10 @@ public class InterviewProcessor {
     private final InterviewRepository interviewRepository;
     private final ProblemRecommender problemRecommender;
     private final QuestionFlowProcessor questionFlowProcessor;
+    private final InterviewStartPolicy interviewStartPolicy;
 
     public List<Question> initInterview(MainCategory mainCategory, Long memberId) {
+        interviewStartPolicy.validate(memberId, mainCategory);
         List<Problem> rootProblems = problemRecommender.recommendRootProblems(memberId, mainCategory,
                 STARTING_PROBLEM_SIZE);
         if (rootProblems.isEmpty()) {

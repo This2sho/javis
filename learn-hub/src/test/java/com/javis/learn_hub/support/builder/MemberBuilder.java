@@ -1,12 +1,14 @@
 package com.javis.learn_hub.support.builder;
 
 import com.javis.learn_hub.member.domain.Member;
+import com.javis.learn_hub.member.domain.Role;
 import com.javis.learn_hub.support.domain.Provider;
 
 public class MemberBuilder {
 
     private Provider provider = Provider.KAKAO;
     private Long socialId = 0L;
+    private Role role = Role.USER;
 
     public static MemberBuilder builder() {
         return new MemberBuilder();
@@ -22,8 +24,12 @@ public class MemberBuilder {
         return this;
     }
 
+    public MemberBuilder withRole(Role role) {
+        this.role = role;
+        return this;
+    }
+
     public Member build() {
-        return new Member(provider, socialId);
+        return new Member(provider, socialId, role);
     }
 }
-
