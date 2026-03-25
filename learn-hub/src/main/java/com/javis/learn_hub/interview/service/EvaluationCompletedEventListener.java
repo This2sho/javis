@@ -12,11 +12,11 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 public class EvaluationCompletedEventListener {
 
-    private final NextQuestionService nextQuestionService;
+    private final InterviewFlowService interviewFlowService;
 
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void onEvaluationCompleted(EvaluationCompletedEvent event) {
         log.info("채점 완료 이벤트 수신: answerId={}, questionId={}", event.answerId(), event.questionId());
-        nextQuestionService.continueNextQuestion(event.questionId(), event.preferences());
+        interviewFlowService.continueNextQuestion(event.questionId(), event.preferences());
     }
 }

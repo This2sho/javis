@@ -60,31 +60,10 @@ public class InterviewReader {
     }
 
     public Question getCurrentQuestion(Interview interview) {
-        Optional<Question> pendingEvaluationQuestion = findPendingEvaluationQuestion(interview);
-        if (pendingEvaluationQuestion.isPresent()) {
-            return pendingEvaluationQuestion.get();
-        }
-
-        List<Question> unansweredQuestions = questionRepository.findAllByInterviewIdAndQuestionStatus(
-                Association.from(interview.getId()), QuestionStatus.UNANSWERED);
-
-        Optional<Question> followUpQuestion = unansweredQuestions.stream()
-                .filter(Question::isFollowUpQuestion)
-                .findAny();
-        if (followUpQuestion.isPresent()) {
-            return followUpQuestion.get();
-        }
-
-        Optional<Question> currentQuestion = unansweredQuestions.stream()
-                .filter(question -> question.getQuestionOrder() == interview.getCurrentQuestionOrder())
-                .findAny();
-        if (currentQuestion.isPresent()) {
-            return currentQuestion.get();
-        }
-        return questionRepository.findByInterviewIdAndParentQuestionIdAndQuestionOrder(
-                        Association.from(interview.getId()),
-                        Association.getEmpty(),
-                        interview.getCurrentQuestionOrder())
+        return findPendingEvaluationQuestion(interview)
+                .or(() -> findFollowUpQuestion(interview))
+                .or(() -> findCurrentRootQuestion(interview))
+                .or(() -> findAnsweredRootQuestionAtCurrentOrder(interview))
                 .orElseThrow(() -> new IllegalStateException("현재 인터뷰 상태가 잘못되었습니다."));
     }
 
@@ -99,5 +78,32 @@ public class InterviewReader {
                 .stream()
                 .filter(q -> answerReader.getByQuestionId(q.getId()).isPendingEvaluation())
                 .findFirst();
+    }
+
+    private Optional<Question> findFollowUpQuestion(Interview interview) {
+        return getUnansweredQuestions(interview).stream()
+                .filter(Question::isFollowUpQuestion)
+                .findAny();
+    }
+
+    private Optional<Question> findCurrentRootQuestion(Interview interview) {
+        return getUnansweredQuestions(interview).stream()
+                .filter(question -> question.getQuestionOrder() == interview.getCurrentQuestionOrder())
+                .findAny();
+    }
+
+    private Optional<Question> findAnsweredRootQuestionAtCurrentOrder(Interview interview) {
+        return questionRepository.findByInterviewIdAndParentQuestionIdAndQuestionOrder(
+                Association.from(interview.getId()),
+                Association.getEmpty(),
+                interview.getCurrentQuestionOrder()
+        );
+    }
+
+    private List<Question> getUnansweredQuestions(Interview interview) {
+        return questionRepository.findAllByInterviewIdAndQuestionStatus(
+                Association.from(interview.getId()),
+                QuestionStatus.UNANSWERED
+        );
     }
 }
