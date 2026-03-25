@@ -30,6 +30,10 @@ import lombok.NoArgsConstructor;
                 @Index(
                         name = "idx_interview_member_id_main_category_status",
                         columnList = "member_id, main_category, status"
+                ),
+                @Index(
+                        name = "idx_interview_member_id_main_category_created_at",
+                        columnList = "member_id, main_category, created_at"
                 )
         }
 )

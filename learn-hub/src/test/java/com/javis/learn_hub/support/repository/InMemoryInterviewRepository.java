@@ -60,4 +60,15 @@ public class InMemoryInterviewRepository extends InMemoryRepository<Interview> i
                 && i.getStatus().equals(interviewStatus)
         );
     }
+
+    @Override
+    public long countByMemberIdAndMainCategoryAndCreatedAtBetween(Association<Member> memberId,
+                                                                  MainCategory mainCategory,
+                                                                  LocalDateTime start,
+                                                                  LocalDateTime end) {
+        return findAll(i -> i.getMemberId().equals(memberId)
+                && i.getMainCategory().equals(mainCategory)
+                && !i.getCreatedAt().isBefore(start)
+                && i.getCreatedAt().isBefore(end)).size();
+    }
 }
