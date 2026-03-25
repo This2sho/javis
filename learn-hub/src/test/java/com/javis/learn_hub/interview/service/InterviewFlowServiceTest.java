@@ -1,25 +1,20 @@
 package com.javis.learn_hub.interview.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
-import com.javis.learn_hub.answer.domain.Answer;
-import com.javis.learn_hub.answer.domain.service.AnswerReader;
 import com.javis.learn_hub.category.domain.MainCategory;
-import com.javis.learn_hub.evaluation.domain.Evaluation;
-import com.javis.learn_hub.evaluation.domain.service.EvaluationReader;
 import com.javis.learn_hub.event.EvaluationRetryEvent;
 import com.javis.learn_hub.interview.domain.Interview;
 import com.javis.learn_hub.interview.domain.Question;
-import com.javis.learn_hub.interview.domain.QuestionStatus;
-import com.javis.learn_hub.interview.domain.service.InterviewFinder;
 import com.javis.learn_hub.interview.domain.service.InterviewProcessor;
-import com.javis.learn_hub.interview.domain.service.InterviewReader;
+import com.javis.learn_hub.interview.domain.service.InterviewStepFinder;
+import com.javis.learn_hub.interview.domain.service.QuestionFlowProcessor;
+import com.javis.learn_hub.interview.domain.service.dto.InterviewStepResult;
+import com.javis.learn_hub.interview.domain.service.dto.NextQuestionResult;
+import com.javis.learn_hub.interview.service.dto.InterviewerResponse;
 import com.javis.learn_hub.interview.service.dto.QuestionResponse;
 import com.javis.learn_hub.problem.domain.Difficulty;
 import com.javis.learn_hub.score.service.ScoreService;
@@ -39,7 +34,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @WithMockEventPublisher
 @SpringBootTest
-class InterviewCommandServiceTest {
+class InterviewFlowServiceTest {
 
     private final TestFixtureFactory fixtureFactory = new TestFixtureFactory();
 
@@ -47,19 +42,10 @@ class InterviewCommandServiceTest {
     private InterviewProcessor interviewProcessor;
 
     @MockitoBean
-    private InterviewReader interviewReader;
+    private InterviewStepFinder interviewStepFinder;
 
     @MockitoBean
-    private InterviewFinder interviewFinder;
-
-    @MockitoBean
-    private AnswerReader answerReader;
-
-    @MockitoBean
-    private EvaluationReader evaluationReader;
-
-    @MockitoBean
-    private NextQuestionService nextQuestionService;
+    private QuestionFlowProcessor questionFlowProcessor;
 
     @MockitoBean
     private ScoreService scoreService;
@@ -68,7 +54,7 @@ class InterviewCommandServiceTest {
     private ApplicationEventPublisher applicationEventPublisher;
 
     @Autowired
-    private InterviewCommandService interviewCommandService;
+    private InterviewFlowService interviewFlowService;
 
     @BeforeEach
     void resetMocks() {
@@ -79,16 +65,16 @@ class InterviewCommandServiceTest {
     @Test
     void testStart() {
         //given
-        given(interviewFinder.findActiveInterview(MainCategory.COMPUTER_SCIENCE, 1L)).willReturn(Optional.empty());
+        given(interviewStepFinder.findActiveInterview(MainCategory.COMPUTER_SCIENCE, 1L)).willReturn(Optional.empty());
         List<Question> rootQuestions = List.of(fixtureFactory.make(QuestionBuilder.builder().build()), fixtureFactory.make(QuestionBuilder.builder().build()),
                 fixtureFactory.make(QuestionBuilder.builder().build()));
         Question firstQuestion = rootQuestions.get(0);
-        given(interviewProcessor.initInterview(any(), any()))
+        given(interviewProcessor.initInterview(MainCategory.COMPUTER_SCIENCE, 1L))
                 .willReturn(rootQuestions);
         QuestionResponse expected = QuestionResponse.from(firstQuestion);
 
         //when
-        QuestionResponse actual = interviewCommandService.start(MainCategory.COMPUTER_SCIENCE.name(), 1L);
+        QuestionResponse actual = interviewFlowService.start(MainCategory.COMPUTER_SCIENCE.name(), 1L);
 
         //then
         assertThat(actual).isEqualTo(expected);
@@ -99,21 +85,14 @@ class InterviewCommandServiceTest {
     void testStartWhenAnsweredQuestionNeedsEvaluation() {
         // given
         Interview interview = fixtureFactory.make(InterviewBuilder.builder().build());
-        Question answeredQuestion = fixtureFactory.make(
-                QuestionBuilder.builder()
-                        .withInterviewId(interview.getId())
-                        .withQuestionStatus(QuestionStatus.ANSWERED)
-                        .buildRoot()
-        );
-        Answer failedAnswer = mock(Answer.class);
-        given(failedAnswer.needsEvaluation()).willReturn(true);
+        Question answeredQuestion = fixtureFactory.make(QuestionBuilder.builder().withInterviewId(interview.getId()).buildRoot());
+        InterviewStepResult step = InterviewStepResult.pendingEvaluation(answeredQuestion);
 
-        given(interviewFinder.findActiveInterview(MainCategory.COMPUTER_SCIENCE, 1L)).willReturn(Optional.of(interview));
-        given(interviewReader.getCurrentQuestion(interview)).willReturn(answeredQuestion);
-        given(answerReader.getByQuestionId(answeredQuestion.getId())).willReturn(failedAnswer);
+        given(interviewStepFinder.findActiveInterview(MainCategory.COMPUTER_SCIENCE, 1L)).willReturn(Optional.of(interview));
+        given(interviewStepFinder.find(interview)).willReturn(step);
 
         // when
-        QuestionResponse actual = interviewCommandService.start(MainCategory.COMPUTER_SCIENCE.name(), 1L);
+        QuestionResponse actual = interviewFlowService.start(MainCategory.COMPUTER_SCIENCE.name(), 1L);
 
         // then
         assertThat(actual).isEqualTo(QuestionResponse.pendingEvaluation(answeredQuestion));
@@ -128,40 +107,47 @@ class InterviewCommandServiceTest {
         Question answeredQuestion = fixtureFactory.make(
                 QuestionBuilder.builder()
                         .withInterviewId(interview.getId())
-                        .withQuestionStatus(QuestionStatus.ANSWERED)
                         .buildRoot()
         );
-        Answer scoredAnswer = mock(Answer.class);
-        Evaluation evaluation = mock(Evaluation.class);
-        given(scoredAnswer.needsEvaluation()).willReturn(false);
-        given(scoredAnswer.getId()).willReturn(10L);
-        given(evaluation.getPreferences()).willReturn(List.of(Difficulty.MEDIUM, Difficulty.HARD, Difficulty.EASY));
+        List<Difficulty> preferences = List.of(Difficulty.MEDIUM, Difficulty.HARD, Difficulty.EASY);
+        InterviewStepResult step = InterviewStepResult.waitingForNextQuestion(answeredQuestion, preferences);
+        Question nextQuestion = fixtureFactory.make(QuestionBuilder.builder().withInterviewId(interview.getId()).buildRoot());
+        NextQuestionResult nextQuestionResult = NextQuestionResult.withNextQuestion(interview, nextQuestion);
 
-        given(interviewFinder.findActiveInterview(MainCategory.COMPUTER_SCIENCE, 1L)).willReturn(Optional.of(interview));
-        given(interviewReader.getCurrentQuestion(interview)).willReturn(answeredQuestion);
-        given(answerReader.getByQuestionId(answeredQuestion.getId())).willReturn(scoredAnswer);
-        given(evaluationReader.getByAnswerId(scoredAnswer.getId())).willReturn(evaluation);
+        given(interviewStepFinder.findActiveInterview(MainCategory.COMPUTER_SCIENCE, 1L)).willReturn(Optional.of(interview));
+        given(interviewStepFinder.find(interview)).willReturn(step);
+        given(questionFlowProcessor.continueNextQuestion(answeredQuestion.getId(), preferences)).willReturn(nextQuestionResult);
 
         // when
-        QuestionResponse actual = interviewCommandService.start(MainCategory.COMPUTER_SCIENCE.name(), 1L);
+        QuestionResponse actual = interviewFlowService.start(MainCategory.COMPUTER_SCIENCE.name(), 1L);
 
         // then
         assertThat(actual).isEqualTo(QuestionResponse.waitingForNextQuestion(answeredQuestion));
-        verify(nextQuestionService).continueNextQuestion(eq(answeredQuestion.getId()), any());
+        verify(questionFlowProcessor).continueNextQuestion(answeredQuestion.getId(), preferences);
     }
 
-    @DisplayName("[꼬리 질문이 있는 경우] 다음 문제로 꼬리 질문으로 인터뷰를 진행한다.")
+    @DisplayName("[꼬리 질문이 있는 경우] 다음 문제 진행 요청은 QuestionFlowProcessor에 위임하고 이벤트를 발행한다.")
     @Test
     void testContinueNextQuestion() {
         //given
         List<Difficulty> preferences = List.of(Difficulty.EASY, Difficulty.MEDIUM, Difficulty.HARD);
         Long questionId = 1L;
+        Interview interview = fixtureFactory.make(InterviewBuilder.builder().build());
+        Question nextQuestion = fixtureFactory.make(QuestionBuilder.builder().withInterviewId(interview.getId()).buildRoot());
+        NextQuestionResult result = NextQuestionResult.withNextQuestion(interview, nextQuestion);
+        given(questionFlowProcessor.continueNextQuestion(questionId, preferences)).willReturn(result);
 
         //when
-        interviewCommandService.continueNextQuestion(questionId, preferences);
+        interviewFlowService.continueNextQuestion(questionId, preferences);
 
         //then
-        verify(nextQuestionService).continueNextQuestion(questionId, preferences);
+        verify(questionFlowProcessor).continueNextQuestion(questionId, preferences);
+        verify(applicationEventPublisher).publishEvent(
+                new com.javis.learn_hub.event.NextQuestionReadyEvent(
+                        interview.getMemberId().getId(),
+                        InterviewerResponse.nextQuestion(interview.getId(), nextQuestion.getId(), nextQuestion.getMessage())
+                )
+        );
     }
 
     @DisplayName("[꼬리 질문이 없는 경우] 다음 시작 질문으로 인터뷰를 진행한다.")
@@ -170,26 +156,30 @@ class InterviewCommandServiceTest {
         //given
         List<Difficulty> preferences = List.of(Difficulty.EASY, Difficulty.MEDIUM, Difficulty.HARD);
         Long questionId = 2L;
+        Interview interview = fixtureFactory.make(InterviewBuilder.builder().build());
+        NextQuestionResult result = NextQuestionResult.finished(interview);
+        given(questionFlowProcessor.continueNextQuestion(questionId, preferences)).willReturn(result);
+        given(interviewProcessor.finish(interview)).willReturn(new com.javis.learn_hub.event.InterviewFinishEvent(interview.getId(), interview.getMemberId().getId()));
 
         //when
-        interviewCommandService.continueNextQuestion(questionId, preferences);
+        interviewFlowService.continueNextQuestion(questionId, preferences);
 
         //then
-        verify(nextQuestionService).continueNextQuestion(questionId, preferences);
+        verify(questionFlowProcessor).continueNextQuestion(questionId, preferences);
+        verify(interviewProcessor).finish(interview);
     }
 
-    @DisplayName("다음 질문 진행 요청은 NextQuestionService에 위임한다.")
+    @DisplayName("답변 생성 이벤트 후 질문을 answered 상태로 변경한다.")
     @Test
-    void testContinueNextQuestion3() {
+    void testMarkQuestionAnswered() {
         //given
-        List<Difficulty> preferences = List.of(Difficulty.EASY, Difficulty.MEDIUM, Difficulty.HARD);
         Long questionId = 3L;
 
         //when
-        interviewCommandService.continueNextQuestion(questionId, preferences);
+        interviewFlowService.markQuestionAnswered(questionId);
 
         //then
-        verify(nextQuestionService).continueNextQuestion(questionId, preferences);
+        verify(questionFlowProcessor).markQuestionAnswered(questionId);
     }
 
 }
