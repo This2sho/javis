@@ -41,6 +41,41 @@
 문제는 개인 학습용(PRIVATE)과 서비스 공용(PUBLIC)으로 구분됩니다.
 
 ### 3. 인터뷰 & 채점
+인터뷰 플로우
+```mermaid
+flowchart TD
+    Start([인터뷰 시작]) --> Branch{기존 인터뷰\n존재 여부}
+
+    %% ── 기존 인터뷰 ──────────────────────────────
+    Branch -->|기존 인터뷰| FindQ[현재 질문 조회\n꼬리 질문 => 루트 질문 순]
+    FindQ --> HasAnswer{현재 질문에\n답변 여부}
+
+    HasAnswer -->|답변 없음| ReturnQ[현재 질문 재제공]
+    ReturnQ --> UserAnswer
+
+    HasAnswer -->|답변 있음| HasEval{채점 완료\n여부}
+
+    HasEval -->|채점 미완료| Evaluate[채점 진행]
+    Evaluate --> NextQ
+
+    HasEval -->|채점 완료| NextQ[다음 질문 제공]
+    NextQ --> UserAnswer[사용자 답변 입력]
+
+    %% ── 새 인터뷰 ────────────────────────────────
+    Branch -->|새 인터뷰| Recommend[카테고리 기반\n추천 질문 생성]
+    Recommend --> FirstQ[첫 번째 루트 질문 반환]
+    FirstQ --> UserAnswer
+
+    %% ── 공통 답변 처리 ───────────────────────────
+    UserAnswer --> Score[답변 채점]
+    Score --> ScoreResult{채점 결과}
+
+    ScoreResult -->|높은 점수\nGOOD / PERFECT| FollowUp[꼬리 질문 생성]
+    ScoreResult -->|낮은 점수\nVAGUE / INCORRECT| NextRoot[다음 루트 질문 생성]
+
+    NextRoot --> UserAnswer
+    FollowUp --> UserAnswer
+```
 
 사용자는 학습한 내용을 인터뷰 형식으로 진행할 수 있습니다.
 
