@@ -54,4 +54,11 @@ public interface InterviewRepository extends Repository<Interview, Long> {
             MainCategory mainCategory,
             InterviewStatus interviewStatus
     );
+
+    long countByMemberIdAndMainCategoryAndCreatedAtBetween(
+            Association<Member> memberId,
+            MainCategory mainCategory,
+            LocalDateTime start,
+            LocalDateTime end
+    );
 }

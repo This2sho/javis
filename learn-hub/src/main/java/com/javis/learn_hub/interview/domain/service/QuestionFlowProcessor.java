@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class QuestionFlowProcessor {
 
+    static final int MAX_DEPTH = 5;
+
     private final QuestionRepository questionRepository;
     private final InterviewReader interviewReader;
     private final ProblemRecommender problemRecommender;
@@ -54,11 +56,18 @@ public class QuestionFlowProcessor {
     }
 
     private Optional<Question> proceedToFollowUpQuestion(Question previousQuestion, List<Difficulty> preferences) {
+        if (canNotCreateFollowUpQuestion(previousQuestion)) {
+            return Optional.empty();
+        }
         List<Association<Problem>> answeredProblemIds = interviewReader.getAllAnsweredProblemIds(
                 previousQuestion.getInterviewId());
         return problemRecommender
                 .recommendNextProblem(previousQuestion.getProblemId(), answeredProblemIds, preferences)
                 .map(problem -> createFollowUpQuestion(previousQuestion, problem));
+    }
+
+    private boolean canNotCreateFollowUpQuestion(Question previousQuestion) {
+        return previousQuestion.getDepth() >= MAX_DEPTH;
     }
 
     private Question createFollowUpQuestion(Question previousQuestion, Problem problem) {

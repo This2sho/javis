@@ -1,6 +1,7 @@
 package com.javis.learn_hub.interview.domain.service;
 
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.javis.learn_hub.answer.domain.service.AnswerReader;
 import com.javis.learn_hub.category.domain.service.CategoryReader;
@@ -113,5 +114,39 @@ class QuestionFlowProcessorTest {
             softly.assertThat(result.hasNextQuestion()).isFalse();
             softly.assertThat(interview.isFinished()).isFalse();
         });
+    }
+
+    @DisplayName("[꼬리 질문 depth가 최대치인 경우] 더 이상 꼬리 질문을 만들지 않고 다음 루트 질문으로 진행한다.")
+    @Test
+    void testContinueNextQuestionWhenFollowUpDepthReachedLimit() {
+        Interview interview = fixtureFactory.make(InterviewBuilder.builder().withTotalQuestions(2).build());
+
+        Problem firstProblem = fixtureFactory.make(ProblemBuilder.builder().build());
+        Question previousQuestion = fixtureFactory.make(
+                QuestionBuilder.builder()
+                        .withInterviewId(interview.getId())
+                        .withProblemId(firstProblem.getId())
+                        .withParentQuestionId(999L)
+                        .withDepth(QuestionFlowProcessor.MAX_DEPTH)
+                        .buildFollowUp()
+        );
+        fixtureFactory.make(
+                ProblemBuilder.builder().withParentProblemId(firstProblem.getId()).build()
+        );
+        Question nextRootQuestion = fixtureFactory.make(
+                QuestionBuilder.builder().withInterviewId(interview.getId()).withQuestionOrder(1).buildRoot()
+        );
+
+        List<Difficulty> preferences = List.of(Difficulty.EASY, Difficulty.MEDIUM, Difficulty.HARD);
+
+        NextQuestionResult result = questionFlowProcessor.continueNextQuestion(previousQuestion.getId(), preferences);
+
+        assertSoftly(softly -> {
+            softly.assertThat(result.hasNextQuestion()).isTrue();
+            softly.assertThat(result.nextQuestion().orElseThrow()).isEqualTo(nextRootQuestion);
+        });
+        assertThat(interviewReader.getAllQuestions(Association.from(interview.getId())).stream()
+                .filter(Question::isFollowUpQuestion)
+                .count()).isEqualTo(1);
     }
 }
