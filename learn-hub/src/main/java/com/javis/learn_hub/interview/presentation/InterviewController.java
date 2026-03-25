@@ -1,6 +1,6 @@
 package com.javis.learn_hub.interview.presentation;
 
-import com.javis.learn_hub.interview.service.InterviewCommandService;
+import com.javis.learn_hub.interview.service.InterviewFlowService;
 import com.javis.learn_hub.interview.service.dto.QuestionResponse;
 import com.javis.learn_hub.support.domain.Authenticated;
 import com.javis.learn_hub.support.domain.MemberId;
@@ -16,14 +16,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class InterviewController {
 
-    private final InterviewCommandService interviewCommandService;
+    private final InterviewFlowService interviewFlowService;
 
     @PostMapping("/interviews/start/{mainCategory}")
     public ResponseEntity<QuestionResponse> startInterview(
             @PathVariable String mainCategory,
             @Authenticated MemberId memberId
     ) {
-        QuestionResponse questionResponse = interviewCommandService.start(mainCategory, memberId.getId());
+        QuestionResponse questionResponse = interviewFlowService.start(mainCategory, memberId.getId());
         return ResponseEntity.ok(questionResponse);
     }
 }

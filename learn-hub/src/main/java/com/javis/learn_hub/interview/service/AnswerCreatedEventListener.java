@@ -12,11 +12,11 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 public class AnswerCreatedEventListener {
 
-    private final InterviewCommandService interviewCommandService;
+    private final InterviewFlowService interviewFlowService;
 
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void onAnswerCreated(AnswerCreatedEvent event) {
         log.info("답변 생성 이벤트 수신: questionId={}", event.questionId());
-        interviewCommandService.markQuestionAnswered(event.questionId());
+        interviewFlowService.markQuestionAnswered(event.questionId());
     }
 }
