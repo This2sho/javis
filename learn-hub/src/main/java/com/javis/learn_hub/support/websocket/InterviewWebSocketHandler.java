@@ -25,7 +25,7 @@ public class InterviewWebSocketHandler extends TextWebSocketHandler {
         Long memberId = extractMemberId(session);
         if (memberId != null) {
             sessionManager.addSession(memberId, session);
-            log.info("WebSocket 연결: memberId={}", memberId);
+            log.debug("WebSocket 연결: memberId={}", memberId);
         }
     }
 
@@ -34,7 +34,7 @@ public class InterviewWebSocketHandler extends TextWebSocketHandler {
         Long memberId = extractMemberId(session);
         if (memberId != null) {
             sessionManager.removeSession(memberId);
-            log.info("WebSocket 종료: memberId={}", memberId);
+            log.debug("WebSocket 종료: memberId={}", memberId);
         }
     }
 
@@ -52,7 +52,7 @@ public class InterviewWebSocketHandler extends TextWebSocketHandler {
                 response.interviewerMessage()
         );
         sendMessage(memberId, message);
-        log.info("인터뷰어 메시지 WebSocket 전송: memberId={}, ended={}", memberId, response.ended());
+        log.debug("인터뷰어 메시지 WebSocket 전송: memberId={}, ended={}", memberId, response.ended());
     }
 
     private void sendMessage(Long memberId, InterviewProgressMessage message) {

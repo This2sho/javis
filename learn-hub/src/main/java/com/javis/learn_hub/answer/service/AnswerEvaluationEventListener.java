@@ -24,7 +24,7 @@ public class AnswerEvaluationEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void onEvaluationCompleted(EvaluationCompletedEvent event) {
-        log.info("채점 완료 이벤트 수신, 답변 완료 처리: answerId={}", event.answerId());
+        log.debug("채점 완료 이벤트 수신, 답변 완료 처리: answerId={}", event.answerId());
         answerCommandService.successEvaluation(event.answerId());
     }
 }

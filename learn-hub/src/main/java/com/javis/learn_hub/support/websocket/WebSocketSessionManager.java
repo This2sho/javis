@@ -17,13 +17,13 @@ public class WebSocketSessionManager {
 
     public void addSession(Long memberId, WebSocketSession session) {
         sessions.put(memberId, session);
-        log.info("WebSocket 세션 등록: memberId={}, sessionId={}", memberId, session.getId());
+        log.debug("WebSocket 세션 등록: memberId={}, sessionId={}", memberId, session.getId());
     }
 
     public void removeSession(Long memberId) {
         WebSocketSession removed = sessions.remove(memberId);
         if (removed != null) {
-            log.info("WebSocket 세션 제거: memberId={}", memberId);
+            log.debug("WebSocket 세션 제거: memberId={}", memberId);
         }
     }
 
@@ -37,7 +37,7 @@ public class WebSocketSessionManager {
             Long memberId = entry.getKey();
             WebSocketSession session = entry.getValue();
             if (!session.isOpen()) {
-                log.info("닫힌 세션 제거: memberId={}", memberId);
+                log.debug("닫힌 세션 제거: memberId={}", memberId);
                 return true;
             }
             try {
