@@ -111,6 +111,36 @@ services:
     volumes:
       - ./logs:/logs
 
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: prometheus
+    profiles: ["test"]
+    networks:
+      - javis-net
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    restart: on-failure
+
+  grafana:
+    image: grafana/grafana:11.1.5
+    container_name: grafana
+    profiles: ["test"]
+    networks:
+      - javis-net
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana-volume:/var/lib/grafana
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    restart: on-failure
+
 networks:
   javis-net:
     name: javis-net
@@ -119,3 +149,4 @@ networks:
 volumes:
   mysql-prod-volume:
   mysql-test-volume:
+  grafana-volume:
