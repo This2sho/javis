@@ -16,7 +16,7 @@ public class AnswerCreatedEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void onAnswerCreated(AnswerCreatedEvent event) {
-        log.info("답변 생성 이벤트 수신: questionId={}", event.questionId());
+        log.debug("답변 생성 이벤트 수신: questionId={}", event.questionId());
         interviewFlowService.markQuestionAnswered(event.questionId());
     }
 }

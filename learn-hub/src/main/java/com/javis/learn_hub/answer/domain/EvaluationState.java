@@ -17,4 +17,9 @@ public enum EvaluationState {
         if (this == SCORING) return FAILED;
         throw new IllegalStateException(this + " 상태에서는 실패 처리가 불가합니다.");
     }
+
+    public EvaluationState requeue() {
+        if (this == SCORING) return PENDING;
+        throw new IllegalStateException(this + " 상태에서는 재대기 처리가 불가합니다.");
+    }
 }
