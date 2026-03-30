@@ -4,6 +4,7 @@ import com.javis.learn_hub.answer.domain.Answer;
 import com.javis.learn_hub.answer.domain.EvaluationState;
 import com.javis.learn_hub.answer.domain.repository.AnswerRepository;
 import com.javis.learn_hub.event.AnswerCreatedEvent;
+import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -21,8 +22,9 @@ public class AnswerProcessor {
         return new AnswerCreatedEvent(answer.getId(), questionId);
     }
 
-    public Answer prepareScoring(Long questionId) {
-        Answer answer = answerReader.getByQuestionId(questionId);
+    @Transactional
+    public Answer prepareScoring(Long answerId) {
+        Answer answer = answerReader.get(answerId);
         answer.toScoring();
         answerRepository.save(answer);
         return answer;
@@ -37,6 +39,12 @@ public class AnswerProcessor {
     public void fail(Long answerId) {
         Answer answer = answerReader.get(answerId);
         answer.fail();
+        answerRepository.save(answer);
+    }
+
+    public void requeue(Long answerId) {
+        Answer answer = answerReader.get(answerId);
+        answer.requeue();
         answerRepository.save(answer);
     }
 

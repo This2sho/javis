@@ -3,6 +3,7 @@ package com.javis.learn_hub.evaluation.application;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
@@ -10,10 +11,10 @@ import static org.mockito.Mockito.verify;
 
 import com.javis.learn_hub.answer.domain.service.AnswerProcessor;
 import com.javis.learn_hub.answer.service.AnswerCommandService;
+import com.javis.learn_hub.evaluation.domain.repository.EvaluationRepository;
 import com.javis.learn_hub.evaluation.infrastructure.AnswerEvaluator;
 import com.javis.learn_hub.evaluation.infrastructure.dto.EvaluationResponse;
 import com.javis.learn_hub.event.AnswerCreatedEvent;
-import com.javis.learn_hub.event.EvaluationRetryEvent;
 import com.javis.learn_hub.interview.domain.Interview;
 import com.javis.learn_hub.interview.domain.Question;
 import com.javis.learn_hub.interview.domain.repository.InterviewRepository;
@@ -24,6 +25,7 @@ import com.javis.learn_hub.support.config.WithMockEventPublisher;
 import com.javis.learn_hub.support.builder.InterviewBuilder;
 import com.javis.learn_hub.support.domain.Association;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -46,7 +48,7 @@ class EvaluationServiceConcurrencyTest {
     private EvaluationService evaluationService;
 
     @Autowired
-    private EvaluationEventListener evaluationEventListener;
+    private EvaluationQueuePoller evaluationQueuePoller;
 
     @Autowired
     private AnswerProcessor answerProcessor;
@@ -56,6 +58,9 @@ class EvaluationServiceConcurrencyTest {
 
     @Autowired
     private QuestionRepository questionRepository;
+
+    @Autowired
+    private EvaluationRepository evaluationRepository;
 
     @MockitoBean
     private AnswerEvaluator answerEvaluator;
@@ -70,7 +75,7 @@ class EvaluationServiceConcurrencyTest {
         Long questionId = createQuestion().getId();
 
         AnswerCreatedEvent createdEvent = answerProcessor.create(questionId, "테스트 답변");
-        answerProcessor.prepareScoring(createdEvent.questionId()); // PENDING → SCORING
+        answerProcessor.prepareScoring(createdEvent.answerId()); // PENDING → SCORING
         answerProcessor.fail(createdEvent.answerId());           // SCORING → FAILED
 
         ProblemScoringInfo mockScoringInfo = Mockito.mock(ProblemScoringInfo.class);
@@ -89,7 +94,7 @@ class EvaluationServiceConcurrencyTest {
             executor.submit(() -> {
                 try {
                     startLatch.await();
-                    answerCommandService.prepareScoring(questionId)
+                    answerCommandService.prepareScoring(createdEvent.answerId())
                             .ifPresent(answer -> evaluationService.evaluate(answer, questionId));
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -122,7 +127,7 @@ class EvaluationServiceConcurrencyTest {
                 .willReturn(new EvaluationResponse("판단 근거", "GOOD", "잘 답변했습니다."));
 
         // when
-        runConcurrently(5, () -> evaluationEventListener.onAnswerCreated(createdEvent));
+        runConcurrently(5, evaluationQueuePoller::pollEvaluationQueue);
 
         // then
         verify(answerEvaluator, timeout(5000).times(1)).evaluate(anyString(),anyString(), anyString());
@@ -135,7 +140,7 @@ class EvaluationServiceConcurrencyTest {
         Long questionId = createQuestion().getId();
 
         AnswerCreatedEvent createdEvent = answerProcessor.create(questionId, "테스트 답변");
-        answerProcessor.prepareScoring(createdEvent.questionId());
+        answerProcessor.prepareScoring(createdEvent.answerId());
         answerProcessor.fail(createdEvent.answerId());
 
         ProblemScoringInfo mockScoringInfo = Mockito.mock(ProblemScoringInfo.class);
@@ -144,16 +149,47 @@ class EvaluationServiceConcurrencyTest {
         given(answerEvaluator.evaluate(anyString(),anyString(), anyString()))
                 .willReturn(new EvaluationResponse("판단 근거", "GOOD", "잘 답변했습니다."));
 
-        EvaluationRetryEvent retryEvent = new EvaluationRetryEvent(questionId);
-
         // when
-        runConcurrently(5, () -> evaluationEventListener.onEvaluationRetry(retryEvent));
+        runConcurrently(5, evaluationQueuePoller::pollEvaluationQueue);
 
         // then
         verify(answerEvaluator, timeout(5000).times(1)).evaluate(anyString(),anyString(), anyString());
     }
 
+    @DisplayName("동시에 여러 번 채점 완료 처리가 들어와도 완료 이벤트와 평가 결과는 하나만 생성된다")
+    @Test
+    void completeEvaluation_whenConcurrentRequests_completesOnlyOnce() throws InterruptedException {
+        // given
+        Long questionId = createQuestion().getId();
+        AnswerCreatedEvent createdEvent = answerProcessor.create(questionId, "테스트 답변");
+        answerProcessor.prepareScoring(createdEvent.answerId());
+
+        EvaluationResponse result = new EvaluationResponse("판단 근거", "GOOD", "잘 답변했습니다.");
+        AtomicInteger successCount = new AtomicInteger();
+
+        // when
+        List<Throwable> errors = runConcurrentlyCollectErrors(
+                5,
+                () -> {
+                    evaluationService.completeEvaluation(createdEvent.answerId(), questionId, result);
+                    successCount.incrementAndGet();
+                }
+        );
+
+        // then
+        assertThat(evaluationRepository.findByAnswerId(Association.from(createdEvent.answerId()))).isPresent();
+        assertThat(successCount.get()).isEqualTo(1);
+        assertThat(errors).hasSize(4);
+    }
+
     private void runConcurrently(int threadCount, ThrowingRunnable action) throws InterruptedException {
+        List<Throwable> errors = runConcurrentlyCollectErrors(threadCount, action);
+        if (!errors.isEmpty()) {
+            throw new AssertionError("동시 실행 중 예외 발생", errors.get(0));
+        }
+    }
+
+    private List<Throwable> runConcurrentlyCollectErrors(int threadCount, ThrowingRunnable action) throws InterruptedException {
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch doneLatch = new CountDownLatch(threadCount);
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
@@ -178,9 +214,7 @@ class EvaluationServiceConcurrencyTest {
         doneLatch.await();
         executor.shutdown();
 
-        if (!errors.isEmpty()) {
-            throw new AssertionError("동시 실행 중 예외 발생", errors.get(0));
-        }
+        return errors;
     }
 
     private Question createQuestion() {
