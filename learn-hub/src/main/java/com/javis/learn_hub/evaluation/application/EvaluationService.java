@@ -36,6 +36,6 @@ public class EvaluationService {
     public void completeEvaluation(Long answerId, Long questionId, EvaluationResponse result) {
         EvaluationCompletedEvent completedEvent = evaluationProcessor.complete(answerId, questionId, result);
         eventPublisher.publishEvent(completedEvent);
-        log.info("채점 완료: answerId={}, grade={}", answerId, result.grade());
+        log.debug("채점 완료: answerId={}, grade={}", answerId, result.grade());
     }
 }

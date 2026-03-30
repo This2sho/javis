@@ -29,13 +29,12 @@ public class AnswerCommandService {
         return AnswerSubmitResponse.accepted(event.answerId());
     }
 
-    @Transactional
-    public Optional<Answer> prepareScoring(Long questionId) {
+    public Optional<Answer> prepareScoring(Long answerId) {
         try {
-            Answer answer = answerProcessor.prepareScoring(questionId);
+            Answer answer = answerProcessor.prepareScoring(answerId);
             return Optional.of(answer);
         } catch (IllegalStateException | ObjectOptimisticLockingFailureException e) {
-            log.info("이미 채점 진행 중, 중복 요청 무시: questionId={}", questionId);
+            log.info("이미 채점 진행 중, 중복 요청 무시: answerId={}", answerId);
             return Optional.empty();
         }
     }
@@ -43,6 +42,11 @@ public class AnswerCommandService {
     @Transactional
     public void failEvaluation(Long answerId) {
         answerProcessor.fail(answerId);
+    }
+
+    @Transactional
+    public void requeueEvaluation(Long answerId) {
+        answerProcessor.requeue(answerId);
     }
 
     @Transactional

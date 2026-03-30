@@ -8,6 +8,7 @@ import com.javis.learn_hub.support.domain.Association;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 
 public class InMemoryAnswerRepository extends InMemoryRepository<Answer> implements AnswerRepository {
 
@@ -19,6 +20,14 @@ public class InMemoryAnswerRepository extends InMemoryRepository<Answer> impleme
     @Override
     public Optional<Answer> findByQuestionId(Association<Question> questionId) {
         return findOne(answer -> answer.getQuestionId().equals(questionId));
+    }
+
+    @Override
+    public List<Answer> findByEvaluationStateInOrderByCreatedAtAsc(List<EvaluationState> evaluationStates, Pageable pageable) {
+        return findAll(answer -> evaluationStates.contains(answer.getEvaluationState())).stream()
+                .sorted((left, right) -> left.getCreatedAt().compareTo(right.getCreatedAt()))
+                .limit(pageable.getPageSize())
+                .toList();
     }
 
     @Override

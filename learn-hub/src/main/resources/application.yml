@@ -41,3 +41,12 @@ logging:
     com.javis.learn_hub: INFO
   pattern:
     console: "[%X{reqId}] %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: never

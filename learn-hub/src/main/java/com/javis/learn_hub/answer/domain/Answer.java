@@ -71,6 +71,10 @@ public class Answer extends BaseEntity {
         this.evaluationState = this.evaluationState.fail();
     }
 
+    public void requeue() {
+        this.evaluationState = this.evaluationState.requeue();
+    }
+
     public boolean needsEvaluation() {
         return this.evaluationState == EvaluationState.PENDING
             || this.evaluationState == EvaluationState.FAILED;

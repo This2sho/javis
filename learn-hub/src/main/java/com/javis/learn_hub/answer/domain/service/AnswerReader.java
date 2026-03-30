@@ -1,11 +1,13 @@
 package com.javis.learn_hub.answer.domain.service;
 
 import com.javis.learn_hub.answer.domain.Answer;
+import com.javis.learn_hub.answer.domain.EvaluationState;
 import com.javis.learn_hub.answer.domain.repository.AnswerRepository;
 import com.javis.learn_hub.interview.domain.Question;
 import com.javis.learn_hub.support.domain.Association;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
@@ -26,5 +28,15 @@ public class AnswerReader {
     public Answer getByQuestionId(Long questionId) {
         return answerRepository.findByQuestionId(Association.from(questionId))
                 .orElseThrow(() -> new IllegalArgumentException("해당 질문에 대한 답변이 존재하지 않습니다: " + questionId));
+    }
+
+    public List<Answer> getQueuedForEvaluation(int limit) {
+        if (limit <= 0) {
+            return List.of();
+        }
+        return answerRepository.findByEvaluationStateInOrderByCreatedAtAsc(
+                List.of(EvaluationState.PENDING, EvaluationState.FAILED),
+                PageRequest.of(0, limit)
+        );
     }
 }
