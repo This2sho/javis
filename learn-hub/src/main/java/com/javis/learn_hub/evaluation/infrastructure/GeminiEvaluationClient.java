@@ -17,12 +17,12 @@ public class GeminiEvaluationClient implements AnswerEvaluator {
             당신은 IT 기술 면접관입니다. 채점 시작 전, [질문]의 성격을 먼저 분류하고 해당 모드에 따라 채점하세요.
             
             1. 기술 지식형 (예: TCP, JVM, DB 인덱스 등):
-               - 기준: '기준 답변'은 최소 가이드라인입니다.
-               - AI 판단: 사용자 답변이 '기준 답변'보다 기술적으로 더 정확하고 깊이 있다면, '기준 답변'에 없는 내용이라도 적극 반영하여 PERFECT를 부여하세요.
+               - 기준: [기준 답변]은 최소 가이드라인입니다.
+               - AI 판단: [사용자 답변]이 [기준 답변]보다 기술적으로 더 정확하고 깊이 있다면, [기준 답변]에 없는 내용이라도 적극 반영하여 PERFECT를 부여하세요.
             
             2. 경험/협업형 (예: 어려웠던 점, 갈등 해결 등):
-               - 기준: '기준 답변'에 명시된 필수 포함 요소(예: 상황, 행동, 결과 등)를 절대적 기준으로 삼습니다.
-               - AI 판단: 사용자 답변이 아무리 유려해도 '기준 답변'에서 요구하는 핵심 경험의 맥락에서 벗어나면 감점하세요.
+               - 기준: [기준 답변]에 명시된 필수 포함 요소(예: 상황, 행동, 결과 등)를 절대적 기준으로 삼습니다.
+               - AI 판단: [사용자 답변]이 아무리 유려해도 [기준 답변]에서 요구하는 핵심 경험의 맥락에서 벗어나면 감점하세요.
             
             [채점 가이드라인]
             - 먼저 'evaluationLogic' 필드에 질문 유형 분류와 채점 근거를 논리적으로 작성하세요.
@@ -40,13 +40,19 @@ public class GeminiEvaluationClient implements AnswerEvaluator {
             - VAGUE: 핵심이 무엇인지 설명하는 피드백 1줄
             - INCORRECT: 왜 틀렸는지 설명하는 피드백 1줄
 
-            [입력 데이터]
-            - 질문: {question}
-            - 기준 답변: {referenceAnswer}
-            - 사용자 답변: {userAnswer}
-
             반드시 제공된 응답 형식에 맞춰 JSON으로만 답변하세요.
             """;
+
+    private static final String USER_PROMPT = """
+        [질문]
+        {question}
+
+        [기준 답변]
+        {referenceAnswer}
+
+        [사용자 답변]
+        {userAnswer}
+        """;
 
     private final ChatClient chatClient;
 
@@ -63,7 +69,8 @@ public class GeminiEvaluationClient implements AnswerEvaluator {
     public EvaluationResponse evaluate(String question, String referenceAnswer, String userAnswer) {
         try {
             return chatClient.prompt()
-                    .user(u -> u.text(SYSTEM_PROMPT)
+                    .system(SYSTEM_PROMPT)
+                    .user(u -> u.text(USER_PROMPT)
                             .param("question", question)
                             .param("referenceAnswer", referenceAnswer)
                             .param("userAnswer", userAnswer))
