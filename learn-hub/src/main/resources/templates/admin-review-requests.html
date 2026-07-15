@@ -1,20 +1,21 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
     <meta charset="UTF-8">
-    <title>리뷰 요청 목록</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{admin.review.requests.title}">Review Requests</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
 <header>
-    <h1>리뷰 요청 목록</h1>
+    <h1 th:text="#{admin.review.requests.title}">Review Requests</h1>
 
     <div style="margin-top:12px;">
         <select id="status-select">
-            <option value="PENDING_REVIEW" selected>대기중</option>
-            <option value="APPROVED">승인됨</option>
-            <option value="REJECTED">거절됨</option>
+            <option value="PENDING_REVIEW" selected th:text="#{review.status.PENDING_REVIEW}">Pending</option>
+            <option value="APPROVED" th:text="#{review.status.APPROVED}">Approved</option>
+            <option value="REJECTED" th:text="#{review.status.REJECTED}">Rejected</option>
         </select>
     </div>
 </header>
@@ -24,7 +25,16 @@
 </main>
 
 <script src="/js/cursor-paging.js"></script>
-<script>
+<script th:inline="javascript">
+    const messages = {
+        loadFailed: /*[[#{admin.review.requests.load.failed}]]*/ "Unable to load review requests.",
+        empty: /*[[#{admin.review.requests.empty}]]*/ "No review requests."
+    };
+    const reviewStatusLabels = {
+        PENDING_REVIEW: /*[[#{review.status.PENDING_REVIEW}]]*/ "Pending",
+        APPROVED: /*[[#{review.status.APPROVED}]]*/ "Approved",
+        REJECTED: /*[[#{review.status.REJECTED}]]*/ "Rejected"
+    };
 
     const list = document.getElementById("review-list");
 
@@ -67,7 +77,7 @@
 
         } catch (e) {
             console.error(e);
-            alert("리뷰 요청 목록을 불러오지 못했습니다.");
+            alert(messages.loadFailed);
         }
     }
 
@@ -76,10 +86,9 @@
     =============================== */
     function renderReviews(reviews) {
         if (!reviews || reviews.length === 0) {
-            // 최초 로딩인데 아무것도 없을 때만 메시지
             if (list.children.length === 0) {
                 list.innerHTML =
-                    `<p style="text-align:center;">리뷰 요청이 없습니다.</p>`;
+                    `<p style="text-align:center;">${messages.empty}</p>`;
             }
             return;
         }
@@ -98,7 +107,7 @@
                     ${r.rootProblem}
                 </div>
                 <div class="problem-meta">
-                    <span class="tag review-status">${r.registrationStatus}</span>
+                    <span class="tag review-status">${reviewStatusLabels[r.registrationStatus] || r.registrationStatus}</span>
                 </div>
             `;
 
@@ -118,9 +127,6 @@
         }
     });
 
-    /* ===============================
-       최초 로딩
-    =============================== */
     loadReviews();
 </script>
 

@@ -1,14 +1,23 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
     <meta charset="UTF-8">
-    <title>로그인</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{login.title}">Login</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<h2>로그인 페이지</h2>
+<main class="login-shell">
+    <section class="login-card">
+        <h2 th:text="#{login.heading}">Login</h2>
 
-<a id="kakao-login-btn" href="/kakao/sign-in">
-    <img src="https://k.kakaocdn.net/14/dn/btroDszwNrM/I6efHub1SN5KCJqLm1Ovx1/o.jpg" width="222" alt="카카오 로그인 버튼" />
-</a>
+        <a id="kakao-login-btn" href="/kakao/sign-in">
+            <img src="https://k.kakaocdn.net/14/dn/btroDszwNrM/I6efHub1SN5KCJqLm1Ovx1/o.jpg"
+                 width="222"
+                 th:alt="#{login.kakao.alt}"
+                 alt="Kakao login button" />
+        </a>
+    </section>
+</main>
 </body>
 </html>

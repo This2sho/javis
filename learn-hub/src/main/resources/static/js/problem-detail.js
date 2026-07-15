@@ -2,6 +2,17 @@
    Problem Detail Page
 ========================= */
 
+const problemDetailMessages = window.problemDetailMessages || {};
+const problemDetailDifficultyLabels = window.difficultyLabels || {};
+
+function problemDetailMessage(key, fallback) {
+    return problemDetailMessages[key] || fallback;
+}
+
+function problemDetailDifficultyLabel(difficulty) {
+    return problemDetailDifficultyLabels[difficulty] || difficulty;
+}
+
 /* =========================
    VIEW MODE
 ========================= */
@@ -10,12 +21,12 @@ function renderViewMode(problem) {
     root.innerHTML = `
         <div class="problem-box">
             <h2>${problem.content}</h2>
-            <p><strong>난이도:</strong> ${problem.difficulty}</p>
-            <p><strong>카테고리:</strong> ${problem.category}</p>
-            <p><strong>예상 답변</strong></p>
+            <p><strong>${problemDetailMessage("difficulty", "Difficulty")}:</strong> ${problemDetailDifficultyLabel(problem.difficulty)}</p>
+            <p><strong>${problemDetailMessage("category", "Category")}:</strong> ${problem.category}</p>
+            <p><strong>${problemDetailMessage("referenceAnswer", "Reference Answer")}</strong></p>
             <pre>${problem.referenceAnswer}</pre>
 
-            <button onclick="enterEditMode()">수정</button>
+            <button onclick="enterEditMode()">${problemDetailMessage("edit", "Edit")}</button>
         </div>
     `;
 }
@@ -34,7 +45,7 @@ function enterEditMode() {
 
     const saveBtn = document.createElement("button");
     saveBtn.className = "submit-btn";
-    saveBtn.innerText = "수정 저장";
+    saveBtn.innerText = problemDetailMessage("save", "Save Changes");
     saveBtn.onclick = submitUpdate;
 
     root.appendChild(saveBtn);
@@ -48,9 +59,8 @@ function fillForm(box, problem) {
 
     box.querySelector(`#selected-category-${box.dataset.id}`).innerText = problem.category;
 
-    // difficulty 버튼 선택
     box.querySelectorAll(".difficulty-btn").forEach(btn => {
-        if (btn.innerText === problem.difficulty) {
+        if (btn.dataset.value === problem.difficulty) {
             btn.classList.add("selected");
         }
     });
@@ -71,8 +81,8 @@ function submitUpdate() {
         body: JSON.stringify(payload)
     })
         .then(res => {
-            if (!res.ok) throw new Error("수정 실패");
+            if (!res.ok) throw new Error(problemDetailMessage("updateFailed", "Failed to update the problem."));
             window.location.reload();
         })
-        .catch(() => alert("문제 수정 실패"));
+        .catch(() => alert(problemDetailMessage("updateFailed", "Failed to update the problem.")));
 }

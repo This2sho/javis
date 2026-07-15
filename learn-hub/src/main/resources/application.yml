@@ -43,6 +43,10 @@ logging:
     console: "[%X{reqId}] %msg%n"
 
 management:
+  prometheus:
+    metrics:
+      export:
+        enabled: ${PROMETHEUS_METRICS_ENABLED:false}
   endpoints:
     web:
       exposure:

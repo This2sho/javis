@@ -1,67 +1,69 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
     <meta charset="UTF-8">
-    <title>인터뷰 웹</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{main.title}">Interview Web</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 
 <header>
-    <h1>인터뷰 웹</h1>
-    <div>
-        <!-- 로그인 여부 체크 -->
+    <h1 th:text="#{main.title}">Interview Web</h1>
+    <div class="header-actions">
+        <div class="language-switcher" aria-label="language switcher">
+            <span class="language-switcher-label" th:text="#{common.language}">Language</span>
+            <a class="language-switcher-link"
+               th:href="@{/(lang='ko')}"
+               th:text="#{language.ko}">한국어</a>
+            <a class="language-switcher-link"
+               th:href="@{/(lang='en')}"
+               th:text="#{language.en}">English</a>
+        </div>
         <button th:if="${memberId == -1}" onclick="location.href='/login'">
-            로그인
+            <span th:text="#{common.login}">Login</span>
         </button>
         <button th:if="${memberId != -1}" onclick="location.href='/mypage'">
-            마이페이지
+            <span th:text="#{common.mypage}">My Page</span>
         </button>
     </div>
 </header>
 
 <main>
-
-    <!-- =========================
-         문제 기록 섹션
-    ========================= -->
     <section class="problem-section">
-        <h2 class="section-title">📘 문제 기록</h2>
+        <h2 class="section-title">📘 <span th:text="#{main.problem.section}">Problem Journal</span></h2>
 
         <div class="problem-history-action">
             <button
                     class="problem-history"
                     onclick="location.href='/problems/new'">
-                ✏️ 문제 직접 기록하기
+                <span th:text="|✏️ #{main.problem.create}|">✏️ Create Problems Manually</span>
             </button>
         </div>
         <div class="problem-history-action">
             <button
                     class="problem-history"
                     onclick="location.href='/problems'">
-                📘 기록한 문제 확인
+                <span th:text="|📘 #{main.problem.list}|">📘 View Saved Problems</span>
             </button>
         </div>
     </section>
 
-    <!-- =========================
-         인터뷰 선택 섹션
-    ========================= -->
     <section class="interview-section">
-        <h2 class="section-title">🎤 인터뷰 연습</h2>
+        <h2 class="section-title">🎤 <span th:text="#{main.interview.section}">Interview Practice</span></h2>
 
         <div class="button-container">
             <button onclick="location.href='/interviews/start/computer_science'">
-                CS 인터뷰
+                <span th:text="#{main.interview.computer_science}">Computer Science Interview</span>
             </button>
             <button onclick="location.href='/interviews/start/backend'">
-                서버 기술 인터뷰
+                <span th:text="#{main.interview.backend}">Backend Interview</span>
             </button>
             <button onclick="location.href='/interviews/start/system_design'">
-                시스템 설계 인터뷰
+                <span th:text="#{main.interview.system_design}">System Design Interview</span>
             </button>
             <button onclick="location.href='/interviews/start/culture_fit'">
-                인성 인터뷰
+                <span th:text="#{main.interview.culture_fit}">Culture Fit Interview</span>
             </button>
         </div>
     </section>

@@ -1,0 +1,104 @@
+#!/bin/bash
+set -euxo pipefail
+
+dnf update -y
+dnf install -y docker
+systemctl enable --now docker
+
+if [ "${enable_swap}" = "true" ]; then
+  if ! swapon --show | grep -q "/swapfile"; then
+    fallocate -l ${swap_size_mb}M /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=${swap_size_mb}
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    grep -q "^/swapfile " /etc/fstab || echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
+  fi
+fi
+
+mkdir -p /opt/learn-hub
+
+cat <<'EOF' > /opt/learn-hub/mysql.env
+MYSQL_DATABASE=${db_name}
+MYSQL_USER=${db_username}
+MYSQL_PASSWORD=${db_password}
+MYSQL_ROOT_PASSWORD=${db_root_password}
+TZ=Asia/Seoul
+EOF
+
+cat <<'EOF' > /opt/learn-hub/app.env
+SPRING_PROFILES_ACTIVE=prod
+PROMETHEUS_METRICS_ENABLED=${prometheus_metrics_enabled}
+DB_URL=jdbc:mysql://learn-hub-mysql:3306/${db_name}?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Seoul
+DB_USERNAME=${db_username}
+DB_PASSWORD=${db_password}
+JWT_SECRET_KEY=${jwt_secret_key}
+KAKAO_CLIENT_ID=${kakao_client_id}
+KAKAO_CLIENT_SECRET=${kakao_client_secret}
+KAKAO_REDIRECT_URI=${kakao_redirect_uri}
+GEMINI_API_KEY=${gemini_api_key}
+GEMINI_MODEL_NAME=${gemini_model_name}
+JAVA_OPTS=${java_opts}
+TZ=Asia/Seoul
+EOF
+
+cat <<'EOF' > /opt/learn-hub/Caddyfile
+:80 {
+  reverse_proxy learn-hub-app:${app_container_port}
+}
+
+${www_domain_name} {
+  redir https://${domain_name}{uri} permanent
+}
+
+${domain_name} {
+  reverse_proxy learn-hub-app:${app_container_port}
+}
+EOF
+
+if [[ "${container_image}" == *.amazonaws.com/* ]]; then
+  aws ecr get-login-password --region ${aws_region} \
+    | docker login --username AWS --password-stdin "$(echo "${container_image}" | cut -d/ -f1)"
+fi
+
+docker network create learn-hub-net || true
+docker volume create learn-hub-mysql-data || true
+docker volume create learn-hub-caddy-data || true
+docker volume create learn-hub-caddy-config || true
+
+docker pull "${mysql_image}"
+docker pull "${container_image}"
+docker pull "${caddy_image}"
+
+docker rm -f learn-hub-app || true
+docker rm -f learn-hub-mysql || true
+docker rm -f learn-hub-caddy || true
+
+docker run -d \
+  --name learn-hub-mysql \
+  --restart unless-stopped \
+  --network learn-hub-net \
+  --env-file /opt/learn-hub/mysql.env \
+  -v learn-hub-mysql-data:/var/lib/mysql \
+  "${mysql_image}"
+
+until docker exec learn-hub-mysql mysqladmin ping -h localhost --silent; do
+  sleep 5
+done
+
+docker run -d \
+  --name learn-hub-app \
+  --restart unless-stopped \
+  --network learn-hub-net \
+  --env-file /opt/learn-hub/app.env \
+  "${container_image}"
+
+docker run -d \
+  --name learn-hub-caddy \
+  --restart unless-stopped \
+  --network learn-hub-net \
+  -p 80:80 \
+  -p 443:443 \
+  -v /opt/learn-hub/Caddyfile:/etc/caddy/Caddyfile:ro \
+  -v learn-hub-caddy-data:/data \
+  -v learn-hub-caddy-config:/config \
+  "${caddy_image}"

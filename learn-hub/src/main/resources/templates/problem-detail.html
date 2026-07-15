@@ -1,35 +1,34 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
     <meta charset="UTF-8">
-    <title>문제 상세</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{problem.detail.title}">Problem Detail</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
 <header>
-    <h1>문제 상세</h1>
+    <h1 th:text="#{problem.detail.title}">Problem Detail</h1>
 </header>
 
 <main class="page-container">
 
-    <!-- 읽기 모드 -->
     <div id="view-root"></div>
 
     <div class="page-actions">
-        <button class="primary-action" onclick="requestReview()">리뷰요청</button>
-        <button class="primary-action" onclick="enterEditModeAll()">수정하기</button>
-        <button class="secondary-btn" onclick="deleteProblem()">삭제하기</button>
+        <button class="primary-action" onclick="requestReview()" th:text="#{problem.detail.requestReview}">Request Review</button>
+        <button class="primary-action" onclick="enterEditModeAll()" th:text="#{problem.detail.edit}">Edit</button>
+        <button class="secondary-btn" onclick="deleteProblem()" th:text="#{problem.detail.delete}">Delete</button>
     </div>
 
-    <!-- 편집 모드 -->
     <div id="edit-mode" style="display:none;">
-        <h2>문제 편집</h2>
+        <h2 th:text="#{problem.detail.edit.title}">Edit Problem</h2>
         <div id="edit-root"></div>
 
         <div class="edit-actions">
-            <button class="submit-btn" onclick="submitUpdate()">수정 완료</button>
-            <button class="secondary-btn" onclick="exitEditMode()">취소</button>
+            <button class="submit-btn" onclick="submitUpdate()" th:text="#{problem.detail.save}">Save Changes</button>
+            <button class="secondary-btn" onclick="exitEditMode()" th:text="#{problem.detail.cancel}">Cancel</button>
         </div>
     </div>
 
@@ -39,6 +38,26 @@
     const ROOT_PROBLEM_ID = /*[[${problemId}]]*/ 0;
     const DIFFICULTIES = /*[[${difficulties}]]*/ [];
     const CATEGORY_TREE = /*[[${categoryTree.categoryNodeResponses}]]*/ [];
+    window.problemFormMessages = {
+        delete: /*[[#{problem.form.delete}]]*/ "Delete",
+        content: /*[[#{problem.form.content}]]*/ "Question",
+        referenceAnswer: /*[[#{problem.form.referenceAnswer}]]*/ "Reference Answer",
+        difficulty: /*[[#{problem.form.difficulty}]]*/ "Difficulty",
+        category: /*[[#{problem.form.category}]]*/ "Select Category",
+        categoryUnselected: /*[[#{problem.form.category.unselected}]]*/ "Not selected",
+        addFollowUp: /*[[#{problem.form.addFollowUp}]]*/ "Add Follow-up Question"
+    };
+    window.difficultyLabels = {
+        EASY: /*[[#{difficulty.EASY}]]*/ "Easy",
+        MEDIUM: /*[[#{difficulty.MEDIUM}]]*/ "Medium",
+        HARD: /*[[#{difficulty.HARD}]]*/ "Hard"
+    };
+    const pageMessages = {
+        referenceAnswer: /*[[#{problem.detail.referenceAnswer}]]*/ "Reference Answer",
+        updateFailed: /*[[#{problem.detail.update.failed}]]*/ "Failed to update the problem.",
+        deleteConfirm: /*[[#{problem.detail.delete.confirm}]]*/ "This will delete this problem and all follow-up problems. Continue?",
+        deleteFailed: /*[[#{problem.detail.delete.failed}]]*/ "Failed to delete the problem."
+    };
 </script>
 
 <script src="/js/problem-form.js"></script>
@@ -73,11 +92,11 @@
         box.innerHTML = `
             <div class="problem-content">${problem.content}</div>
             <div class="problem-meta">
-                <span class="tag difficulty">${problem.difficulty}</span>
+                <span class="tag difficulty">${window.difficultyLabels[problem.difficulty] || problem.difficulty}</span>
                 <span class="tag category">${problem.category}</span>
             </div>
             <div class="section">
-                <h4>예상 답변</h4>
+                <h4>${pageMessages.referenceAnswer}</h4>
                 <p>${problem.referenceAnswer}</p>
             </div>
         `;
@@ -139,7 +158,7 @@
 
     function selectDifficulty(node, difficulty) {
         node.querySelectorAll(".difficulty-btn").forEach(btn => {
-            btn.classList.toggle("selected", btn.innerText === difficulty);
+            btn.classList.toggle("selected", btn.dataset.value === difficulty);
         });
         node.querySelector('[data-field="difficulty"]').value = difficulty;
     }
@@ -165,9 +184,9 @@
             credentials: "include",
             body: JSON.stringify(payload)
         }).then(res => {
-            if (!res.ok) throw new Error("수정 실패");
+            if (!res.ok) throw new Error(pageMessages.updateFailed);
             location.reload();
-        });
+        }).catch(() => alert(pageMessages.updateFailed));
     }
 
     function requestReview() {
@@ -181,16 +200,16 @@
     }
 
     function deleteProblem() {
-        const confirmed = window.confirm("이 문제와 꼬리 문제를 모두 삭제합니다. 계속할까요?");
+        const confirmed = window.confirm(pageMessages.deleteConfirm);
         if (!confirmed) return;
 
         fetch(`/api/problems/${ROOT_PROBLEM_ID}`, {
             method: "DELETE",
             credentials: "include"
         }).then(res => {
-            if (!res.ok) throw new Error("삭제 실패");
+            if (!res.ok) throw new Error(pageMessages.deleteFailed);
             window.location.href = "/problems";
-        }).catch(() => alert("문제 삭제 실패"));
+        }).catch(() => alert(pageMessages.deleteFailed));
     }
 </script>
 

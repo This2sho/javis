@@ -1,26 +1,45 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
     <meta charset="UTF-8">
-    <title>문제 생성</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{problem.create.title}">Create Problem</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
 <header>
-    <h1>문제 생성</h1>
+    <h1 th:text="#{problem.create.title}">Create Problem</h1>
 </header>
 
 <main class="page-container">
     <div id="root"></div>
-    <button class="submit-btn" onclick="submitProblem()">문제 저장</button>
+    <button class="submit-btn" onclick="submitProblem()" th:text="#{problem.create.save}">Save Problem</button>
 </main>
 
-<!-- 서버에서 내려준 데이터 -->
 <script th:inline="javascript">
     const CATEGORY_TREE_RESPONSE = /*[[${categoryTree}]]*/ {};
     const CATEGORY_TREE = CATEGORY_TREE_RESPONSE.categoryNodeResponses || [];
     const DIFFICULTIES = /*[[${difficulties}]]*/ [];
+    window.problemFormMessages = {
+        delete: /*[[#{problem.form.delete}]]*/ "Delete",
+        content: /*[[#{problem.form.content}]]*/ "Question",
+        referenceAnswer: /*[[#{problem.form.referenceAnswer}]]*/ "Reference Answer",
+        difficulty: /*[[#{problem.form.difficulty}]]*/ "Difficulty",
+        category: /*[[#{problem.form.category}]]*/ "Select Category",
+        categoryUnselected: /*[[#{problem.form.category.unselected}]]*/ "Not selected",
+        addFollowUp: /*[[#{problem.form.addFollowUp}]]*/ "Add Follow-up Question"
+    };
+    window.difficultyLabels = {
+        EASY: /*[[#{difficulty.EASY}]]*/ "Easy",
+        MEDIUM: /*[[#{difficulty.MEDIUM}]]*/ "Medium",
+        HARD: /*[[#{difficulty.HARD}]]*/ "Hard"
+    };
+    const pageMessages = {
+        createFailed: /*[[#{problem.create.failed}]]*/ "Failed to create the problem.",
+        missingLocation: /*[[#{problem.create.location.missing}]]*/ "Location header is missing.",
+        createError: /*[[#{problem.create.error}]]*/ "An error occurred while creating the problem."
+    };
 </script>
 
 <script src="/js/problem-form.js"></script>
@@ -40,14 +59,14 @@
             body: JSON.stringify(payload)
         })
             .then(res => {
-                if (!res.ok) throw new Error("문제 생성 실패");
+                if (!res.ok) throw new Error(pageMessages.createFailed);
                 const location = res.headers.get("Location");
-                if (!location) throw new Error("Location 헤더 없음");
+                if (!location) throw new Error(pageMessages.missingLocation);
                 window.location.href = location;
             })
             .catch(err => {
                 console.error(err);
-                alert("문제 생성 중 오류가 발생했습니다.");
+                alert(pageMessages.createError);
             });
     }
 </script>

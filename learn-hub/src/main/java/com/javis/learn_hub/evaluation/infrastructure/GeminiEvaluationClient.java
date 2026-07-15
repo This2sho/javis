@@ -1,6 +1,7 @@
 package com.javis.learn_hub.evaluation.infrastructure;
 
 import com.javis.learn_hub.evaluation.infrastructure.dto.EvaluationResponse;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.ChatOptions;
@@ -12,6 +13,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class GeminiEvaluationClient implements AnswerEvaluator {
+
+    private static final Pattern HANGUL_PATTERN = Pattern.compile("[가-힣]");
+    private static final Pattern LATIN_PATTERN = Pattern.compile("[A-Za-z]");
 
     private static final String SYSTEM_PROMPT = """
             당신은 IT 기술 면접관입니다. 채점 시작 전, [질문]의 성격을 먼저 분류하고 해당 모드에 따라 채점하세요.
@@ -40,6 +44,9 @@ public class GeminiEvaluationClient implements AnswerEvaluator {
             - VAGUE: 핵심이 무엇인지 설명하는 피드백 1줄
             - INCORRECT: 왜 틀렸는지 설명하는 피드백 1줄
 
+            [언어별 추가 지침]
+            {languageEvaluationGuide}
+
             반드시 제공된 응답 형식에 맞춰 JSON으로만 답변하세요.
             """;
 
@@ -53,6 +60,22 @@ public class GeminiEvaluationClient implements AnswerEvaluator {
         [사용자 답변]
         {userAnswer}
         """;
+
+    private static final String KOREAN_EVALUATION_GUIDE = """
+            - 이 문항은 한국어 답변 인터뷰입니다.
+            - 내용의 정확성, 구조, 핵심 포함 여부를 우선 평가하세요.
+            - 단순한 맞춤법이나 띄어쓰기보다 전달력과 논리성을 더 중요하게 보세요.
+            - feedback은 한국어로 작성하세요.
+            """;
+
+    private static final String ENGLISH_EVALUATION_GUIDE = """
+            - 이 문항은 영어 답변 인터뷰입니다.
+            - 내용의 적절성과 함께 영어 문법, 시제, 어휘 선택, collocation, 표현의 자연스러움을 함께 평가하세요.
+            - 사소한 문법 실수만으로 곧바로 INCORRECT를 주지 말고, 내용이 충분하면 PERFECT 또는 GOOD 범위 안에서 표현 완성도를 함께 반영하세요.
+            - 답변이 질문 의도에는 맞더라도 어색한 문장, 부자연스러운 단어 선택, 반복되는 표현이 있으면 피드백에 구체적으로 적으세요.
+            - 영어 질문인데 한국어로 답하거나 영어 문장으로 보기 어려운 수준이면 감점하세요.
+            - feedback은 반드시 한국어로 작성하되, 내용 측면과 영어 표현 측면을 함께 짧게 언급하세요.
+            """;
 
     private final ChatClient chatClient;
 
@@ -68,8 +91,12 @@ public class GeminiEvaluationClient implements AnswerEvaluator {
     @Override
     public EvaluationResponse evaluate(String question, String referenceAnswer, String userAnswer) {
         try {
+            String languageEvaluationGuide = isEnglishInterview(question, referenceAnswer)
+                    ? ENGLISH_EVALUATION_GUIDE
+                    : KOREAN_EVALUATION_GUIDE;
             return chatClient.prompt()
-                    .system(SYSTEM_PROMPT)
+                    .system(s -> s.text(SYSTEM_PROMPT)
+                            .param("languageEvaluationGuide", languageEvaluationGuide))
                     .user(u -> u.text(USER_PROMPT)
                             .param("question", question)
                             .param("referenceAnswer", referenceAnswer)
@@ -89,5 +116,20 @@ public class GeminiEvaluationClient implements AnswerEvaluator {
     public EvaluationResponse recover(Exception e, String question, String referenceAnswer, String userAnswer) {
         log.error("Gemini 채점 최종 실패 (3회 재시도 소진): {}", e.getMessage());
         throw new EvaluationRequestException(e);
+    }
+
+    private boolean isEnglishInterview(String question, String referenceAnswer) {
+        String source = (question == null ? "" : question) + "\n" + (referenceAnswer == null ? "" : referenceAnswer);
+        int latinCount = countMatches(LATIN_PATTERN, source);
+        int hangulCount = countMatches(HANGUL_PATTERN, source);
+
+        if (latinCount < 20) {
+            return false;
+        }
+        return hangulCount == 0 || latinCount >= hangulCount * 3;
+    }
+
+    private int countMatches(Pattern pattern, String text) {
+        return (int) pattern.matcher(text).results().count();
     }
 }

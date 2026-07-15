@@ -5,10 +5,11 @@ import com.javis.learn_hub.category.service.dto.AllCategoryNodesResponse;
 import com.javis.learn_hub.problem.domain.Difficulty;
 import com.javis.learn_hub.support.domain.Authenticated;
 import com.javis.learn_hub.support.domain.MemberId;
-import java.util.List;
-import java.util.Map;
+import com.javis.learn_hub.support.i18n.MainCategoryLabelResolver;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +21,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 public class PageController {
 
     private final CategoryService categoryService;
+    private final MainCategoryLabelResolver mainCategoryLabelResolver;
+    private final MessageSource messageSource;
 
     @GetMapping("/")
     public String mainPage(
@@ -32,14 +35,6 @@ public class PageController {
 
     @GetMapping("/mypage")
     public String myPage(Model model) {
-        List<Map<String, Object>> categories = List.of(
-                Map.of("name", "실제 인터뷰", "score", 80),
-                Map.of("name", "기술 인터뷰", "score", 75),
-                Map.of("name", "인성 인터뷰", "score", 85),
-                Map.of("name", "CS 인터뷰", "score", 90),
-                Map.of("name", "서버 기술 인터뷰", "score", 70)
-        );
-        model.addAttribute("categories", categories);
         return "mypage";
     }
 
@@ -65,14 +60,15 @@ public class PageController {
     @GetMapping("/interviews/start/{mainCategory}")
     public String interviewPage(
             @PathVariable String mainCategory,
-            Model model
+            Model model,
+            Locale locale
     ) {
+        String mainCategoryLabel = mainCategoryLabelResolver.resolveByPath(mainCategory, locale);
+        String interviewTitle = messageSource.getMessage("interview.title", new Object[]{mainCategoryLabel}, locale);
+        String welcomeMessage = messageSource.getMessage("interview.welcome", new Object[]{mainCategoryLabel}, locale);
 
-        model.addAttribute("interviewTitle", mainCategory);
-        model.addAttribute(
-                "welcomeMessage",
-                String.format("안녕하세요! %s 인터뷰를 진행합니다.", mainCategory)
-        );
+        model.addAttribute("interviewTitle", interviewTitle);
+        model.addAttribute("welcomeMessage", welcomeMessage);
         model.addAttribute("mainCategory", mainCategory);
         return "interview";
     }
@@ -114,4 +110,3 @@ public class PageController {
         return "review-requests";
     }
 }
-

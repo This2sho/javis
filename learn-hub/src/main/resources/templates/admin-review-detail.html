@@ -1,29 +1,23 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
     <meta charset="UTF-8">
-    <title>리뷰 요청 상세</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{admin.review.detail.title}">Review Request Detail</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
 <header>
-    <h1>리뷰 요청 상세</h1>
+    <h1 th:text="#{admin.review.detail.title}">Review Request Detail</h1>
 </header>
 
 <main class="page-container">
-
-    <!-- 문제 상세 (읽기 전용) -->
     <div id="view-root"></div>
 
-    <!-- 승인 / 거절 -->
     <div class="page-actions">
-        <button class="approve-btn approve" onclick="submitReview('APPROVED')">
-            승인
-        </button>
-        <button class="reject-btn reject" onclick="submitReview('REJECTED')">
-            거절
-        </button>
+        <button class="approve-btn approve" onclick="submitReview('APPROVED')" th:text="#{admin.review.detail.approve}">Approve</button>
+        <button class="reject-btn reject" onclick="submitReview('REJECTED')" th:text="#{admin.review.detail.reject}">Reject</button>
     </div>
 
 </main>
@@ -31,15 +25,20 @@
 <script th:inline="javascript">
     const REVIEW_ID = /*[[${reviewId}]]*/ 0;
     const ROOT_PROBLEM_ID   = /*[[${problemId}]]*/ 0;
+    const messages = {
+        problemFailed: /*[[#{admin.review.detail.problem.failed}]]*/ "Failed to load the problem.",
+        referenceAnswer: /*[[#{admin.review.detail.referenceAnswer}]]*/ "Reference Answer",
+        processFailed: /*[[#{admin.review.detail.process.failed}]]*/ "An error occurred while processing the review.",
+        difficultyEasy: /*[[#{difficulty.EASY}]]*/ "Easy",
+        difficultyMedium: /*[[#{difficulty.MEDIUM}]]*/ "Medium",
+        difficultyHard: /*[[#{difficulty.HARD}]]*/ "Hard"
+    };
 </script>
 
 <script>
-    /* ===============================
-       문제 상세 조회
-    =============================== */
     fetch(`/api/problems/${ROOT_PROBLEM_ID}`, { credentials: "include" })
         .then(res => {
-            if (!res.ok) throw new Error("문제 조회 실패");
+            if (!res.ok) throw new Error(messages.problemFailed);
             return res.json();
         })
         .then(problem => {
@@ -57,12 +56,12 @@
             <div class="problem-content">${problem.content}</div>
 
             <div class="problem-meta">
-                <span class="tag difficulty">${problem.difficulty}</span>
+                <span class="tag difficulty">${translateDifficulty(problem.difficulty)}</span>
                 <span class="tag category">${problem.category}</span>
             </div>
 
             <div class="section">
-                <h4>예상 답변</h4>
+                <h4>${messages.referenceAnswer}</h4>
                 <p>${problem.referenceAnswer}</p>
             </div>
         `;
@@ -74,9 +73,19 @@
         );
     }
 
-    /* ===============================
-       리뷰 승인 / 거절
-    =============================== */
+    function translateDifficulty(difficulty) {
+        switch (difficulty) {
+            case "EASY":
+                return messages.difficultyEasy;
+            case "MEDIUM":
+                return messages.difficultyMedium;
+            case "HARD":
+                return messages.difficultyHard;
+            default:
+                return difficulty;
+        }
+    }
+
     function submitReview(status) {
         fetch(`/admin/api/review-requests/${REVIEW_ID}`, {
             method: "PUT",
@@ -90,17 +99,15 @@
         })
             .then(res => {
                 if (!res.ok) {
-                    throw new Error("리뷰 처리 실패");
+                    throw new Error(messages.processFailed);
                 }
 
-                // 1️⃣ Location 헤더 기반 redirect
                 const location = res.headers.get("Location");
                 if (location) {
                     window.location.href = location;
                     return;
                 }
 
-                // 2️⃣ body 기반 redirect (선택)
                 return res.json();
             })
             .then(data => {
@@ -110,7 +117,7 @@
             })
             .catch(err => {
                 console.error(err);
-                alert("리뷰 처리 중 오류가 발생했습니다.");
+                alert(messages.processFailed);
             });
     }
 </script>

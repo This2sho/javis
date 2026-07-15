@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
     <meta charset="UTF-8">
-    <title>인터뷰 상세</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{interview.detail.title}">Interview Detail</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
 <header>
-    <h1>인터뷰 상세</h1>
+    <h1 th:text="#{interview.detail.title}">Interview Detail</h1>
     <div class="interview-detail-actions">
-        <button onclick="location.href='/interviews'">목록</button>
-        <button onclick="location.href='/mypage'">마이페이지</button>
+        <button onclick="location.href='/interviews'" th:text="#{common.list}">List</button>
+        <button onclick="location.href='/mypage'" th:text="#{common.mypage}">My Page</button>
     </div>
 </header>
 
@@ -21,6 +22,7 @@
 
 <script th:inline="javascript">
     const interviewId = [[${interviewId}]];
+    const loadFailedMessage = /*[[#{interview.detail.load.failed}]]*/ "Unable to load the data.";
 </script>
 
 <script>
@@ -42,7 +44,7 @@
         })
         .catch(err => {
             console.error(err);
-            container.innerText = "데이터를 불러오지 못했습니다.";
+            container.innerText = loadFailedMessage;
         });
 </script>
 

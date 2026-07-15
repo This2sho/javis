@@ -1,0 +1,23 @@
+[
+  {
+    "problem": "Could you walk me through your resume?",
+    "referenceAnswer": "I majored in computer science at Pusan National University. After that, I participated in TechCourse to deepen my knowledge of Java, Spring Boot, and the soft skills required by companies. Then, I developed and optimized API designs through projects. I gained hands-on experience with what I learned and improved my communication skills by working with my teammates.\nCurrently, I've been working at an insurance tech company and am mainly involved in backend maintenance and operational support for internal business systems.",
+    "difficulty": "MEDIUM",
+    "category": "culture_fit:resume:resume_walkthrough",
+    "followUpProblems": []
+  },
+  {
+    "problem": "Could you provide more details about the projects listed on your resume? Specifically, what was your role and what kind of impact did your contributions have?",
+    "referenceAnswer": "One of the projects that I'm most proud of is an AI interview preparation service.\nIn this project, the biggest challenge was improving the AI grading process.\nAt first, grading was processed immediately whenever a user submitted an answer.\nThis worked well when the number of concurrent users was small.\nHowever, as concurrent requests increased, too many grading tasks were submitted to the thread pool at once.\nI tried tuning the grading thread pool to scale quickly, but under high concurrency, the thread pool still started rejecting tasks.\nThis made me realize that immediate grading had a structural limitation because the system could not control the amount of incoming work.\nSo I redesigned it as scheduled grading. The system first saves the grading request, and then processes grading jobs asynchronously in the background.\nAs a result, throughput increased from 8 TPS to 231 TPS and p95 latency dropped from 20 seconds to 1.5 seconds.\nFrom this experience, I learned how to design systems that stay stable even if traffic increases.",
+    "difficulty": "MEDIUM",
+    "category": "culture_fit:resume:project_impact",
+    "followUpProblems": []
+  },
+  {
+    "problem": "Can you tell me about your current role?",
+    "referenceAnswer": "Currently, I work at an insurance tech company, supporting HR and organization-related ERP operations.\nMy main responsibilities include handling requests related to employee information, permissions, electronic signatures, data extraction, and the onboarding process for insurance agent candidates.\nOne recent improvement I made was implementing Slack notifications for internal workflow requests. Previously, some requests came through an external workflow system, so we had to check the website manually. I built a small system that checks the workflow system every five minutes and sends a notification to Slack when a new request comes in.\nIn addition, I often handle login issues caused by delayed data synchronization between internal systems. Currently, some of these cases require manual handling, but I'm planning to improve this process in the second half of the year.",
+    "difficulty": "MEDIUM",
+    "category": "culture_fit:resume:current_role",
+    "followUpProblems": []
+  }
+]

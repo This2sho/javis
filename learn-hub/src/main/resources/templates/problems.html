@@ -1,36 +1,38 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
     <meta charset="UTF-8">
-    <title>문제 목록</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{problems.title}">Problem History</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
 <header>
-    <h1>문제 기록</h1>
+    <h1 th:text="#{problems.title}">Problem History</h1>
     <div class="header-actions">
         <button class="problem-addition-action"
-                onclick="location.href='/review-requests'">
-            리뷰 상태 보기
-        </button>
+                onclick="location.href='/review-requests'"
+                th:text="#{problems.review.requests}">View Review Status</button>
 
         <button class="problem-addition-action"
-                onclick="location.href='/problems/new'">
-            + 새 문제 생성
-        </button>
+                onclick="location.href='/problems/new'"
+                th:text="#{problems.new}">+ New Problem</button>
     </div>
 </header>
 
 <main class="page-container">
     <div id="problem-list" class="problem-list"></div>
-    <div id="loading" class="interview-loading">불러오는 중...</div>
+    <div id="loading" class="interview-loading" th:text="#{common.loading}">Loading...</div>
 </main>
 
-<!-- problem-form.js는 그대로 유지 -->
 <script src="/js/problem-form.js"></script>
 <script src="/js/cursor-paging.js"></script>
-<script>
+<script th:inline="javascript">
+    const messages = {
+        allLoaded: /*[[#{problems.all.loaded}]]*/ "All problems have been loaded.",
+        loadFailed: /*[[#{problems.load.failed}]]*/ "Failed to load"
+    };
 
     let loading = false;
     let hasNext = true;
@@ -57,11 +59,11 @@
             nextCursor = data.nextCursor;
 
             if (!hasNext) {
-                loadingEl.innerText = "모든 문제를 불러왔습니다.";
+                loadingEl.innerText = messages.allLoaded;
             }
         } catch (e) {
             console.error(e);
-            loadingEl.innerText = "불러오기 실패";
+            loadingEl.innerText = messages.loadFailed;
         } finally {
             loading = false;
         }
@@ -85,14 +87,12 @@
         });
     }
 
-    // 🔥 스크롤 하단 감지
     window.addEventListener("scroll", () => {
         if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100) {
             loadProblems();
         }
     });
 
-    // 최초 로딩
     loadProblems();
 </script>
 

@@ -3,6 +3,16 @@
 ========================= */
 
 let problemIdSeq = 0;
+const problemFormMessages = window.problemFormMessages || {};
+const difficultyLabels = window.difficultyLabels || {};
+
+function problemFormMessage(key, fallback) {
+    return problemFormMessages[key] || fallback;
+}
+
+function difficultyLabel(difficulty) {
+    return difficultyLabels[difficulty] || difficulty;
+}
 
 /* =========================
    Problem Node 생성
@@ -15,7 +25,7 @@ function createProblemNode(parentCategoryPath = "", isFollowUp = false) {
     box.dataset.id = problemId;
 
     const deleteBtn = isFollowUp
-        ? `<button class="delete-followup" onclick="deleteFollowUpProblem(this)">🗑️ 삭제</button>`
+        ? `<button class="delete-followup" onclick="deleteFollowUpProblem(this)">🗑️ ${problemFormMessage("delete", "Delete")}</button>`
         : '';
 
     box.innerHTML = `
@@ -23,32 +33,32 @@ function createProblemNode(parentCategoryPath = "", isFollowUp = false) {
             ${deleteBtn}
         </div>
         <div class="field">
-            <label>문제</label>
+            <label>${problemFormMessage("content", "Question")}</label>
             <textarea data-field="content"></textarea>
         </div>
 
         <div class="field">
-            <label>예상 답변</label>
+            <label>${problemFormMessage("referenceAnswer", "Reference Answer")}</label>
             <textarea data-field="expectedAnswer"></textarea>
         </div>
 
         <div class="field">
-            <label>난이도</label>
+            <label>${problemFormMessage("difficulty", "Difficulty")}</label>
             <div class="difficulty-selector" id="difficulty-selector-${problemId}"></div>
             <input type="hidden" data-field="difficulty">
         </div>
 
         <div class="field">
-            <label>카테고리 선택</label>
+            <label>${problemFormMessage("category", "Select Category")}</label>
             <div class="category-selector" id="category-selector-${problemId}"></div>
             <div class="selected-category" id="selected-category-${problemId}">
-                ${parentCategoryPath || "선택되지 않음"}
+                ${parentCategoryPath || problemFormMessage("categoryUnselected", "Not selected")}
             </div>
             <input type="hidden" data-field="category" value="${parentCategoryPath}">
         </div>
 
         <button class="add-followup" onclick="addFollowUpProblem(${problemId})">
-            ➕ 꼬리 문제 추가
+            ➕ ${problemFormMessage("addFollowUp", "Add Follow-up Question")}
         </button>
 
         <div class="children" id="children-${problemId}"></div>
@@ -70,7 +80,8 @@ function renderDifficultySelector(difficulties, container, id) {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "difficulty-btn";
-        btn.innerText = difficulty;
+        btn.dataset.value = difficulty;
+        btn.innerText = difficultyLabel(difficulty);
 
         btn.onclick = () => {
             const box = document.querySelector(`[data-id="${id}"]`);

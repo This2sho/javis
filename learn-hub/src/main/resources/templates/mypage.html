@@ -1,26 +1,38 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
     <meta charset="UTF-8">
-    <title>마이페이지</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{mypage.title}">My Page</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
 <header>
-    <h1>마이페이지</h1>
-    <button onclick="location.href='/'">홈으로</button>
+    <h1 th:text="#{mypage.title}">My Page</h1>
+    <button onclick="location.href='/'" th:text="#{common.home}">Home</button>
 </header>
 
 <main class="score-list">
-    <div class="score-list-title">카테고리별 점수</div>
+    <div class="score-list-title" th:text="#{mypage.score.list}">Scores by Category</div>
     <div id="scoreList"></div>
 </main>
 <main class="score-list">
-    <button class="interview-list-button" onclick="location.href='/interviews'">인터뷰 기록 보기</button>
+    <button class="interview-list-button" onclick="location.href='/interviews'" th:text="#{mypage.interview.history}">View Interview History</button>
 </main>
 
-<script>
+<script th:inline="javascript">
+    const messages = {
+        loadFailed: /*[[#{mypage.load.failed}]]*/ "Unable to load score information.",
+        scoreUnit: /*[[#{common.score.unit}]]*/ "pts"
+    };
+    const mainCategoryLabels = {
+        COMPUTER_SCIENCE: /*[[#{mainCategory.computer_science}]]*/ "Computer Science",
+        BACKEND: /*[[#{mainCategory.backend}]]*/ "Backend",
+        SYSTEM_DESIGN: /*[[#{mainCategory.system_design}]]*/ "System Design",
+        CULTURE_FIT: /*[[#{mainCategory.culture_fit}]]*/ "Culture Fit"
+    };
+
     document.addEventListener("DOMContentLoaded", () => {
         loadScores();
     });
@@ -32,7 +44,7 @@
         })
             .then(res => res.json())
             .then(data => renderScores(data.scores))
-            .catch(() => alert("점수 정보를 불러오지 못했습니다."));
+            .catch(() => alert(messages.loadFailed));
     }
 
     function renderScores(scores) {
@@ -45,11 +57,11 @@
 
             const name = document.createElement("div");
             name.className = "score-item-name";
-            name.innerText = toKorean(item.mainCategory);
+            name.innerText = mainCategoryLabels[item.mainCategory] || item.mainCategory;
 
             const score = document.createElement("div");
             score.className = "score-item-value";
-            score.innerText = item.score + "점";
+            score.innerText = `${item.score}${messages.scoreUnit}`;
 
             div.appendChild(name);
             div.appendChild(score);
@@ -60,16 +72,6 @@
 
             container.appendChild(div);
         });
-    }
-
-    function toKorean(category) {
-        switch (category) {
-            case "COMPUTER_SCIENCE": return "컴퓨터 공학";
-            case "BACKEND": return "백엔드";
-            case "SYSTEM_DESIGN": return "시스템 설계";
-            case "CULTURE_FIT": return "컬처 핏";
-            default: return category;
-        }
     }
 </script>
 

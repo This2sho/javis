@@ -2,6 +2,12 @@
    Problem Create Page
 ========================= */
 
+const problemCreateMessages = window.problemCreateMessages || {};
+
+function problemCreateMessage(key, fallback) {
+    return problemCreateMessages[key] || fallback;
+}
+
 document.getElementById("root").appendChild(
     createProblemNode("")
 );
@@ -17,13 +23,13 @@ function submitProblem() {
         body: JSON.stringify(payload)
     })
         .then(res => {
-            if (!res.ok) throw new Error("문제 생성 실패");
+            if (!res.ok) throw new Error(problemCreateMessage("failed", "Failed to create the problem."));
             const location = res.headers.get("Location");
-            if (!location) throw new Error("Location 헤더 없음");
+            if (!location) throw new Error(problemCreateMessage("missingLocation", "Location header is missing."));
             window.location.href = location;
         })
         .catch(err => {
             console.error(err);
-            alert("문제 생성 중 오류가 발생했습니다.");
+            alert(problemCreateMessage("error", "An error occurred while creating the problem."));
         });
 }

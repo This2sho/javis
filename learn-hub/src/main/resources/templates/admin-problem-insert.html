@@ -1,37 +1,40 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
     <meta charset="UTF-8">
-    <title>문제 JSON 업로드</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{admin.problem.insert.title}">Upload Problem JSON</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 
-<h1>문제 JSON 업로드</h1>
+<main class="page-container">
+<h1 th:text="#{admin.problem.insert.heading}">Upload Problem JSON</h1>
 
-<!-- 1️⃣ JSON 파일 선택 -->
 <input type="file" id="jsonFileInput" accept=".json"/>
 
-<!-- 2️⃣ JSON 미리보기 -->
-<textarea id="jsonPreview" placeholder="JSON 내용이 여기에 표시됩니다"></textarea>
+<textarea id="jsonPreview" th:placeholder="#{admin.problem.insert.preview.placeholder}" placeholder="JSON content will be shown here."></textarea>
 
-<!-- 3️⃣ 서버 전송 버튼 -->
 <br/>
-<button onclick="submitProblems()">서버로 문제 등록</button>
+<button onclick="submitProblems()" th:text="#{admin.problem.insert.submit}">Upload Problems to Server</button>
 
-<!-- 4️⃣ 결과 표시 -->
 <div id="status" class="status"></div>
+</main>
 
-<script>
+<script th:inline="javascript">
     const fileInput = document.getElementById("jsonFileInput");
     const preview = document.getElementById("jsonPreview");
     const status = document.getElementById("status");
+    const messages = {
+        loadSuccess: /*[[#{admin.problem.insert.load.success}]]*/ "JSON file loaded successfully",
+        parseFailed: /*[[#{admin.problem.insert.parse.failed}]]*/ "Failed to parse JSON",
+        invalid: /*[[#{admin.problem.insert.invalid}]]*/ "Upload a valid JSON file first.",
+        submitFailed: /*[[#{admin.problem.insert.submit.failed}]]*/ "Failed to register problems",
+        processingFailed: /*[[#{admin.problem.insert.processing.failed}]]*/ "An error occurred while processing."
+    };
 
     let parsedJson = null;
 
-    /* ===============================
-       JSON 파일 읽기
-    =============================== */
     fileInput.addEventListener("change", () => {
         const file = fileInput.files[0];
         if (!file) return;
@@ -42,10 +45,10 @@
             try {
                 parsedJson = JSON.parse(e.target.result);
                 preview.value = JSON.stringify(parsedJson, null, 2);
-                status.textContent = "JSON 파일 로드 성공";
+                status.textContent = messages.loadSuccess;
                 status.style.color = "green";
             } catch (error) {
-                status.textContent = "JSON 파싱 실패";
+                status.textContent = messages.parseFailed;
                 status.style.color = "red";
                 parsedJson = null;
             }
@@ -54,12 +57,9 @@
         reader.readAsText(file);
     });
 
-    /* ===============================
-       서버로 POST 요청
-    =============================== */
     async function submitProblems() {
         if (!parsedJson) {
-            alert("유효한 JSON 파일을 먼저 업로드하세요.");
+            alert(messages.invalid);
             return;
         }
         fetch("/admin/api/problems", {
@@ -76,7 +76,6 @@
                 return;
             }
 
-            // 2️⃣ body 기반 redirect (선택)
             return res.json();
         })
         .then(data => {
@@ -86,9 +85,9 @@
         })
         .catch(err => {
             console.error(err);
-            status.textContent = "문제 등록 실패";
+            status.textContent = messages.submitFailed;
             status.style.color = "red";
-            alert("처리 중 오류가 발생했습니다.");
+            alert(messages.processingFailed);
         });
     }
 </script>

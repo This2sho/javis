@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><title>로그인 성공</title></head>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title th:text="#{login.success.title}">Login Success</title></head>
 <body>
-<h2>로그인 성공</h2>
+<h2 th:text="#{login.success.heading}">Login Success</h2>
 <script th:inline="javascript">
     const accessToken = /*[[${accessToken}]]*/ "";
     const provider = /*[[${provider}]]*/ "";
+    const loginProcessingFailed = /*[[#{login.success.failed}]]*/ "Login processing failed";
 
-    // 서버로 다시 POST 요청
     fetch(`/login/${provider.toLowerCase()}`, {
         method: "POST",
         headers: {
@@ -19,7 +19,7 @@
             window.location.href = "/";
         })
         .catch(err => {
-            console.error("로그인 처리 실패", err);
+            console.error(loginProcessingFailed, err);
             window.location.href = "/error";
         });
 </script>

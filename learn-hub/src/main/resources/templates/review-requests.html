@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
     <meta charset="UTF-8">
-    <title>리뷰 요청 목록</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{review.requests.title}">Review Requests</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
 <header>
-    <h1>리뷰 요청 목록</h1>
+    <h1 th:text="#{review.requests.title}">Review Requests</h1>
     <div class="header-actions">
         <button class="problem-addition-action"
-                onclick="location.href='/problems'">
-            문제 목록으로
-        </button>
+                onclick="location.href='/problems'"
+                th:text="#{review.requests.back}">Back to Problems</button>
     </div>
 </header>
 
@@ -22,7 +22,16 @@
 </main>
 
 <script src="/js/cursor-paging.js"></script>
-<script>
+<script th:inline="javascript">
+    const messages = {
+        loadFailed: /*[[#{review.requests.load.failed}]]*/ "Unable to load review requests.",
+        empty: /*[[#{review.requests.empty}]]*/ "No review requests."
+    };
+    const reviewStatusLabels = {
+        PENDING_REVIEW: /*[[#{review.status.PENDING_REVIEW}]]*/ "Pending",
+        APPROVED: /*[[#{review.status.APPROVED}]]*/ "Approved",
+        REJECTED: /*[[#{review.status.REJECTED}]]*/ "Rejected"
+    };
 
     const list = document.getElementById("review-list");
 
@@ -48,7 +57,7 @@
 
         } catch (e) {
             console.error(e);
-            alert("리뷰 요청 목록을 불러오지 못했습니다.");
+            alert(messages.loadFailed);
         }
     }
 
@@ -57,10 +66,9 @@
     =============================== */
     function renderReviews(reviews) {
         if (!reviews || reviews.length === 0) {
-            // 최초 로딩인데 아무것도 없을 때만 메시지
             if (list.children.length === 0) {
                 list.innerHTML =
-                    `<p style="text-align:center;">리뷰 요청이 없습니다.</p>`;
+                    `<p style="text-align:center;">${messages.empty}</p>`;
             }
             return;
         }
@@ -79,7 +87,7 @@
                     ${r.rootProblem}
                 </div>
                 <div class="problem-meta">
-                    <span class="tag review-status">${r.registrationStatus}</span>
+                    <span class="tag review-status">${reviewStatusLabels[r.registrationStatus] || r.registrationStatus}</span>
                 </div>
             `;
 
@@ -87,9 +95,6 @@
         });
     }
 
-    /* ===============================
-       무한 스크롤
-    =============================== */
     window.addEventListener("scroll", () => {
         if (
             window.innerHeight + window.scrollY >=
@@ -99,9 +104,6 @@
         }
     });
 
-    /* ===============================
-       최초 로딩
-    =============================== */
     loadReviews();
 </script>
 

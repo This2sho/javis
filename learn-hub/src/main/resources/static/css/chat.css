@@ -1,59 +1,104 @@
-/* 기본 레이아웃 */
-body, html {
+body.interview-page,
+html {
     margin: 0;
     padding: 0;
     height: 100%;
-    font-family: Arial, sans-serif;
 }
 
-/* 전체 컨테이너 */
-.chat-container {
+.interview-page {
+    overflow: hidden;
+    background:
+            radial-gradient(circle at top, rgba(79, 70, 229, 0.08), transparent 32%),
+            linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+}
+
+.interview-page-shell {
     display: flex;
     flex-direction: column;
-    height: 100vh; /* 화면 전체 높이 차지 */
+    height: 100dvh;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 20px 16px;
+}
+
+.interview-page-header {
+    flex: 0 0 auto;
+    padding-bottom: 12px;
+}
+
+.interview-page-header h2 {
+    margin: 0;
+    font-size: 28px;
+}
+
+.chat-container {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    position: relative;
+    border: 1px solid rgba(99, 102, 241, 0.12);
+    border-radius: 24px;
+    background-color: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
 }
 
 /* 메시지 영역 */
 .messages {
-    flex: 1; /* 남는 공간 모두 차지 */
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 10px; /* 메시지 간격 */
-    padding: 20px;
-    overflow-y: auto; /* 메시지 영역만 스크롤 */
+    gap: 12px;
+    min-height: 0;
+    padding: 24px 24px 140px;
+    overflow-y: auto;
     background-color: #ffffff;
 }
 
 /* 메시지 공통 스타일 */
 .message {
-    padding: 10px 14px;
+    padding: 12px 16px;
     border-radius: 20px;
-    max-width: 70%;
+    max-width: min(72%, 720px);
     word-wrap: break-word;
     line-height: 1.4;
+    white-space: pre-wrap;
 }
 
 /* 봇 메시지: 왼쪽 */
 .bot-message {
-    background-color: #f1f1f1;
+    background-color: #eef2ff;
+    color: #1f2937;
     align-self: flex-start;
 }
 
 /* 유저 메시지: 오른쪽 */
 .user-message {
-    background-color: #007bff;
+    background: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%);
     color: white;
     align-self: flex-end;
-    border-bottom-right-radius: 4px; /* 챗지피티 느낌 */
+    border-bottom-right-radius: 6px;
 }
 
 /* 입력창 영역 */
 .input-container {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: min(1060px, calc(100vw - 32px));
     display: flex;
     align-items: center;
-    padding: 10px;
-    border-top: 1px solid #ddd;
-    background-color: #fff;
+    gap: 12px;
+    padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
+    border: 1px solid rgba(99, 102, 241, 0.12);
+    border-bottom: none;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    background-color: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 -16px 40px rgba(15, 23, 42, 0.08);
+    z-index: 30;
 }
 
 /* 입력창 */
@@ -61,26 +106,38 @@ body, html {
     flex: 1;
     border: 1px solid #ddd;
     border-radius: 20px;
-    padding: 10px 14px;
+    padding: 12px 16px;
     resize: none;
-    min-height: 40px;
-    max-height: 150px;
+    min-height: 52px;
+    max-height: 180px;
     overflow-y: auto;
-    font-size: 14px;
+    font-size: 15px;
+    line-height: 1.5;
+    background-color: #f8fafc;
 }
 
 /* 전송 버튼 */
 .send-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    margin-left: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
+    background-color: #2563eb;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22);
 }
 
 .send-button svg {
     width: 24px;
     height: 24px;
-    fill: #007bff;
+    fill: #ffffff;
+}
+
+.send-button:disabled {
+    background-color: #94a3b8;
+    box-shadow: none;
+    cursor: not-allowed;
 }
 
 /* 채점 로딩 */
@@ -156,4 +213,42 @@ body, html {
     font-size: 14px;
     line-height: 1.6;
     color: #333;
+}
+
+@media (max-width: 768px) {
+    .interview-page-shell {
+        padding: 12px 12px 8px;
+    }
+
+    .interview-page-header {
+        padding-bottom: 10px;
+    }
+
+    .interview-page-header h2 {
+        font-size: 22px;
+    }
+
+    .chat-container {
+        border-radius: 20px;
+    }
+
+    .messages {
+        padding: 16px 16px 132px;
+    }
+
+    .message {
+        max-width: 88%;
+        font-size: 15px;
+    }
+
+    .input-container {
+        width: calc(100vw - 16px);
+        padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+        border-top-left-radius: 18px;
+        border-top-right-radius: 18px;
+    }
+
+    .chat-input {
+        font-size: 16px;
+    }
 }
