@@ -30,29 +30,25 @@ public class ProblemQueryService {
                                                                     String mainCategory,
                                                                     String rootCategoryPath,
                                                                     ContentLanguage contentLanguage) {
-        MainCategory resolved = resolveMainCategory(mainCategory);
-        String mainCategoryPath = resolved != null ? resolved.getPath() : null;
-        ContentLanguage resolvedLanguage = resolved != null
-                ? resolved.resolveContentLanguage(contentLanguage)
-                : contentLanguage;
+        String mainCategoryPath = normalizeMainCategory(mainCategory);
         String normalizedRootCategoryPath = normalizeRootCategory(rootCategoryPath);
         List<Problem> problems = problemReader.getAllRootProblem(
                 memberId,
                 cursorPageRequest,
                 mainCategoryPath,
                 normalizedRootCategoryPath,
-                resolvedLanguage
+                contentLanguage
         );
         CursorPage<Problem> slicedProblems = CursorPagingSupport.slice(problems, cursorPageRequest);
         Map<Long, Category> categoriesByProblemId = problemFinder.getAllCategory(slicedProblems.content());
         return collectToResponse(slicedProblems, categoriesByProblemId);
     }
 
-    private MainCategory resolveMainCategory(String mainCategory) {
+    private String normalizeMainCategory(String mainCategory) {
         if (mainCategory == null || mainCategory.isBlank()) {
             return null;
         }
-        return MainCategory.from(mainCategory);
+        return MainCategory.from(mainCategory).getPath();
     }
 
     private String normalizeRootCategory(String rootCategoryPath) {
