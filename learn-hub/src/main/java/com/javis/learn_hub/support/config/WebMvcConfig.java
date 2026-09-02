@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 
 @RequiredArgsConstructor
 @Configuration
@@ -19,9 +20,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
     private final AuthorizationInterceptor authorizationInterceptor;
     private final AuthArgumentResolver authArgumentResolver;
     private final CursorPageRequestArgumentResolver cursorPageRequestArgumentResolver;
+    private final LocaleChangeInterceptor localeChangeInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(localeChangeInterceptor)
+                .order(-10)
+                .addPathPatterns("/**");
+
         registry.addInterceptor(authenticationInterceptor)
                 .order(0)
                 .addPathPatterns("/**")
