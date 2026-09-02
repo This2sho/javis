@@ -25,7 +25,7 @@ public interface ProblemRepository extends Repository<Problem, Long> {
     SELECT p.*
     FROM problem p
     JOIN category c ON c.id = p.category_id
-    WHERE p.writer_id = :memberId
+    WHERE (p.writer_id = :memberId OR p.visibility = 'PUBLIC')
       AND p.parent_problem_id = -1
       AND (:mainCategoryPath IS NULL OR c.path LIKE CONCAT(:mainCategoryPath, ':%') OR c.path = :mainCategoryPath)
       AND (:rootCategoryPath IS NULL OR c.path = :rootCategoryPath OR c.path LIKE CONCAT(:rootCategoryPath, ':%'))
@@ -51,7 +51,7 @@ public interface ProblemRepository extends Repository<Problem, Long> {
     SELECT p.*
     FROM problem p
     JOIN category c ON c.id = p.category_id
-    WHERE p.writer_id = :memberId
+    WHERE (p.writer_id = :memberId OR p.visibility = 'PUBLIC')
       AND p.parent_problem_id = -1
       AND (:mainCategoryPath IS NULL OR c.path LIKE CONCAT(:mainCategoryPath, ':%') OR c.path = :mainCategoryPath)
       AND (:rootCategoryPath IS NULL OR c.path = :rootCategoryPath OR c.path LIKE CONCAT(:rootCategoryPath, ':%'))
