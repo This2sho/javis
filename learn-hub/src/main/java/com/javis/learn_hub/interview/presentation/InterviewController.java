@@ -1,5 +1,6 @@
 package com.javis.learn_hub.interview.presentation;
 
+import com.javis.learn_hub.category.domain.MainCategory;
 import com.javis.learn_hub.interview.service.InterviewFlowService;
 import com.javis.learn_hub.interview.service.dto.QuestionResponse;
 import com.javis.learn_hub.support.domain.Authenticated;
@@ -26,10 +27,11 @@ public class InterviewController {
             Locale locale,
             @Authenticated MemberId memberId
     ) {
+        MainCategory resolvedMainCategory = MainCategory.from(mainCategory);
         QuestionResponse questionResponse = interviewFlowService.start(
-                mainCategory,
+                resolvedMainCategory.getPath(),
                 memberId.getId(),
-                ContentLanguage.from(locale)
+                resolvedMainCategory.resolveContentLanguage(ContentLanguage.from(locale))
         );
         return ResponseEntity.ok(questionResponse);
     }

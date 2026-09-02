@@ -36,7 +36,7 @@ import lombok.NoArgsConstructor;
                         columnList = "parent_problem_id"
                 ),
                 @Index(
-                        name = "idx_problem_writer_id_parent_problem_id_content_language_updated_at_id",
+                        name = "idx_problem_writer_parent_lang_updated_id",
                         columnList = "writer_id, parent_problem_id, content_language, updated_at, id"
                 )
         }
