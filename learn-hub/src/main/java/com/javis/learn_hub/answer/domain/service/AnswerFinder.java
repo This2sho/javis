@@ -1,8 +1,12 @@
 package com.javis.learn_hub.answer.domain.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.javis.learn_hub.answer.domain.Answer;
 import com.javis.learn_hub.answer.domain.service.dto.CategoryGrade;
 import com.javis.learn_hub.answer.domain.service.dto.QnA;
+import com.javis.learn_hub.evaluation.domain.analysis.EvaluationAnalysis;
+import com.javis.learn_hub.evaluation.domain.analysis.SentenceSegmenter;
 import com.javis.learn_hub.evaluation.domain.Evaluation;
 import com.javis.learn_hub.evaluation.domain.repository.EvaluationRepository;
 import com.javis.learn_hub.interview.domain.Interview;
@@ -25,6 +29,8 @@ public class AnswerFinder {
     private final InterviewReader interviewReader;
     private final ProblemReader problemReader;
     private final EvaluationRepository evaluationRepository;
+    private final SentenceSegmenter sentenceSegmenter;
+    private final ObjectMapper objectMapper;
 
     public List<CategoryGrade> findCategoryGrades(Association<Interview> interviewId) {
         List<Question> questions = interviewReader.getAllQuestions(interviewId);
@@ -69,8 +75,24 @@ public class AnswerFinder {
                 .map(answer -> {
                     Question question = questionMap.get(answer.getQuestionId().getId());
                     Evaluation evaluation = evaluationMap.get(answer.getId());
-                    return new QnA(question, answer, evaluation);
+                    return new QnA(question, answer, evaluation, resolveAnalysis(answer, evaluation));
                 }).toList();
+    }
+
+    private EvaluationAnalysis resolveAnalysis(Answer answer, Evaluation evaluation) {
+        if (evaluation == null || evaluation.getAnalysisJson() == null || evaluation.getAnalysisJson().isBlank()) {
+            return EvaluationAnalysis.empty(sentenceSegmenter.segment(answer.getMessage()));
+        }
+
+        try {
+            EvaluationAnalysis parsed = objectMapper.readValue(evaluation.getAnalysisJson(), EvaluationAnalysis.class);
+            if (parsed == null || parsed.sentences() == null || parsed.sentences().isEmpty()) {
+                return EvaluationAnalysis.empty(sentenceSegmenter.segment(answer.getMessage()));
+            }
+            return parsed;
+        } catch (JsonProcessingException e) {
+            return EvaluationAnalysis.empty(sentenceSegmenter.segment(answer.getMessage()));
+        }
     }
 
     private List<CategoryGrade> toCategoryGrades(List<QnA> qnAs, List<Problem> problems) {

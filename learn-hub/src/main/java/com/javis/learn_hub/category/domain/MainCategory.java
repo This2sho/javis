@@ -11,7 +11,8 @@ public enum MainCategory {
     COMPUTER_SCIENCE("computer_science"),
     BACKEND("backend"),
     SYSTEM_DESIGN("system_design"),
-    CULTURE_FIT("culture_fit");
+    CULTURE_FIT("culture_fit"),
+    ENGLISH_CONVERSATION("english_conversation");
 
     private final String path;
 

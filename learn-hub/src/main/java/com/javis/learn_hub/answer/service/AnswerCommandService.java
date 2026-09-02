@@ -24,7 +24,11 @@ public class AnswerCommandService {
 
     @Transactional
     public AnswerSubmitResponse submitAnswer(Long questionId, AnswerRequest request) {
-        AnswerCreatedEvent event = answerProcessor.create(questionId, request.userAnswer());
+        AnswerCreatedEvent event = answerProcessor.create(
+                questionId,
+                request.userAnswer(),
+                request.responseTimeMs()
+        );
         applicationEventPublisher.publishEvent(event);
         return AnswerSubmitResponse.accepted(event.answerId());
     }

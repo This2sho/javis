@@ -6,6 +6,7 @@ import com.javis.learn_hub.member.domain.Member;
 import com.javis.learn_hub.member.domain.Role;
 import com.javis.learn_hub.member.domain.repository.MemberRepository;
 import com.javis.learn_hub.support.domain.Association;
+import com.javis.learn_hub.support.i18n.ContentLanguage;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class InterviewStartPolicy {
     private final MemberRepository memberRepository;
     private final InterviewRepository interviewRepository;
 
-    public void validate(Long memberId, MainCategory mainCategory) {
+    public void validate(Long memberId, MainCategory mainCategory, ContentLanguage contentLanguage) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalStateException("존재하지 않는 회원입니다."));
 
@@ -32,9 +33,10 @@ public class InterviewStartPolicy {
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime startOfNextDay = today.plusDays(1).atStartOfDay();
 
-        long interviewCount = interviewRepository.countByMemberIdAndMainCategoryAndCreatedAtBetween(
+        long interviewCount = interviewRepository.countByMemberIdAndMainCategoryAndContentLanguageAndCreatedAtBetween(
                 Association.from(memberId),
                 mainCategory,
+                contentLanguage,
                 startOfDay,
                 startOfNextDay
         );
@@ -50,6 +52,11 @@ public class InterviewStartPolicy {
             case BACKEND -> "백엔드";
             case SYSTEM_DESIGN -> "시스템 설계";
             case CULTURE_FIT -> "컬처 핏";
+            case ENGLISH_CONVERSATION -> "영어회화";
         };
+    }
+
+    public void validate(Long memberId, MainCategory mainCategory) {
+        validate(memberId, mainCategory, ContentLanguage.KO);
     }
 }

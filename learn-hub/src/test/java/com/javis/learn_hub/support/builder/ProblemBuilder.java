@@ -6,6 +6,7 @@ import com.javis.learn_hub.problem.domain.Difficulty;
 import com.javis.learn_hub.problem.domain.Problem;
 import com.javis.learn_hub.problem.domain.Visibility;
 import com.javis.learn_hub.support.domain.Association;
+import com.javis.learn_hub.support.i18n.ContentLanguage;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +18,7 @@ public class ProblemBuilder {
     private Difficulty difficulty = Difficulty.EASY;
     private String content = "기본 문제 내용";
     private Visibility visibility = Visibility.PRIVATE;
+    private ContentLanguage contentLanguage = ContentLanguage.KO;
 
     public static ProblemBuilder builder() {
         return new ProblemBuilder();
@@ -67,8 +69,13 @@ public class ProblemBuilder {
         return this;
     }
 
+    public ProblemBuilder withContentLanguage(ContentLanguage contentLanguage) {
+        this.contentLanguage = contentLanguage;
+        return this;
+    }
+
     public Problem build() {
-        return new Problem(categoryId, parentProblemId, writerId, difficulty, content, visibility);
+        return new Problem(categoryId, parentProblemId, writerId, difficulty, content, visibility, contentLanguage);
     }
 
     public List<Problem> build(int size) {
@@ -79,4 +86,3 @@ public class ProblemBuilder {
         return result;
     }
 }
-

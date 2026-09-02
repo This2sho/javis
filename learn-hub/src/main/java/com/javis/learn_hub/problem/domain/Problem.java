@@ -5,6 +5,7 @@ import com.javis.learn_hub.member.domain.Member;
 import com.javis.learn_hub.support.domain.Association;
 import com.javis.learn_hub.support.domain.BaseEntity;
 import com.javis.learn_hub.support.infrastructure.AssociationConverter;
+import com.javis.learn_hub.support.i18n.ContentLanguage;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -33,6 +34,10 @@ import lombok.NoArgsConstructor;
                 @Index(
                         name = "idx_problem_parent_problem_id",
                         columnList = "parent_problem_id"
+                ),
+                @Index(
+                        name = "idx_problem_writer_id_parent_problem_id_content_language_updated_at_id",
+                        columnList = "writer_id, parent_problem_id, content_language, updated_at, id"
                 )
         }
 )
@@ -57,17 +62,26 @@ public class Problem extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Visibility visibility;
 
+    @Enumerated(EnumType.STRING)
+    private ContentLanguage contentLanguage;
+
     @Lob
     private String content;
 
     public Problem(Association<Category> categoryId, Association<Problem> parentProblemId, Association<Member> writerId,
-                   Difficulty difficulty, String content, Visibility visibility) {
+                   Difficulty difficulty, String content, Visibility visibility, ContentLanguage contentLanguage) {
         this.categoryId = categoryId;
         this.parentProblemId = parentProblemId;
         this.writerId = writerId;
         this.difficulty = difficulty;
         this.content = content;
         this.visibility = visibility;
+        this.contentLanguage = contentLanguage;
+    }
+
+    public Problem(Association<Category> categoryId, Association<Problem> parentProblemId, Association<Member> writerId,
+                   Difficulty difficulty, String content, Visibility visibility) {
+        this(categoryId, parentProblemId, writerId, difficulty, content, visibility, ContentLanguage.KO);
     }
 
     public void validateWriter(Association<Member> writerId) {
@@ -104,5 +118,9 @@ public class Problem extends BaseEntity {
 
     public boolean isPrivate() {
         return visibility == Visibility.PRIVATE;
+    }
+
+    public boolean isIn(ContentLanguage contentLanguage) {
+        return this.contentLanguage == contentLanguage;
     }
 }

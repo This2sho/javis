@@ -153,4 +153,27 @@ class CategoryRecommenderTest {
                 }
         );
     }
+
+    @DisplayName("추천 카테고리는 중간 분류를 제외하고 leaf 카테고리만 대상으로 한다.")
+    @Test
+    void testRecommendCategoryIdsByScoreUsesOnlyLeafCategories() {
+        MainCategory cultureFit = MainCategory.CULTURE_FIT;
+        Category parentCategory = testFixtureFactory.make(
+                CategoryBuilder.builder().withMainCategory(cultureFit).withSubCategories("about_me").build());
+        Category leafCategory1 = testFixtureFactory.make(
+                CategoryBuilder.builder().withMainCategory(cultureFit).withSubCategories("about_me", "self_introduction").build());
+        Category leafCategory2 = testFixtureFactory.make(
+                CategoryBuilder.builder().withMainCategory(cultureFit).withSubCategories("resume", "current_role").build());
+        Member member = testFixtureFactory.make(MemberBuilder.builder().build());
+        testFixtureFactory.make(
+                ScoreBuilder.builder().withMemberId(member.getId()).withCategoryId(leafCategory1.getId()).withScore(5).build());
+
+        List<Association<Category>> categoryIds = categoryRecommender.recommendCategoryIdsByScore(
+                cultureFit, member.getId(), 3);
+
+        SoftAssertions.assertSoftly(softly -> {
+            assertThat(categoryIds).contains(Association.from(leafCategory1.getId()), Association.from(leafCategory2.getId()));
+            assertThat(categoryIds).doesNotContain(Association.from(parentCategory.getId()));
+        });
+    }
 }

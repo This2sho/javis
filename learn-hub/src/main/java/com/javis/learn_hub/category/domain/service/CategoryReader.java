@@ -18,6 +18,13 @@ public class CategoryReader {
         return categoryRepository.findAllByPathStartingWith(mainCategory.getPath());
     }
 
+    public List<Category> getAllLeafSubCategoriesFrom(MainCategory mainCategory) {
+        List<Category> categories = getAllSubCategoriesFrom(mainCategory);
+        return categories.stream()
+                .filter(category -> isLeafCategory(category, categories))
+                .toList();
+    }
+
     public List<Category> getAll(Set<Long> categoryIds) {
         return categoryRepository.findAllByIdIn(categoryIds);
     }
@@ -30,5 +37,12 @@ public class CategoryReader {
     public Category get(String categoryPath) {
         return categoryRepository.findByPath(categoryPath)
                 .orElseThrow(() -> new IllegalStateException("존재하지 않는 카테고리입니다."));
+    }
+
+    private boolean isLeafCategory(Category category, List<Category> categories) {
+        String childPrefix = category.getPath() + Category.getDelimiter();
+        return categories.stream()
+                .filter(other -> !other.equals(category))
+                .noneMatch(other -> other.getPath().startsWith(childPrefix));
     }
 }

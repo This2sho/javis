@@ -34,10 +34,11 @@ class AnswerCommandServiceTest {
         Long questionId = 1L;
         String problem = "REST API란?";
         String userAnswer = "REST는 Representational State Transfer의 약자입니다.";
-        AnswerRequest request = new AnswerRequest(problem, userAnswer);
+        Long responseTimeMs = 42_000L;
+        AnswerRequest request = new AnswerRequest(problem, userAnswer, responseTimeMs);
 
         AnswerCreatedEvent mockEvent = new AnswerCreatedEvent(10L, questionId);
-        when(answerProcessor.create(questionId, userAnswer)).thenReturn(mockEvent);
+        when(answerProcessor.create(questionId, userAnswer, responseTimeMs)).thenReturn(mockEvent);
 
         AnswerSubmitResponse response = answerCommandService.submitAnswer(questionId, request);
         assertThat(response.status()).isEqualTo("PENDING");

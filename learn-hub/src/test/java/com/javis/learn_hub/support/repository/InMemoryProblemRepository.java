@@ -5,6 +5,7 @@ import com.javis.learn_hub.member.domain.Member;
 import com.javis.learn_hub.problem.domain.Problem;
 import com.javis.learn_hub.problem.domain.repository.ProblemRepository;
 import com.javis.learn_hub.support.domain.Association;
+import com.javis.learn_hub.support.i18n.ContentLanguage;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -13,6 +14,12 @@ import java.util.function.Predicate;
 import org.springframework.data.domain.Pageable;
 
 public class InMemoryProblemRepository extends InMemoryRepository<Problem> implements ProblemRepository {
+
+    private final InMemoryCategoryRepository categoryRepository;
+
+    public InMemoryProblemRepository(InMemoryCategoryRepository categoryRepository) {
+        this.categoryRepository = categoryRepository;
+    }
 
     @Override
     public List<Problem> findAllByParentProblemId(Association<Problem> parentProblemId) {
@@ -29,11 +36,15 @@ public class InMemoryProblemRepository extends InMemoryRepository<Problem> imple
     }
 
     @Override
-    public List<Problem> findAllByMemberIdAndParentProblemIdByLatest(LocalDateTime targetTime, Long targetId,
-                                                                     Association<Member> memberId, Association<Problem> parentProblemId, Pageable pageable) {
+    public List<Problem> findAllRootByMemberAndFiltersByLatest(LocalDateTime targetTime, Long targetId,
+                                                               Long memberId, String mainCategoryPath,
+                                                               String rootCategoryPath, String contentLanguage,
+                                                               boolean includeNullLanguage, Pageable pageable) {
         Predicate<Problem> cursorCondition = p ->
-                p.getWriterId().equals(memberId)
-                        && p.getParentProblemId().equals(parentProblemId)
+                p.getWriterId().equals(Association.from(memberId))
+                        && p.getParentProblemId().isEmpty()
+                        && matchesPath(p, mainCategoryPath, rootCategoryPath)
+                        && matchesLanguage(p, ContentLanguage.valueOf(contentLanguage), includeNullLanguage)
                         && (p.getUpdatedAt().isBefore(targetTime)
                         || (p.getUpdatedAt().isEqual(targetTime) && p.getId() < targetId)
                 );
@@ -49,10 +60,14 @@ public class InMemoryProblemRepository extends InMemoryRepository<Problem> imple
     }
 
     @Override
-    public List<Problem> findAllByMemberIdAndParentProblemIdByOldest(LocalDateTime targetTime, Long targetId,
-                                                                     Association<Member> memberId, Association<Problem> parentProblemId, Pageable pageable) {
-        Predicate<Problem> cursorCondition = p -> p.getWriterId().equals(memberId)
-                && p.getParentProblemId().equals(parentProblemId)
+    public List<Problem> findAllRootByMemberAndFiltersByOldest(LocalDateTime targetTime, Long targetId,
+                                                               Long memberId, String mainCategoryPath,
+                                                               String rootCategoryPath, String contentLanguage,
+                                                               boolean includeNullLanguage, Pageable pageable) {
+        Predicate<Problem> cursorCondition = p -> p.getWriterId().equals(Association.from(memberId))
+                && p.getParentProblemId().isEmpty()
+                && matchesPath(p, mainCategoryPath, rootCategoryPath)
+                && matchesLanguage(p, ContentLanguage.valueOf(contentLanguage), includeNullLanguage)
                 && (p.getUpdatedAt().isAfter(targetTime) ||
                 (p.getUpdatedAt().isEqual(targetTime) && p.getId() > targetId)
         );
@@ -68,13 +83,37 @@ public class InMemoryProblemRepository extends InMemoryRepository<Problem> imple
     @Override
     public List<Problem> findRecommendableRootProblems(List<Association<Category>> categoryIds,
                                                        Association<Problem> parentProblemId,
-                                                       Association<Member> memberId) {
+                                                       Association<Member> memberId,
+                                                       ContentLanguage contentLanguage,
+                                                       boolean includeNullLanguage) {
         return findAll(problem -> categoryIds.contains(problem.getCategoryId())
                 && problem.getParentProblemId().equals(parentProblemId)
+                && matchesLanguage(problem, contentLanguage, includeNullLanguage)
                 && (
                         problem.isPublic() ||
                                 (problem.isPrivate() && problem.getWriterId().equals(memberId))
                 )
         );
+    }
+
+    private boolean matchesPath(Problem problem, String mainCategoryPath, String rootCategoryPath) {
+        String path = categoryRepository.findById(problem.getCategoryId().getId())
+                .map(Category::getPath)
+                .orElse("");
+
+        boolean matchesMainCategory = mainCategoryPath == null
+                || path.equals(mainCategoryPath)
+                || path.startsWith(mainCategoryPath + ":");
+        boolean matchesRootCategory = rootCategoryPath == null
+                || path.equals(rootCategoryPath)
+                || path.startsWith(rootCategoryPath + ":");
+        return matchesMainCategory && matchesRootCategory;
+    }
+
+    private boolean matchesLanguage(Problem problem, ContentLanguage contentLanguage, boolean includeNullLanguage) {
+        if (problem.getContentLanguage() == null) {
+            return includeNullLanguage;
+        }
+        return problem.getContentLanguage() == contentLanguage;
     }
 }

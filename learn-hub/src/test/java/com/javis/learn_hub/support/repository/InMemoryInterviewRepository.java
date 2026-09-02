@@ -6,6 +6,7 @@ import com.javis.learn_hub.interview.domain.InterviewStatus;
 import com.javis.learn_hub.interview.domain.repository.InterviewRepository;
 import com.javis.learn_hub.member.domain.Member;
 import com.javis.learn_hub.support.domain.Association;
+import com.javis.learn_hub.support.i18n.ContentLanguage;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -52,22 +53,32 @@ public class InMemoryInterviewRepository extends InMemoryRepository<Interview> i
     }
 
     @Override
-    public Optional<Interview> findByMemberIdAndMainCategoryAndStatus(Association<Member> memberId,
-                                                                      MainCategory mainCategory,
-                                                                      InterviewStatus interviewStatus) {
+    public Optional<Interview> findByMemberIdAndMainCategoryAndContentLanguageAndStatus(Association<Member> memberId,
+                                                                                         MainCategory mainCategory,
+                                                                                         ContentLanguage contentLanguage,
+                                                                                         InterviewStatus interviewStatus) {
         return findOne(i -> i.getMemberId().equals(memberId)
             &&  i.getMainCategory().equals(mainCategory)
+                && i.getContentLanguage() == contentLanguage
                 && i.getStatus().equals(interviewStatus)
         );
     }
 
     @Override
-    public long countByMemberIdAndMainCategoryAndCreatedAtBetween(Association<Member> memberId,
-                                                                  MainCategory mainCategory,
-                                                                  LocalDateTime start,
-                                                                  LocalDateTime end) {
+    public List<Interview> findAllByMemberIdAndStatus(Association<Member> memberId, InterviewStatus interviewStatus) {
+        return findAll(i -> i.getMemberId().equals(memberId)
+                && i.getStatus().equals(interviewStatus));
+    }
+
+    @Override
+    public long countByMemberIdAndMainCategoryAndContentLanguageAndCreatedAtBetween(Association<Member> memberId,
+                                                                                    MainCategory mainCategory,
+                                                                                    ContentLanguage contentLanguage,
+                                                                                    LocalDateTime start,
+                                                                                    LocalDateTime end) {
         return findAll(i -> i.getMemberId().equals(memberId)
                 && i.getMainCategory().equals(mainCategory)
+                && i.getContentLanguage() == contentLanguage
                 && !i.getCreatedAt().isBefore(start)
                 && i.getCreatedAt().isBefore(end)).size();
     }

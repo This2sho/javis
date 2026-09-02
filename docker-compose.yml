@@ -76,6 +76,7 @@ services:
       - javis-net
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      PROMETHEUS_METRICS_ENABLED: "true"
       DB_URL: jdbc:mysql://learn-hub-mysql-prod:3306/learn_hub?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Seoul
       <<: *common_environment
     depends_on:
@@ -96,6 +97,7 @@ services:
       - javis-net
     environment:
       SPRING_PROFILES_ACTIVE: test
+      PROMETHEUS_METRICS_ENABLED: "true"
       DB_URL: jdbc:mysql://learn-hub-mysql-test:3306/learn_hub_test?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Seoul
       JAVA_OPTS: >
         -Xms512m

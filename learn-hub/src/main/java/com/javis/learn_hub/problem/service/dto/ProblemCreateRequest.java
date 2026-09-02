@@ -16,6 +16,8 @@ public record ProblemCreateRequest(
         @NotBlank
         String category,
 
+        String contentLanguage,
+
         List<ProblemCreateRequest> followUpProblems
 ) {
 

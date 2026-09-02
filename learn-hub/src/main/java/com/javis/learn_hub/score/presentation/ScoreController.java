@@ -1,7 +1,7 @@
 package com.javis.learn_hub.score.presentation;
 
 import com.javis.learn_hub.score.service.ScoreService;
-import com.javis.learn_hub.score.service.dto.CategoryScoreNodeResponse;
+import com.javis.learn_hub.score.service.dto.ScoreDetailResponse;
 import com.javis.learn_hub.score.service.dto.ScoreSummaryResponse;
 import com.javis.learn_hub.support.domain.Authenticated;
 import com.javis.learn_hub.support.domain.MemberId;
@@ -28,11 +28,11 @@ public class ScoreController {
     }
 
     @GetMapping("/scores/{mainCategory}")
-    public ResponseEntity<CategoryScoreNodeResponse> showDetailScores(
+    public ResponseEntity<ScoreDetailResponse> showDetailScores(
             @Authenticated MemberId memberId,
             @PathVariable String mainCategory
     ) {
-        CategoryScoreNodeResponse response = scoreService.showDetailScore(memberId.getId(),
+        ScoreDetailResponse response = scoreService.showDetailScore(memberId.getId(),
                 mainCategory);
         return ResponseEntity.ok().body(response);
     }

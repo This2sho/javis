@@ -20,7 +20,7 @@ public class CategoryRecommender {
     private final CategoryReader categoryReader;
 
     public List<Association<Category>> recommendCategoryIdsByScore(MainCategory mainCategory, Long memberId, int maxRecommendSize) {
-        List<Category> subCategories = categoryReader.getAllSubCategoriesFrom(mainCategory);
+        List<Category> subCategories = categoryReader.getAllLeafSubCategoriesFrom(mainCategory);
         List<Score> scoresByLowest = scoreReader.getScoresByLowest(Association.from(memberId), subCategories);
         List<Association<Category>> existingCategoryIds = scoresByLowest.stream().map(score -> score.getCategoryId()).toList();
         List<Association<Category>> zeroScoreCategoryIds = getZeroScoreCategories(existingCategoryIds, subCategories);
@@ -34,7 +34,7 @@ public class CategoryRecommender {
     }
 
     public List<Association<Category>> getAllCategoryIds(MainCategory mainCategory) {
-        return categoryReader.getAllSubCategoriesFrom(mainCategory).stream()
+        return categoryReader.getAllLeafSubCategoriesFrom(mainCategory).stream()
                 .map(category -> Association.<Category>from(category.getId()))
                 .toList();
     }

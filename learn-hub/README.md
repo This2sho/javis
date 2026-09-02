@@ -96,3 +96,7 @@ infrastructure 패키지는 외부 시스템 및 기술 의존 영역을 담당�
 
 ## Related Documentation
 👉 [전체 프로젝트 개요 및 실행 방법](../README.md)
+
+👉 [아키텍처 및 코드 스타일](../docs/architecture-code-style.md)
+
+👉 [다국어 확장 기획](../docs/i18n-expansion-plan.md)

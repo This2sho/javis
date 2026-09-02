@@ -10,6 +10,7 @@ import com.javis.learn_hub.interview.domain.Question;
 import com.javis.learn_hub.interview.domain.repository.InterviewRepository;
 import com.javis.learn_hub.interview.domain.service.dto.InterviewStepResult;
 import com.javis.learn_hub.support.domain.Association;
+import com.javis.learn_hub.support.i18n.ContentLanguage;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -23,10 +24,12 @@ public class InterviewStepFinder {
     private final AnswerReader answerReader;
     private final EvaluationReader evaluationReader;
 
-    public Optional<Interview> findActiveInterview(MainCategory mainCategory, Long memberId) {
-        return interviewRepository.findByMemberIdAndMainCategoryAndStatus(
+    public Optional<Interview> findActiveInterview(MainCategory mainCategory, Long memberId,
+                                                   ContentLanguage contentLanguage) {
+        return interviewRepository.findByMemberIdAndMainCategoryAndContentLanguageAndStatus(
                 Association.from(memberId),
                 mainCategory,
+                contentLanguage,
                 InterviewStatus.ACTIVE
         );
     }
@@ -38,7 +41,7 @@ public class InterviewStepFinder {
         }
 
         Answer answer = answerReader.getByQuestionId(question.getId());
-        if (answer.needsEvaluation()) {
+        if (answer.isPendingEvaluation()) {
             return InterviewStepResult.pendingEvaluation(question);
         }
 

@@ -224,6 +224,65 @@ ul li {
     color: #1f2937;
 }
 
+.qna-answer-issue-inline {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.qna-answer-prefix {
+    display: inline-block;
+    margin-right: 6px;
+    font-weight: 700;
+}
+
+.qna-answer-sentences {
+    display: grid;
+    gap: 10px;
+}
+
+.qna-answer-sentence {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.qna-answer-sentence-issue {
+    background: #fef2f2;
+    border-left: 4px solid #dc2626;
+}
+
+.qna-sentence-text {
+    color: #1f2937;
+}
+
+.qna-sentence-review {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(220, 38, 38, 0.14);
+}
+
+.qna-sentence-review-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #b91c1c;
+    margin-bottom: 6px;
+}
+
+.qna-sentence-review-item + .qna-sentence-review-item {
+    margin-top: 8px;
+}
+
+.qna-sentence-review-reason {
+    font-size: 14px;
+    color: #991b1b;
+}
+
+.qna-sentence-review-suggestion {
+    margin-top: 4px;
+    font-size: 13px;
+    color: #7f1d1d;
+}
+
 .qna-feedback {
     background-color: #f3f4f6;
     border-radius: 12px;
@@ -231,6 +290,37 @@ ul li {
     font-size: 14px;
     line-height: 1.5;
     color: #374151;
+}
+
+.qna-missing-points {
+    margin-top: 12px;
+    padding: 12px;
+    background: #fff7ed;
+    border: 1px solid #fdba74;
+    border-radius: 12px;
+}
+
+.qna-missing-points-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #9a3412;
+    margin-bottom: 8px;
+}
+
+.qna-missing-point-item + .qna-missing-point-item {
+    margin-top: 8px;
+}
+
+.qna-missing-point-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #7c2d12;
+}
+
+.qna-missing-point-reason,
+.qna-missing-point-empty {
+    font-size: 14px;
+    color: #9a3412;
 }
 
 .interview-detail-actions {
@@ -258,6 +348,121 @@ ul li {
     font-size: 22px;
     font-weight: bold;
     margin-bottom: 16px;
+}
+
+.focus-list {
+    display: grid;
+    gap: 14px;
+}
+
+.focus-card {
+    display: grid;
+    gap: 12px;
+    padding: 18px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+}
+
+.focus-card.compact {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+}
+
+.focus-card-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.focus-card-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.focus-card-subtitle {
+    margin-top: 4px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.focus-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #3730a3;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.focus-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    font-size: 13px;
+    color: #374151;
+}
+
+.focus-feedback {
+    padding: 12px 14px;
+    background: #f8fafc;
+    border-radius: 14px;
+    color: #334155;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.focus-action {
+    justify-self: start;
+}
+
+.focus-empty {
+    padding: 18px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 16px;
+    background: #f8fafc;
+    color: #64748b;
+}
+
+.english-coaching-group + .english-coaching-group {
+    margin-top: 28px;
+}
+
+.english-coaching-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 14px;
+}
+
+.english-card {
+    gap: 10px;
+}
+
+.english-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #6366f1;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.english-sentence,
+.english-wrong-sentence {
+    font-size: 15px;
+    line-height: 1.65;
+    color: #111827;
+    white-space: pre-wrap;
+}
+
+.english-wrong-sentence {
+    color: #b91c1c;
 }
 
 .score-item {
@@ -377,6 +582,15 @@ textarea {
 textarea {
     min-height: 80px;
     resize: vertical;
+}
+
+.problem-box textarea[data-field="content"] {
+    min-height: 120px;
+}
+
+.problem-box textarea[data-field="expectedAnswer"] {
+    min-height: 180px;
+    line-height: 1.6;
 }
 
 /* =========================
@@ -520,6 +734,31 @@ button {
 .problem-list {
     max-width: 720px;
     margin: 15px auto 0;
+}
+
+.problem-filter-bar {
+    max-width: 720px;
+    margin: 12px auto 0;
+    padding: 0 4px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.problem-filter-chip {
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #374151;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.problem-filter-chip.selected {
+    background: #111827;
+    border-color: #111827;
+    color: #ffffff;
 }
 
 .problem-card {

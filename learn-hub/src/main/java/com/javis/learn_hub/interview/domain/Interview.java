@@ -5,6 +5,7 @@ import com.javis.learn_hub.member.domain.Member;
 import com.javis.learn_hub.support.domain.Association;
 import com.javis.learn_hub.support.domain.BaseEntity;
 import com.javis.learn_hub.support.infrastructure.AssociationConverter;
+import com.javis.learn_hub.support.i18n.ContentLanguage;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -34,6 +35,10 @@ import lombok.NoArgsConstructor;
                 @Index(
                         name = "idx_interview_member_id_main_category_created_at",
                         columnList = "member_id, main_category, created_at"
+                ),
+                @Index(
+                        name = "idx_interview_member_id_main_category_content_language_status",
+                        columnList = "member_id, main_category, content_language, status"
                 )
         }
 )
@@ -52,16 +57,25 @@ public class Interview extends BaseEntity {
     @Enumerated(EnumType.STRING)
     InterviewStatus status;
 
+    @Enumerated(EnumType.STRING)
+    private ContentLanguage contentLanguage;
+
     private int currentQuestionOrder;
 
     private int rootQuestionSize;
 
-    public Interview(Association<Member> memberId, MainCategory mainCategory, int rootQuestionSize) {
+    public Interview(Association<Member> memberId, MainCategory mainCategory, int rootQuestionSize,
+                     ContentLanguage contentLanguage) {
         this.memberId = memberId;
         this.mainCategory = mainCategory;
         this.status = InterviewStatus.ACTIVE;
+        this.contentLanguage = contentLanguage;
         this.currentQuestionOrder = 0;
         this.rootQuestionSize = rootQuestionSize;
+    }
+
+    public Interview(Association<Member> memberId, MainCategory mainCategory, int rootQuestionSize) {
+        this(memberId, mainCategory, rootQuestionSize, ContentLanguage.KO);
     }
 
     public boolean hasNextQuestion(){

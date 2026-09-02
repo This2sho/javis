@@ -11,6 +11,7 @@ import com.javis.learn_hub.problem.domain.service.dto.ProblemUpdateCommand;
 import com.javis.learn_hub.problem.service.dto.ProblemCreateRequest;
 import com.javis.learn_hub.problem.service.dto.ProblemUpdateRequest;
 import com.javis.learn_hub.support.domain.Association;
+import com.javis.learn_hub.support.i18n.ContentLanguage;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,9 +25,14 @@ public class ProblemCommandService {
     private final ProblemReader problemReader;
 
     @Transactional
-    public Long create(ProblemCreateRequest request, Long memberId) {
+    public Long create(ProblemCreateRequest request, Long memberId, ContentLanguage contentLanguage) {
         ProblemCreateCommand command = toProblemCreateCommand(request);
-        Problem problem = problemProcessor.create(command, memberId, Visibility.PRIVATE);
+        Problem problem = problemProcessor.create(
+                command,
+                memberId,
+                Visibility.PRIVATE,
+                resolveContentLanguage(request.contentLanguage(), contentLanguage)
+        );
         return problem.getId();
     }
 
@@ -69,8 +75,20 @@ public class ProblemCommandService {
     public void createAll(List<ProblemCreateRequest> requests, Long memberId) {
         for (ProblemCreateRequest request : requests) {
             ProblemCreateCommand command = toProblemCreateCommand(request);
-            problemProcessor.create(command, memberId, Visibility.PUBLIC);
+            problemProcessor.create(
+                    command,
+                    memberId,
+                    Visibility.PUBLIC,
+                    resolveContentLanguage(request.contentLanguage(), ContentLanguage.KO)
+            );
         }
+    }
+
+    private ContentLanguage resolveContentLanguage(String requestedContentLanguage, ContentLanguage fallback) {
+        if (requestedContentLanguage == null || requestedContentLanguage.isBlank()) {
+            return fallback;
+        }
+        return ContentLanguage.valueOf(requestedContentLanguage.trim().toUpperCase());
     }
 
     public void publish(Long rootProblemId) {

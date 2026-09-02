@@ -59,6 +59,13 @@ public class InterviewReader {
                 member, pageRequest.getPageable());
     }
 
+    public List<Interview> getAllEndedInterviews(Long memberId) {
+        return interviewRepository.findAllByMemberIdAndStatus(
+                Association.from(memberId),
+                InterviewStatus.ENDED
+        );
+    }
+
     public Question getCurrentQuestion(Interview interview) {
         return findPendingEvaluationQuestion(interview)
                 .or(() -> findFollowUpQuestion(interview))

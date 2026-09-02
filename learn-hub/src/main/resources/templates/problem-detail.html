@@ -116,6 +116,7 @@
         node.querySelector('[data-field="category"]').value = problem.category;
 
         selectDifficulty(node, problem.difficulty);
+        refreshProblemTextareas(node);
 
         if (!problem.followUps) return;
 

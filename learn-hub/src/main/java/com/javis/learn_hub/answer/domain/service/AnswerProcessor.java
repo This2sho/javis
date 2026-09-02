@@ -16,10 +16,14 @@ public class AnswerProcessor {
     private final AnswerRepository answerRepository;
     private final AnswerReader answerReader;
 
-    public AnswerCreatedEvent create(Long questionId, String userAnswer) {
-        Answer answer = Answer.create(questionId, userAnswer);
+    public AnswerCreatedEvent create(Long questionId, String userAnswer, Long responseTimeMs) {
+        Answer answer = Answer.create(questionId, userAnswer, responseTimeMs);
         answerRepository.save(answer);
         return new AnswerCreatedEvent(answer.getId(), questionId);
+    }
+
+    public AnswerCreatedEvent create(Long questionId, String userAnswer) {
+        return create(questionId, userAnswer, null);
     }
 
     @Transactional

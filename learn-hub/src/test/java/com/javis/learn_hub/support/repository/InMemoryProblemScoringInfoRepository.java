@@ -4,6 +4,7 @@ import com.javis.learn_hub.problem.domain.Problem;
 import com.javis.learn_hub.problem.domain.ProblemScoringInfo;
 import com.javis.learn_hub.problem.domain.repository.ProblemScoringInfoRepository;
 import com.javis.learn_hub.support.domain.Association;
+import java.util.List;
 import java.util.Optional;
 
 public class InMemoryProblemScoringInfoRepository extends InMemoryRepository<ProblemScoringInfo> implements
@@ -12,6 +13,11 @@ public class InMemoryProblemScoringInfoRepository extends InMemoryRepository<Pro
     @Override
     public Optional<ProblemScoringInfo> findByProblemId(Association<Problem> problemId) {
         return findOne(psi -> psi.getProblemId().equals(problemId));
+    }
+
+    @Override
+    public List<ProblemScoringInfo> findAllByProblemIdIn(List<Association<Problem>> problemIds) {
+        return findAll(psi -> problemIds.contains(psi.getProblemId()));
     }
 
     @Override

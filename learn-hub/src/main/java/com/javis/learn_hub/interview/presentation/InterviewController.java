@@ -4,6 +4,8 @@ import com.javis.learn_hub.interview.service.InterviewFlowService;
 import com.javis.learn_hub.interview.service.dto.QuestionResponse;
 import com.javis.learn_hub.support.domain.Authenticated;
 import com.javis.learn_hub.support.domain.MemberId;
+import com.javis.learn_hub.support.i18n.ContentLanguage;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,9 +23,14 @@ public class InterviewController {
     @PostMapping("/interviews/start/{mainCategory}")
     public ResponseEntity<QuestionResponse> startInterview(
             @PathVariable String mainCategory,
+            Locale locale,
             @Authenticated MemberId memberId
     ) {
-        QuestionResponse questionResponse = interviewFlowService.start(mainCategory, memberId.getId());
+        QuestionResponse questionResponse = interviewFlowService.start(
+                mainCategory,
+                memberId.getId(),
+                ContentLanguage.from(locale)
+        );
         return ResponseEntity.ok(questionResponse);
     }
 }

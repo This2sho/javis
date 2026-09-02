@@ -1,6 +1,7 @@
 package com.javis.learn_hub.evaluation.application;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -81,8 +82,8 @@ class EvaluationServiceConcurrencyTest {
         ProblemScoringInfo mockScoringInfo = Mockito.mock(ProblemScoringInfo.class);
         given(mockScoringInfo.getReferenceAnswer()).willReturn("모범 답안");
         given(problemReader.getProblemScoringInfoByQuestionId(anyLong())).willReturn(mockScoringInfo);
-        given(answerEvaluator.evaluate(anyString(),anyString(), anyString()))
-                .willReturn(new EvaluationResponse("판단 근거", "GOOD", "잘 답변했습니다."));
+        given(answerEvaluator.evaluate(anyString(), anyString(), anyString(), anyList(), any()))
+                .willReturn(new EvaluationResponse("판단 근거", "GOOD", "잘 답변했습니다.", java.util.List.of(), java.util.List.of()));
 
         // when - 5개 스레드가 동시에 재채점 요청
         int threadCount = 5;
@@ -109,7 +110,7 @@ class EvaluationServiceConcurrencyTest {
         executor.shutdown();
 
         // then - Gemini 요청은 정확히 1번만
-        verify(answerEvaluator, times(1)).evaluate(anyString(),any(), any());
+        verify(answerEvaluator, times(1)).evaluate(anyString(), any(), any(), anyList(), any());
     }
 
     @DisplayName("동시에 여러 번 답변 생성 이벤트가 들어와도 Gemini 채점 요청은 정확히 한 번만 전송된다")
@@ -123,14 +124,14 @@ class EvaluationServiceConcurrencyTest {
         ProblemScoringInfo mockScoringInfo = Mockito.mock(ProblemScoringInfo.class);
         given(mockScoringInfo.getReferenceAnswer()).willReturn("모범 답안");
         given(problemReader.getProblemScoringInfoByQuestionId(anyLong())).willReturn(mockScoringInfo);
-        given(answerEvaluator.evaluate(anyString(),anyString(), anyString()))
-                .willReturn(new EvaluationResponse("판단 근거", "GOOD", "잘 답변했습니다."));
+        given(answerEvaluator.evaluate(anyString(), anyString(), anyString(), anyList(), any()))
+                .willReturn(new EvaluationResponse("판단 근거", "GOOD", "잘 답변했습니다.", java.util.List.of(), java.util.List.of()));
 
         // when
         runConcurrently(5, evaluationQueuePoller::pollEvaluationQueue);
 
         // then
-        verify(answerEvaluator, timeout(5000).times(1)).evaluate(anyString(),anyString(), anyString());
+        verify(answerEvaluator, timeout(5000).times(1)).evaluate(anyString(), anyString(), anyString(), anyList(), any());
     }
 
     @DisplayName("동시에 여러 번 재채점 이벤트가 들어와도 Gemini 채점 요청은 정확히 한 번만 전송된다")
@@ -146,14 +147,14 @@ class EvaluationServiceConcurrencyTest {
         ProblemScoringInfo mockScoringInfo = Mockito.mock(ProblemScoringInfo.class);
         given(mockScoringInfo.getReferenceAnswer()).willReturn("모범 답안");
         given(problemReader.getProblemScoringInfoByQuestionId(anyLong())).willReturn(mockScoringInfo);
-        given(answerEvaluator.evaluate(anyString(),anyString(), anyString()))
-                .willReturn(new EvaluationResponse("판단 근거", "GOOD", "잘 답변했습니다."));
+        given(answerEvaluator.evaluate(anyString(), anyString(), anyString(), anyList(), any()))
+                .willReturn(new EvaluationResponse("판단 근거", "GOOD", "잘 답변했습니다.", java.util.List.of(), java.util.List.of()));
 
         // when
         runConcurrently(5, evaluationQueuePoller::pollEvaluationQueue);
 
         // then
-        verify(answerEvaluator, timeout(5000).times(1)).evaluate(anyString(),anyString(), anyString());
+        verify(answerEvaluator, timeout(5000).times(1)).evaluate(anyString(), anyString(), anyString(), anyList(), any());
     }
 
     @DisplayName("동시에 여러 번 채점 완료 처리가 들어와도 완료 이벤트와 평가 결과는 하나만 생성된다")
@@ -164,7 +165,7 @@ class EvaluationServiceConcurrencyTest {
         AnswerCreatedEvent createdEvent = answerProcessor.create(questionId, "테스트 답변");
         answerProcessor.prepareScoring(createdEvent.answerId());
 
-        EvaluationResponse result = new EvaluationResponse("판단 근거", "GOOD", "잘 답변했습니다.");
+        EvaluationResponse result = new EvaluationResponse("판단 근거", "GOOD", "잘 답변했습니다.", java.util.List.of(), java.util.List.of());
         AtomicInteger successCount = new AtomicInteger();
 
         // when

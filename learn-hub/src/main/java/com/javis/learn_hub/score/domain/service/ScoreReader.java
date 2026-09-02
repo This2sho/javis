@@ -47,12 +47,12 @@ public class ScoreReader {
     }
 
     public int getMainCategoryScore(Association<Member> memberId, MainCategory mainCategory) {
-        List<Category> subCategories = categoryReader.getAllSubCategoriesFrom(mainCategory);
+        List<Category> subCategories = categoryReader.getAllLeafSubCategoriesFrom(mainCategory);
         return scoreRepository.sumScoresByMemberIdAndCategoryIdIn(memberId, categoryIdsFrom(subCategories));
     }
 
     public Map<Category, Integer> getAllSubCategoryScores(Association<Member> memberId, MainCategory mainCategory) {
-        List<Category> subCategories = categoryReader.getAllSubCategoriesFrom(mainCategory);
+        List<Category> subCategories = categoryReader.getAllLeafSubCategoriesFrom(mainCategory);
         Set<Score> scores = scoreRepository.findByMemberIdAndCategoryIdIn(memberId, categoryIdsFrom(subCategories));
         Map<Long, Score> scoreByCategoryId = collectScoresByCategoryId(scores);
         return collectScoresByCategoryPath(subCategories, scoreByCategoryId);

@@ -43,20 +43,38 @@ public class Answer extends BaseEntity {
     @Lob
     private String message;
 
+    private Long responseTimeMs;
+
     @Version
     private Long version;
 
     @Enumerated(EnumType.STRING)
     private EvaluationState evaluationState;
 
-    public Answer(Association<Question> questionId, String message) {
+    public Answer(Association<Question> questionId, String message, Long responseTimeMs) {
         this.questionId = questionId;
         this.message = message;
+        this.responseTimeMs = sanitizeResponseTime(responseTimeMs);
         this.evaluationState = EvaluationState.PENDING;
     }
 
+    public Answer(Association<Question> questionId, String message) {
+        this(questionId, message, null);
+    }
+
+    public static Answer create(Long questionId, String message, Long responseTimeMs) {
+        return new Answer(Association.from(questionId), message, responseTimeMs);
+    }
+
     public static Answer create(Long questionId, String message) {
-        return new Answer(Association.from(questionId), message);
+        return create(questionId, message, null);
+    }
+
+    private Long sanitizeResponseTime(Long responseTimeMs) {
+        if (responseTimeMs == null) {
+            return null;
+        }
+        return Math.max(0L, responseTimeMs);
     }
 
     public void toScoring() {

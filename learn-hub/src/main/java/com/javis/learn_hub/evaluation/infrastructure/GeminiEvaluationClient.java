@@ -1,6 +1,9 @@
 package com.javis.learn_hub.evaluation.infrastructure;
 
+import com.javis.learn_hub.evaluation.domain.analysis.SegmentedSentence;
 import com.javis.learn_hub.evaluation.infrastructure.dto.EvaluationResponse;
+import com.javis.learn_hub.support.i18n.ContentLanguage;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.ChatOptions;
@@ -17,16 +20,20 @@ public class GeminiEvaluationClient implements AnswerEvaluator {
             당신은 IT 기술 면접관입니다. 채점 시작 전, [질문]의 성격을 먼저 분류하고 해당 모드에 따라 채점하세요.
             
             1. 기술 지식형 (예: TCP, JVM, DB 인덱스 등):
-               - 기준: '기준 답변'은 최소 가이드라인입니다.
-               - AI 판단: 사용자 답변이 '기준 답변'보다 기술적으로 더 정확하고 깊이 있다면, '기준 답변'에 없는 내용이라도 적극 반영하여 PERFECT를 부여하세요.
+               - 기준: [기준 답변]은 최소 가이드라인입니다.
+               - AI 판단: [사용자 답변]이 [기준 답변]보다 기술적으로 더 정확하고 깊이 있다면, [기준 답변]에 없는 내용이라도 적극 반영하여 PERFECT를 부여하세요.
             
             2. 경험/협업형 (예: 어려웠던 점, 갈등 해결 등):
-               - 기준: '기준 답변'에 명시된 필수 포함 요소(예: 상황, 행동, 결과 등)를 절대적 기준으로 삼습니다.
-               - AI 판단: 사용자 답변이 아무리 유려해도 '기준 답변'에서 요구하는 핵심 경험의 맥락에서 벗어나면 감점하세요.
+               - 기준: [기준 답변]에 명시된 필수 포함 요소(예: 상황, 행동, 결과 등)를 절대적 기준으로 삼습니다.
+               - AI 판단: [사용자 답변]이 아무리 유려해도 [기준 답변]에서 요구하는 핵심 경험의 맥락에서 벗어나면 감점하세요.
             
             [채점 가이드라인]
             - 먼저 'evaluationLogic' 필드에 질문 유형 분류와 채점 근거를 논리적으로 작성하세요.
             - 해당 근거를 바탕으로 최종 등급(grade)와 피드백(feedback)을 결정하세요.
+            - sentenceAnnotations는 [문장 목록]의 sentenceId만 사용해서 작성하세요.
+            - 답변 안에 실제로 존재하는 문장에 대한 문제만 sentenceAnnotations에 넣으세요.
+            - 답변에 없는 내용은 sentenceAnnotations에 쓰지 말고 missingPoints로만 작성하세요.
+            - 문장 원문을 새로 만들어내지 말고 sentenceId만 참조하세요.
        
             [등급 기준]
             - PERFECT: 핵심 원리를 완벽히 설명하고 기술 용어가 정확함
@@ -40,12 +47,56 @@ public class GeminiEvaluationClient implements AnswerEvaluator {
             - VAGUE: 핵심이 무엇인지 설명하는 피드백 1줄
             - INCORRECT: 왜 틀렸는지 설명하는 피드백 1줄
 
-            [입력 데이터]
-            - 질문: {question}
-            - 기준 답변: {referenceAnswer}
-            - 사용자 답변: {userAnswer}
+            [sentenceAnnotations 작성 규칙]
+            - 문장 전체 단위로만 지적하세요.
+            - sentenceId는 반드시 [문장 목록]에 존재하는 값만 사용하세요.
+            - issueType은 CONTENT, GRAMMAR, CLARITY, LOGIC 중 하나만 사용하세요.
+            - reason은 한국어로 짧고 명확하게 작성하세요.
+            - suggestion은 있으면 더 나은 한 문장 예시를 작성하고, 없으면 null로 두세요.
+            - 문제 없는 문장은 넣지 마세요.
+
+            [missingPoints 작성 규칙]
+            - 답변에 아예 빠진 핵심 포인트만 작성하세요.
+            - label과 reason은 한국어로 작성하세요.
+            - 없으면 빈 배열로 두세요.
+
+            [언어별 추가 지침]
+            {languageEvaluationGuide}
 
             반드시 제공된 응답 형식에 맞춰 JSON으로만 답변하세요.
+            """;
+
+    private static final String USER_PROMPT = """
+        [질문]
+        {question}
+
+        [기준 답변]
+        {referenceAnswer}
+
+        [사용자 답변]
+        {userAnswer}
+
+        [문장 목록]
+        {sentenceList}
+        """;
+
+    private static final String KOREAN_EVALUATION_GUIDE = """
+            - 이 문항은 한국어 답변 인터뷰입니다.
+            - 내용의 정확성, 구조, 핵심 포함 여부를 우선 평가하세요.
+            - 단순한 맞춤법이나 띄어쓰기보다 전달력과 논리성을 더 중요하게 보세요.
+            - feedback은 한국어로 작성하세요.
+            """;
+
+    private static final String ENGLISH_EVALUATION_GUIDE = """
+            - 이 문항은 영어 답변 인터뷰입니다.
+            - 내용의 적절성과 함께 영어 문법, 시제, 어휘 선택, collocation, 표현의 자연스러움을 함께 평가하세요.
+            - 사소한 문법 실수만으로 곧바로 INCORRECT를 주지 말고, 내용이 충분하면 PERFECT 또는 GOOD 범위 안에서 표현 완성도를 함께 반영하세요.
+            - 답변이 질문 의도에는 맞더라도 어색한 문장, 부자연스러운 단어 선택, 반복되는 표현이 있으면 피드백에 구체적으로 적으세요.
+            - 영어 질문인데 한국어로 답하거나 영어 문장으로 보기 어려운 수준이면 감점하세요.
+            - feedback은 반드시 한국어로 작성하되, 내용 측면과 영어 표현 측면을 함께 짧게 언급하세요.
+            - 영어 피드백에는 반드시 "예시:" 라벨을 붙여, 더 자연스럽거나 문법적으로 올바른 영어 문장 예문을 1개 이상 포함하세요.
+            - 사용자의 문장을 부분 수정해도 되고, 더 좋은 전체 문장으로 다시 써줘도 됩니다.
+            - PERFECT 등급이어도 더 자연스러운 영어 표현이 있다면 짧은 개선 예시를 함께 제시하세요.
             """;
 
     private final ChatClient chatClient;
@@ -60,13 +111,23 @@ public class GeminiEvaluationClient implements AnswerEvaluator {
             backoff = @Backoff(delay = 1000, multiplier = 2.0, maxDelay = 4000)
     )
     @Override
-    public EvaluationResponse evaluate(String question, String referenceAnswer, String userAnswer) {
+    public EvaluationResponse evaluate(String question,
+                                       String referenceAnswer,
+                                       String userAnswer,
+                                       List<SegmentedSentence> sentences,
+                                       ContentLanguage contentLanguage) {
         try {
+            String languageEvaluationGuide = contentLanguage != null && contentLanguage.isEnglish()
+                    ? ENGLISH_EVALUATION_GUIDE
+                    : KOREAN_EVALUATION_GUIDE;
             return chatClient.prompt()
-                    .user(u -> u.text(SYSTEM_PROMPT)
+                    .system(s -> s.text(SYSTEM_PROMPT)
+                            .param("languageEvaluationGuide", languageEvaluationGuide))
+                    .user(u -> u.text(USER_PROMPT)
                             .param("question", question)
                             .param("referenceAnswer", referenceAnswer)
-                            .param("userAnswer", userAnswer))
+                            .param("userAnswer", userAnswer)
+                            .param("sentenceList", formatSentenceList(sentences)))
                     .options(ChatOptions.builder()
                             .temperature(0.1)
                             .build())
@@ -79,8 +140,23 @@ public class GeminiEvaluationClient implements AnswerEvaluator {
     }
 
     @Recover
-    public EvaluationResponse recover(Exception e, String question, String referenceAnswer, String userAnswer) {
+    public EvaluationResponse recover(Exception e,
+                                      String question,
+                                      String referenceAnswer,
+                                      String userAnswer,
+                                      List<SegmentedSentence> sentences,
+                                      ContentLanguage contentLanguage) {
         log.error("Gemini 채점 최종 실패 (3회 재시도 소진): {}", e.getMessage());
         throw new EvaluationRequestException(e);
+    }
+
+    private String formatSentenceList(List<SegmentedSentence> sentences) {
+        if (sentences == null || sentences.isEmpty()) {
+            return "(문장 분리 결과 없음)";
+        }
+        return sentences.stream()
+                .map(sentence -> sentence.sentenceId() + ". " + sentence.text())
+                .reduce((left, right) -> left + "\n" + right)
+                .orElse("(문장 분리 결과 없음)");
     }
 }

@@ -4,6 +4,7 @@ import com.javis.learn_hub.category.domain.Category;
 import com.javis.learn_hub.member.domain.Member;
 import com.javis.learn_hub.problem.domain.Problem;
 import com.javis.learn_hub.support.domain.Association;
+import com.javis.learn_hub.support.i18n.ContentLanguage;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -20,33 +21,55 @@ public interface ProblemRepository extends Repository<Problem, Long> {
 
     List<Problem> findAllByIdIn(Iterable<Long> ids);
 
-    @Query("""
-    SELECT p
-    FROM Problem p
-    WHERE p.writerId = :memberId AND p.parentProblemId = :parentProblemId
-            AND (p.updatedAt < :targetTime OR (p.updatedAt = :targetTime AND p.id <= :targetId))
-    ORDER BY p.updatedAt DESC, p.id DESC
-    """)
-    List<Problem> findAllByMemberIdAndParentProblemIdByLatest(
+    @Query(value = """
+    SELECT p.*
+    FROM problem p
+    JOIN category c ON c.id = p.category_id
+    WHERE p.writer_id = :memberId
+      AND p.parent_problem_id = -1
+      AND (:mainCategoryPath IS NULL OR c.path LIKE CONCAT(:mainCategoryPath, ':%') OR c.path = :mainCategoryPath)
+      AND (:rootCategoryPath IS NULL OR c.path = :rootCategoryPath OR c.path LIKE CONCAT(:rootCategoryPath, ':%'))
+      AND (
+            p.content_language = :contentLanguage
+            OR (:includeNullLanguage = true AND p.content_language IS NULL)
+          )
+      AND (p.updated_at < :targetTime OR (p.updated_at = :targetTime AND p.id <= :targetId))
+    ORDER BY p.updated_at DESC, p.id DESC
+    """, nativeQuery = true)
+    List<Problem> findAllRootByMemberAndFiltersByLatest(
             @Param("targetTime") LocalDateTime targetTime,
             @Param("targetId") Long targetId,
-            Association<Member> memberId,
-            Association<Problem> parentProblemId,
+            @Param("memberId") Long memberId,
+            @Param("mainCategoryPath") String mainCategoryPath,
+            @Param("rootCategoryPath") String rootCategoryPath,
+            @Param("contentLanguage") String contentLanguage,
+            @Param("includeNullLanguage") boolean includeNullLanguage,
             Pageable pageable
     );
 
-    @Query("""
-    SELECT p
-    FROM Problem p
-    WHERE p.writerId = :memberId AND p.parentProblemId = :parentProblemId
-            AND (p.updatedAt > :targetTime OR (p.updatedAt = :targetTime AND p.id >= :targetId))
-    ORDER BY p.updatedAt ASC, p.id ASC
-    """)
-    List<Problem> findAllByMemberIdAndParentProblemIdByOldest(
+    @Query(value = """
+    SELECT p.*
+    FROM problem p
+    JOIN category c ON c.id = p.category_id
+    WHERE p.writer_id = :memberId
+      AND p.parent_problem_id = -1
+      AND (:mainCategoryPath IS NULL OR c.path LIKE CONCAT(:mainCategoryPath, ':%') OR c.path = :mainCategoryPath)
+      AND (:rootCategoryPath IS NULL OR c.path = :rootCategoryPath OR c.path LIKE CONCAT(:rootCategoryPath, ':%'))
+      AND (
+            p.content_language = :contentLanguage
+            OR (:includeNullLanguage = true AND p.content_language IS NULL)
+          )
+      AND (p.updated_at > :targetTime OR (p.updated_at = :targetTime AND p.id >= :targetId))
+    ORDER BY p.updated_at ASC, p.id ASC
+    """, nativeQuery = true)
+    List<Problem> findAllRootByMemberAndFiltersByOldest(
             @Param("targetTime") LocalDateTime targetTime,
             @Param("targetId") Long targetId,
-            Association<Member> memberId,
-            Association<Problem> parentProblemId,
+            @Param("memberId") Long memberId,
+            @Param("mainCategoryPath") String mainCategoryPath,
+            @Param("rootCategoryPath") String rootCategoryPath,
+            @Param("contentLanguage") String contentLanguage,
+            @Param("includeNullLanguage") boolean includeNullLanguage,
             Pageable pageable
     );
 
@@ -60,6 +83,10 @@ public interface ProblemRepository extends Repository<Problem, Long> {
         where p.categoryId in :categoryIds
           and p.parentProblemId = :parentProblemId
           and (
+                p.contentLanguage = :contentLanguage
+             or (:includeNullLanguage = true and p.contentLanguage is null)
+          )
+          and (
                 p.visibility = com.javis.learn_hub.problem.domain.Visibility.PUBLIC
              or (p.visibility = com.javis.learn_hub.problem.domain.Visibility.PRIVATE and p.writerId = :memberId)
           )
@@ -67,6 +94,8 @@ public interface ProblemRepository extends Repository<Problem, Long> {
     List<Problem> findRecommendableRootProblems(
             @Param("categoryIds") List<Association<Category>> categoryIds,
             @Param("parentProblemId") Association<Problem> parentProblemId,
-            @Param("memberId") Association<Member> memberId
+            @Param("memberId") Association<Member> memberId,
+            @Param("contentLanguage") ContentLanguage contentLanguage,
+            @Param("includeNullLanguage") boolean includeNullLanguage
     );
 }

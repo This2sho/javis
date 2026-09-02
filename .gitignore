@@ -7,5 +7,10 @@ evaluation/src/evaluation/core/translation_cache.json
 /learn-hub/out
 /learn-hub/.idea
 /learn-hub/build
-/docs/
+/docs/**
+!/docs/
+!/docs/rule/
+!/docs/rule/architecture-code-style.md
+!/docs/rule/i18n-expansion-plan.md
+!/docs/rule/next-session-guide.md
 /k6-scripts/

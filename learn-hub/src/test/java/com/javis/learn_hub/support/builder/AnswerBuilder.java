@@ -8,6 +8,7 @@ public class AnswerBuilder {
 
     private Association<Question> questionId = Association.from(1L);
     private String message = "기본 답변입니다.";
+    private Long responseTimeMs = null;
 
     public static AnswerBuilder builder() {
         return new AnswerBuilder();
@@ -28,8 +29,13 @@ public class AnswerBuilder {
         return this;
     }
 
+    public AnswerBuilder withResponseTimeMs(Long responseTimeMs) {
+        this.responseTimeMs = responseTimeMs;
+        return this;
+    }
+
     public Answer build() {
-        return new Answer(questionId, message);
+        return new Answer(questionId, message, responseTimeMs);
     }
 
     public Answer buildScored() {

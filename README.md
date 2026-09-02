@@ -128,6 +128,12 @@ Spring 서버는 웹 뷰 제공, 비즈니스 로직 처리, 인터뷰 진행, �
 
 👉 [Spring API Server](./learn-hub/README.md)
 
+👉 [Architecture And Code Style](docs/rule/architecture-code-style.md)
+
+👉 [I18N Expansion Plan](docs/rule/i18n-expansion-plan.md)
+
+👉 [Production Infra And Deployment](docs/rule/production-infra-and-deployment.md)
+
 ## How to Run
 
 전체 서비스는 Docker Compose를 통해 실행할 수 있습니다.

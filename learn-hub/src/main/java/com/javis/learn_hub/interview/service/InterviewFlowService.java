@@ -13,6 +13,7 @@ import com.javis.learn_hub.interview.domain.service.dto.NextQuestionResult;
 import com.javis.learn_hub.interview.service.dto.InterviewerResponse;
 import com.javis.learn_hub.interview.service.dto.QuestionResponse;
 import com.javis.learn_hub.problem.domain.Difficulty;
+import com.javis.learn_hub.support.i18n.ContentLanguage;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -30,14 +31,22 @@ public class InterviewFlowService {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
-    public QuestionResponse start(String mainCategoryName, Long memberId) {
+    public QuestionResponse start(String mainCategoryName, Long memberId, ContentLanguage contentLanguage) {
         MainCategory mainCategory = MainCategory.from(mainCategoryName);
-        Optional<Interview> interview = interviewStepFinder.findActiveInterview(mainCategory, memberId);
+        Optional<Interview> interview = interviewStepFinder.findActiveInterview(
+                mainCategory,
+                memberId,
+                contentLanguage
+        );
         if (interview.isPresent()) {
             return resumeInterview(interview.get());
         }
-        List<Question> rootQuestions = interviewProcessor.initInterview(mainCategory, memberId);
+        List<Question> rootQuestions = interviewProcessor.initInterview(mainCategory, memberId, contentLanguage);
         return QuestionResponse.from(rootQuestions.get(0));
+    }
+
+    public QuestionResponse start(String mainCategoryName, Long memberId) {
+        return start(mainCategoryName, memberId, ContentLanguage.KO);
     }
 
     private QuestionResponse resumeInterview(Interview interview) {

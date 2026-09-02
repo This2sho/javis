@@ -1,50 +1,80 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${interviewTitle}">인터뷰</title>
+    <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/chat.css">
 </head>
-<body>
+<body class="interview-page">
 
-<h2 th:text="${interviewTitle}"></h2>
+<main class="interview-page-shell">
+    <header class="interview-page-header">
+        <div>
+            <h2 th:text="${interviewTitle}"></h2>
+            <p class="interview-timer-label" th:text="#{interview.timer.tip}">Answer as quickly and clearly as you can.</p>
+        </div>
+        <div class="interview-timer-card" id="timerCard">
+            <span class="interview-timer-title" th:text="#{interview.timer.title}">Answer Time</span>
+            <strong class="interview-timer-value" id="answerTimer">00:00</strong>
+        </div>
+    </header>
 
-<input type="hidden" th:value="${mainCategory}" id="mainCategory">
-<input type="hidden" value="-1" id="questionId"/>
+    <input type="hidden" th:value="${mainCategory}" id="mainCategory">
+    <input type="hidden" value="-1" id="questionId"/>
 
-<div class="chat-container">
-    <div class="messages" id="chatContainer">
+    <div class="chat-container">
+        <div class="messages" id="chatContainer">
 
-        <!-- ✅ 시작 인사 (SSR) -->
-        <div class="message bot-message"
-             th:text="${welcomeMessage}">
+            <div class="message bot-message"
+                 th:text="${welcomeMessage}">
+            </div>
         </div>
 
+        <div class="input-container">
+            <textarea id="chatInput"
+                      class="chat-input"
+                      th:placeholder="#{interview.placeholder}"
+                      placeholder="Enter your answer..."></textarea>
+
+            <button class="send-button" id="sendButton">
+                <svg viewBox="0 0 24 24">
+                    <path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/>
+                </svg>
+            </button>
+        </div>
     </div>
+</main>
 
-    <div class="input-container">
-        <textarea id="chatInput"
-                  class="chat-input"
-                  placeholder="답변을 입력하세요..."></textarea>
-
-        <button class="send-button" id="sendButton">
-            <svg viewBox="0 0 24 24">
-                <path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/>
-            </svg>
-        </button>
-    </div>
-</div>
-
-<script>
+<script th:inline="javascript">
     const chatInput = document.getElementById("chatInput");
     const chatContainer = document.getElementById("chatContainer");
     const sendButton = document.getElementById("sendButton");
     const mainCategory = document.getElementById("mainCategory").value;
+    const messages = {
+        resume: /*[[#{interview.resume}]]*/ "Resuming your in-progress interview.",
+        pending: /*[[#{interview.pending}]]*/ "Your previous answer is being evaluated. Please wait a moment.",
+        preparing: /*[[#{interview.preparing}]]*/ "Preparing the next question. Please wait a moment.",
+        startFailed: /*[[#{interview.start.failed}]]*/ "Unable to start the interview due to a network issue.",
+        finished: /*[[#{interview.finished}]]*/ "The interview has ended. Good work.",
+        timeout: /*[[#{interview.timeout}]]*/ "Evaluation is taking longer than expected. Please try again shortly.",
+        serverError: /*[[#{interview.server.error}]]*/ "A server error occurred.",
+        loading: /*[[#{interview.loading}]]*/ "Analyzing your answer",
+        retry: /*[[#{interview.retry}]]*/ "Retry",
+        wsOpen: /*[[#{interview.ws.open}]]*/ "WebSocket connected",
+        wsClose: /*[[#{interview.ws.close}]]*/ "WebSocket disconnected",
+        wsError: /*[[#{interview.ws.error}]]*/ "WebSocket error:",
+        timerMeta: /*[[#{interview.timer.meta('__TIME__')}]]*/ "Answer time: __TIME__"
+    };
 
     let ws = null;
     let loadingMessage = null;
     let memberId = null;
     let evaluationTimeoutId = null;
+    let answerStartedAt = null;
+    let timerIntervalId = null;
+    let lastElapsedMs = 0;
 
     /* =========================
        페이지 로드 → WebSocket 연결 + 인터뷰 시작
@@ -60,40 +90,45 @@
             method: "POST",
             credentials: "include"
         })
-            .then(res => {
+            .then(async res => {
                 if (!res.ok) {
-                    return res.json().then(err => {
-                        alert(err.message);
-                        window.location.href = "/";
-                        unlockInput();
-                    });
+                    let errorMessage = messages.startFailed;
+
+                    try {
+                        const err = await res.json();
+                        errorMessage = err?.message || errorMessage;
+                    } catch (parseError) {
+                        console.error(parseError);
+                    }
+
+                    throw new Error(errorMessage);
                 }
                 return res.json();
             })
             .then(data => {
                 connectWebSocket(data.interviewId);
                 if (!data.isFirst) {
-                    appendBotMessage("진행중이던 인터뷰를 이어서 진행합니다.");
+                    appendBotMessage(messages.resume);
                 }
                 if (data.isPendingEvaluation) {
-                    appendBotMessage("이전 답변을 채점 중입니다. 잠시만 기다려주세요.");
+                    appendBotMessage(messages.pending);
                     loadingMessage = appendLoadingMessage();
                     startEvaluationTimeout();
                     return;
                 }
                 if (!data.question) {
-                    appendBotMessage("다음 질문을 준비 중입니다. 잠시만 기다려주세요.");
+                    appendBotMessage(messages.preparing);
                     loadingMessage = appendLoadingMessage();
                     startEvaluationTimeout();
                     return;
                 }
-                appendBotMessage(data.question);
-                document.getElementById("questionId").value = data.questionId;
+                showQuestion(data.question, data.questionId);
                 unlockInput();
             })
             .catch(err => {
                 console.error(err);
-                appendBotMessage("네트워크 문제가 발생하여 인터뷰를 시작할 수 없습니다.");
+                alert(err?.message || messages.startFailed);
+                window.location.href = "/";
                 unlockInput();
             });
     }
@@ -108,7 +143,7 @@
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-            console.log("WebSocket 연결 성공");
+            console.log(messages.wsOpen);
         };
 
         ws.onmessage = (event) => {
@@ -117,14 +152,14 @@
         };
 
         ws.onclose = () => {
-            console.log("WebSocket 연결 종료");
+            console.log(messages.wsClose);
             setTimeout(() => {
                 if (interviewId) connectWebSocket(interviewId);
             }, 3000);
         };
 
         ws.onerror = (error) => {
-            console.error("WebSocket 에러:", error);
+            console.error(messages.wsError, error);
         };
     }
 
@@ -146,13 +181,13 @@
         }
 
         if (data.ended) {
-            appendBotMessage("인터뷰가 종료되었습니다. 수고하셨습니다!");
+            stopAnswerTimer();
+            appendBotMessage(messages.finished);
             setTimeout(() => {
                 window.location.href = `/interviews/${data.interviewId}`;
             }, 1500);
         } else {
-            appendBotMessage(data.interviewerMessage);
-            document.getElementById("questionId").value = data.questionId;
+            showQuestion(data.interviewerMessage, data.questionId);
             unlockInput();
         }
     }
@@ -166,7 +201,7 @@
                 loadingMessage.remove();
                 loadingMessage = null;
             }
-            appendBotMessage("채점에 시간이 오래 걸리고 있습니다. 잠시 후 다시 시도해주세요.");
+            appendBotMessage(messages.timeout);
             appendRetryButton();
         }, 180000);
     }
@@ -188,8 +223,10 @@
 
         const latestQuestion =
             chatContainer.querySelector(".bot-message:last-child")?.innerText;
+        const elapsedMs = getCurrentElapsedMs();
 
-        appendUserMessage(userAnswer);
+        appendUserMessage(userAnswer, elapsedMs);
+        stopAnswerTimer();
         resetInput();
         lockInput();
 
@@ -202,14 +239,15 @@
             credentials: "include",
             body: JSON.stringify({
                 problem: latestQuestion,
-                userAnswer: userAnswer
+                userAnswer: userAnswer,
+                responseTimeMs: elapsedMs
             })
         })
             .then(res => {
                 if (res.status === 202) {
-                    console.log("답변 제출 완료, 채점 대기 중...");
+                    console.log("answer submitted, waiting for evaluation...");
                 } else {
-                    throw new Error("답변 제출 실패");
+                    throw new Error("submit failed");
                 }
             })
             .catch(err => {
@@ -219,7 +257,7 @@
                     loadingMessage = null;
                 }
                 console.error(err);
-                appendBotMessage("서버 오류가 발생했습니다.");
+                appendBotMessage(messages.serverError);
                 unlockInput();
             });
     }
@@ -235,12 +273,71 @@
         scrollBottom();
     }
 
-    function appendUserMessage(text) {
+    function appendUserMessage(text, elapsedMs = null) {
         const div = document.createElement("div");
         div.className = "message user-message";
-        div.innerText = text;
+
+        const body = document.createElement("div");
+        body.innerText = text;
+        div.appendChild(body);
+
+        if (elapsedMs !== null) {
+            const meta = document.createElement("div");
+            meta.className = "message-meta user-message-meta";
+            meta.innerText = messages.timerMeta.replace("__TIME__", formatElapsed(elapsedMs));
+            div.appendChild(meta);
+        }
+
         chatContainer.appendChild(div);
         scrollBottom();
+    }
+
+    function showQuestion(question, questionId) {
+        appendBotMessage(question);
+        document.getElementById("questionId").value = questionId;
+        startAnswerTimer();
+    }
+
+    function startAnswerTimer() {
+        stopAnswerTimer(false);
+        answerStartedAt = Date.now();
+        lastElapsedMs = 0;
+        updateAnswerTimer(0);
+        timerIntervalId = setInterval(() => {
+            updateAnswerTimer(getCurrentElapsedMs());
+        }, 1000);
+    }
+
+    function stopAnswerTimer(resetClock = false) {
+        if (timerIntervalId) {
+            clearInterval(timerIntervalId);
+            timerIntervalId = null;
+        }
+        if (answerStartedAt) {
+            lastElapsedMs = Date.now() - answerStartedAt;
+            updateAnswerTimer(lastElapsedMs);
+        } else if (resetClock) {
+            updateAnswerTimer(0);
+        }
+        answerStartedAt = null;
+    }
+
+    function getCurrentElapsedMs() {
+        if (!answerStartedAt) {
+            return lastElapsedMs;
+        }
+        return Date.now() - answerStartedAt;
+    }
+
+    function updateAnswerTimer(elapsedMs) {
+        document.getElementById("answerTimer").innerText = formatElapsed(elapsedMs);
+    }
+
+    function formatElapsed(elapsedMs) {
+        const totalSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
+        const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+        const seconds = String(totalSeconds % 60).padStart(2, "0");
+        return `${minutes}:${seconds}`;
     }
 
     function appendLoadingMessage() {
@@ -251,7 +348,7 @@
         spinner.className = "spinner";
 
         const text = document.createElement("span");
-        text.innerText = "답변을 분석 중입니다";
+        text.innerText = messages.loading;
 
         div.appendChild(spinner);
         div.appendChild(text);
@@ -265,7 +362,7 @@
         div.className = "message bot-message";
 
         const btn = document.createElement("button");
-        btn.innerText = "다시 시도";
+        btn.innerText = messages.retry;
         btn.onclick = () => {
             div.remove();
             if (ws) {

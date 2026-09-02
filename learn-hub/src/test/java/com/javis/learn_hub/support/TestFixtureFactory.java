@@ -26,12 +26,12 @@ import java.util.Map;
 
 public class TestFixtureFactory {
 
+    private final InMemoryCategoryRepository categoryRepository = new InMemoryCategoryRepository();
     private final InMemoryAnswerRepository answerRepository = new InMemoryAnswerRepository();
     private final InMemoryQuestionRepository questionRepository = new InMemoryQuestionRepository();
     private final InMemoryInterviewRepository interviewRepository = new InMemoryInterviewRepository();
-    private final InMemoryProblemRepository problemRepository = new InMemoryProblemRepository();
+    private final InMemoryProblemRepository problemRepository = new InMemoryProblemRepository(categoryRepository);
     private final InMemoryScoreRepository scoreRepository = new InMemoryScoreRepository();
-    private final InMemoryCategoryRepository categoryRepository = new InMemoryCategoryRepository();
     private final InMemoryMemberRepository memberRepository = new InMemoryMemberRepository();
     private final InMemoryProblemScoringInfoRepository problemScoringInfoRepository = new InMemoryProblemScoringInfoRepository();
     private final InMemoryReviewRepository reviewRepository = new InMemoryReviewRepository();

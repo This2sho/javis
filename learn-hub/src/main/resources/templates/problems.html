@@ -1,43 +1,59 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
     <meta charset="UTF-8">
-    <title>문제 목록</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{problems.title}">Problem History</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
 <header>
-    <h1>문제 기록</h1>
+    <h1 th:text="#{problems.title}">Problem History</h1>
     <div class="header-actions">
         <button class="problem-addition-action"
-                onclick="location.href='/review-requests'">
-            리뷰 상태 보기
-        </button>
+                onclick="location.href='/review-requests'"
+                th:text="#{problems.review.requests}">View Review Status</button>
 
         <button class="problem-addition-action"
-                onclick="location.href='/problems/new'">
-            + 새 문제 생성
-        </button>
+                onclick="location.href='/problems/new'"
+                th:text="#{problems.new}">+ New Problem</button>
     </div>
 </header>
 
 <main class="page-container">
+    <div class="problem-filter-bar" id="problemFilterBar">
+        <button class="problem-filter-chip selected" data-main-category="" th:text="#{problems.filter.all}">전체</button>
+        <button class="problem-filter-chip" data-main-category="computer_science" th:text="#{mainCategory.computer_science}">Computer Science</button>
+        <button class="problem-filter-chip" data-main-category="backend" th:text="#{mainCategory.backend}">Backend</button>
+        <button class="problem-filter-chip" data-main-category="system_design" th:text="#{mainCategory.system_design}">System Design</button>
+        <button class="problem-filter-chip" data-main-category="culture_fit" th:text="#{mainCategory.culture_fit}">Culture Fit</button>
+    </div>
+    <div class="problem-filter-bar" id="rootCategoryFilterBar" hidden></div>
     <div id="problem-list" class="problem-list"></div>
-    <div id="loading" class="interview-loading">불러오는 중...</div>
+    <div id="loading" class="interview-loading" th:text="#{common.loading}">Loading...</div>
 </main>
 
-<!-- problem-form.js는 그대로 유지 -->
 <script src="/js/problem-form.js"></script>
 <script src="/js/cursor-paging.js"></script>
-<script>
+<script th:inline="javascript">
+    const CATEGORY_TREE = /*[[${categoryTree.categoryNodeResponses}]]*/ [];
+    const messages = {
+        allLoaded: /*[[#{problems.all.loaded}]]*/ "All problems have been loaded.",
+        loadFailed: /*[[#{problems.load.failed}]]*/ "Failed to load",
+        allRoots: /*[[#{problems.filter.all}]]*/ "All"
+    };
 
     let loading = false;
     let hasNext = true;
     let nextCursor = null;
+    let selectedMainCategory = "";
+    let selectedRootCategoryPath = "";
 
     const listEl = document.getElementById("problem-list");
     const loadingEl = document.getElementById("loading");
+    const filterBarEl = document.getElementById("problemFilterBar");
+    const rootFilterBarEl = document.getElementById("rootCategoryFilterBar");
 
     async function loadProblems() {
         if (loading || !hasNext) return;
@@ -46,7 +62,11 @@
         try {
             const data = await fetchCursorPage({
                 url: "/api/problems",
-                params: { size: 10 },
+                params: {
+                    size: 10,
+                    ...(selectedMainCategory ? { mainCategory: selectedMainCategory } : {}),
+                    ...(selectedRootCategoryPath ? { rootCategoryPath: selectedRootCategoryPath } : {})
+                },
                 cursor: nextCursor,
                 credentials: "include"
             });
@@ -57,14 +77,95 @@
             nextCursor = data.nextCursor;
 
             if (!hasNext) {
-                loadingEl.innerText = "모든 문제를 불러왔습니다.";
+                loadingEl.innerText = messages.allLoaded;
             }
         } catch (e) {
             console.error(e);
-            loadingEl.innerText = "불러오기 실패";
+            loadingEl.innerText = messages.loadFailed;
         } finally {
             loading = false;
         }
+    }
+
+    function resetAndReloadProblems() {
+        listEl.innerHTML = "";
+        hasNext = true;
+        nextCursor = null;
+        loadingEl.innerText = /*[[#{common.loading}]]*/ "Loading...";
+        loadProblems();
+    }
+
+    function bindFilterActions() {
+        filterBarEl.querySelectorAll(".problem-filter-chip").forEach(button => {
+            button.addEventListener("click", () => {
+                const nextCategory = button.dataset.mainCategory || "";
+                if (selectedMainCategory === nextCategory) {
+                    return;
+                }
+                selectedMainCategory = nextCategory;
+                selectedRootCategoryPath = "";
+                filterBarEl.querySelectorAll(".problem-filter-chip").forEach(chip => {
+                    chip.classList.toggle("selected", chip === button);
+                });
+                renderRootCategoryFilters();
+                resetAndReloadProblems();
+            });
+        });
+    }
+
+    function renderRootCategoryFilters() {
+        rootFilterBarEl.innerHTML = "";
+
+        if (!selectedMainCategory) {
+            rootFilterBarEl.hidden = true;
+            return;
+        }
+
+        const mainCategoryNode = CATEGORY_TREE.find(node => node.name === selectedMainCategory);
+        const rootNodes = mainCategoryNode?.children || [];
+        if (!rootNodes.length) {
+            rootFilterBarEl.hidden = true;
+            return;
+        }
+
+        rootFilterBarEl.hidden = false;
+
+        const allButton = document.createElement("button");
+        allButton.className = "problem-filter-chip selected";
+        allButton.textContent = messages.allRoots;
+        allButton.dataset.rootCategoryPath = "";
+        allButton.addEventListener("click", () => {
+            if (!selectedRootCategoryPath) {
+                return;
+            }
+            selectedRootCategoryPath = "";
+            toggleRootCategorySelection(allButton);
+            resetAndReloadProblems();
+        });
+        rootFilterBarEl.appendChild(allButton);
+
+        rootNodes.forEach(node => {
+            const button = document.createElement("button");
+            button.className = "problem-filter-chip";
+            button.textContent = node.name;
+            button.dataset.rootCategoryPath = `${selectedMainCategory}:${node.name}`;
+            button.addEventListener("click", () => {
+                const nextRootCategoryPath = button.dataset.rootCategoryPath || "";
+                if (selectedRootCategoryPath === nextRootCategoryPath) {
+                    return;
+                }
+                selectedRootCategoryPath = nextRootCategoryPath;
+                toggleRootCategorySelection(button);
+                resetAndReloadProblems();
+            });
+            rootFilterBarEl.appendChild(button);
+        });
+    }
+
+    function toggleRootCategorySelection(selectedButton) {
+        rootFilterBarEl.querySelectorAll(".problem-filter-chip").forEach(chip => {
+            chip.classList.toggle("selected", chip === selectedButton);
+        });
     }
 
     function renderProblems(problems) {
@@ -85,14 +186,14 @@
         });
     }
 
-    // 🔥 스크롤 하단 감지
     window.addEventListener("scroll", () => {
         if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100) {
             loadProblems();
         }
     });
 
-    // 최초 로딩
+    bindFilterActions();
+    renderRootCategoryFilters();
     loadProblems();
 </script>
 

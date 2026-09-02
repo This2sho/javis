@@ -10,8 +10,10 @@ import com.javis.learn_hub.support.application.dto.CursorPageRequest;
 import com.javis.learn_hub.support.application.dto.CursorPageResponse;
 import com.javis.learn_hub.support.domain.Authenticated;
 import com.javis.learn_hub.support.domain.MemberId;
+import com.javis.learn_hub.support.i18n.ContentLanguage;
 import com.javis.learn_hub.support.presentation.WithCursor;
 import java.net.URI;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequestMapping("/api")
@@ -34,18 +37,28 @@ public class ProblemController {
     @PostMapping("/problems")
     public ResponseEntity<Void> createProblem(
             @RequestBody ProblemCreateRequest request,
+            Locale locale,
             @Authenticated MemberId memberId
     ) {
-        Long problemId = problemCommandService.create(request, memberId.getId());
+        Long problemId = problemCommandService.create(request, memberId.getId(), ContentLanguage.from(locale));
         return ResponseEntity.created(URI.create("/problems/" + problemId)).build();
     }
 
     @GetMapping("/problems")
     public ResponseEntity<CursorPageResponse<ProblemHistoryResponse>> viewProblems(
             @WithCursor(requiredTargetId = false, requiredTargetTime = false) CursorPageRequest cursorPageRequest,
+            @RequestParam(required = false) String mainCategory,
+            @RequestParam(required = false) String rootCategoryPath,
+            Locale locale,
             @Authenticated MemberId memberId
     ) {
-        CursorPageResponse<ProblemHistoryResponse> result = problemQueryService.viewHistories(memberId.getId(), cursorPageRequest);
+        CursorPageResponse<ProblemHistoryResponse> result = problemQueryService.viewHistories(
+                memberId.getId(),
+                cursorPageRequest,
+                mainCategory,
+                rootCategoryPath,
+                ContentLanguage.from(locale)
+        );
         return ResponseEntity.ok(result);
     }
 

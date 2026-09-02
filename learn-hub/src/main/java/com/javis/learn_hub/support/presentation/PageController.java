@@ -93,7 +93,9 @@ public class PageController {
     }
 
     @GetMapping("/problems")
-    public String problemListPage() {
+    public String problemListPage(Model model) {
+        AllCategoryNodesResponse allCategories = categoryService.getAllCategories();
+        model.addAttribute("categoryTree", allCategories);
         return "problems";
     }
 

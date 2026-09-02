@@ -30,7 +30,8 @@ public class QuestionFlowProcessor {
                         Association.from(problems.get(index).getId()),
                         Association.from(interviewId),
                         index,
-                        problems.get(index).getContent())
+                        problems.get(index).getContent(),
+                        problems.get(index).getContentLanguage())
                 ).toList();
         questionRepository.saveAll(rootQuestions);
         return rootQuestions;
@@ -45,7 +46,7 @@ public class QuestionFlowProcessor {
     public NextQuestionResult continueNextQuestion(Long questionId, List<Difficulty> preferences) {
         Question previousQuestion = interviewReader.getQuestion(questionId);
         Interview interview = interviewReader.get(previousQuestion.getInterviewId());
-        Optional<Question> nextQuestion = proceedToFollowUpQuestion(previousQuestion, preferences)
+        Optional<Question> nextQuestion = proceedToFollowUpQuestion(previousQuestion, interview, preferences)
                 .or(() -> proceedToNextRootQuestion(interview));
 
         if (nextQuestion.isPresent()) {
@@ -55,14 +56,16 @@ public class QuestionFlowProcessor {
         return NextQuestionResult.finished(interview);
     }
 
-    private Optional<Question> proceedToFollowUpQuestion(Question previousQuestion, List<Difficulty> preferences) {
+    private Optional<Question> proceedToFollowUpQuestion(Question previousQuestion, Interview interview,
+                                                         List<Difficulty> preferences) {
         if (canNotCreateFollowUpQuestion(previousQuestion)) {
             return Optional.empty();
         }
         List<Association<Problem>> answeredProblemIds = interviewReader.getAllAnsweredProblemIds(
                 previousQuestion.getInterviewId());
         return problemRecommender
-                .recommendNextProblem(previousQuestion.getProblemId(), answeredProblemIds, preferences)
+                .recommendNextProblem(previousQuestion.getProblemId(), answeredProblemIds, preferences,
+                        interview.getContentLanguage())
                 .map(problem -> createFollowUpQuestion(previousQuestion, problem));
     }
 

@@ -5,4 +5,3 @@ import java.util.List;
 public record ScoreSummaryResponse(
         List<MainCategoryScoreResponse> scores
 ) {}
-

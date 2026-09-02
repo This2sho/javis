@@ -5,6 +5,7 @@ import com.javis.learn_hub.interview.domain.Interview;
 import com.javis.learn_hub.interview.domain.InterviewStatus;
 import com.javis.learn_hub.member.domain.Member;
 import com.javis.learn_hub.support.domain.Association;
+import com.javis.learn_hub.support.i18n.ContentLanguage;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -49,15 +50,22 @@ public interface InterviewRepository extends Repository<Interview, Long> {
             Pageable pageable
     );
 
-    Optional<Interview> findByMemberIdAndMainCategoryAndStatus(
+    Optional<Interview> findByMemberIdAndMainCategoryAndContentLanguageAndStatus(
             Association<Member> memberId,
             MainCategory mainCategory,
+            ContentLanguage contentLanguage,
             InterviewStatus interviewStatus
     );
 
-    long countByMemberIdAndMainCategoryAndCreatedAtBetween(
+    List<Interview> findAllByMemberIdAndStatus(
+            Association<Member> memberId,
+            InterviewStatus interviewStatus
+    );
+
+    long countByMemberIdAndMainCategoryAndContentLanguageAndCreatedAtBetween(
             Association<Member> memberId,
             MainCategory mainCategory,
+            ContentLanguage contentLanguage,
             LocalDateTime start,
             LocalDateTime end
     );

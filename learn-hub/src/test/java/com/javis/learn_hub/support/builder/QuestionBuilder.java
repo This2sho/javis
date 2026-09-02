@@ -5,6 +5,7 @@ import com.javis.learn_hub.interview.domain.Question;
 import com.javis.learn_hub.interview.domain.QuestionStatus;
 import com.javis.learn_hub.problem.domain.Problem;
 import com.javis.learn_hub.support.domain.Association;
+import com.javis.learn_hub.support.i18n.ContentLanguage;
 
 public class QuestionBuilder {
 
@@ -15,6 +16,7 @@ public class QuestionBuilder {
     private int depth = 0;
     private int questionOrder = 0;
     private String message = "기본 질문입니다.";
+    private ContentLanguage contentLanguage = ContentLanguage.KO;
 
     public static QuestionBuilder builder() {
         return new QuestionBuilder();
@@ -70,8 +72,13 @@ public class QuestionBuilder {
         return this;
     }
 
+    public QuestionBuilder withContentLanguage(ContentLanguage contentLanguage) {
+        this.contentLanguage = contentLanguage;
+        return this;
+    }
+
     public Question buildRoot() {
-        Question question = Question.rootQuestionOf(problemId, interviewId, questionOrder, message);
+        Question question = Question.rootQuestionOf(problemId, interviewId, questionOrder, message, contentLanguage);
         applyStatus(question);
         return question;
     }
@@ -81,13 +88,13 @@ public class QuestionBuilder {
             throw new IllegalStateException("follow-up question을 만들려면 parentQuestionId가 필요합니다.");
         }
         int followUpDepth = depth > 0 ? depth : 1;
-        Question question = new Question(problemId, interviewId, parentQuestionId, followUpDepth, 0, message);
+        Question question = new Question(problemId, interviewId, parentQuestionId, followUpDepth, 0, message, contentLanguage);
         applyStatus(question);
         return question;
     }
 
     public Question build() {
-        Question question = new Question(problemId, interviewId, parentQuestionId, depth, questionOrder, message);
+        Question question = new Question(problemId, interviewId, parentQuestionId, depth, questionOrder, message, contentLanguage);
         applyStatus(question);
         return question;
     }

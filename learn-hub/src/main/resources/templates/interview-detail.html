@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
     <meta charset="UTF-8">
-    <title>인터뷰 상세</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{interview.detail.title}">Interview Detail</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
 <header>
-    <h1>인터뷰 상세</h1>
+    <h1 th:text="#{interview.detail.title}">Interview Detail</h1>
     <div class="interview-detail-actions">
-        <button onclick="location.href='/interviews'">목록</button>
-        <button onclick="location.href='/mypage'">마이페이지</button>
+        <button onclick="location.href='/interviews'" th:text="#{common.list}">List</button>
+        <button onclick="location.href='/mypage'" th:text="#{common.mypage}">My Page</button>
     </div>
 </header>
 
@@ -21,6 +22,12 @@
 
 <script th:inline="javascript">
     const interviewId = [[${interviewId}]];
+    const loadFailedMessage = /*[[#{interview.detail.load.failed}]]*/ "Unable to load the data.";
+    const responseTimeLabel = /*[[#{interview.detail.responseTime}]]*/ "Response Time";
+    const answerReviewLabel = /*[[#{interview.detail.answerReview}]]*/ "Sentence Review";
+    const missingPointsLabel = /*[[#{interview.detail.missingPoints}]]*/ "Missing Points";
+    const recommendedRewriteLabel = /*[[#{interview.detail.recommendedRewrite}]]*/ "Suggested Rewrite";
+    const noMissingPointsLabel = /*[[#{interview.detail.noMissingPoints}]]*/ "No missing points were detected.";
 </script>
 
 <script>
@@ -32,18 +39,177 @@
             data.qnAResponses.forEach(qna => {
                 const div = document.createElement("div");
                 div.className = "qna-card";
+                const responseTime = qna.responseTimeMs != null
+                    ? `<div class="qna-meta">${responseTimeLabel}: ${formatElapsed(qna.responseTimeMs)}</div>`
+                    : "";
+                const hasStructuredReview =
+                    (Array.isArray(qna.sentenceAnnotations) && qna.sentenceAnnotations.length > 0)
+                    || (Array.isArray(qna.missingPoints) && qna.missingPoints.length > 0);
                 div.innerHTML = `
-                    <div class="qna-question">Q. ${qna.question}</div>
-                    <div class="qna-answer">A. ${qna.answer}</div>
-                    <div class="qna-feedback">${qna.feedBack}</div>
+                    <div class="qna-question">${escapeHtml(qna.displayOrder || "")} ${renderPlainText(qna.question)}</div>
+                    ${responseTime}
+                    ${renderAnswerSection(qna, hasStructuredReview)}
+                    <div class="qna-feedback">${renderPlainText(stripHighlightMarkers(qna.feedBack))}</div>
+                    ${renderMissingPoints(qna, hasStructuredReview)}
                 `;
                 container.appendChild(div);
             });
         })
         .catch(err => {
             console.error(err);
-            container.innerText = "데이터를 불러오지 못했습니다.";
+            container.innerText = loadFailedMessage;
         });
+
+    function formatElapsed(elapsedMs) {
+        const totalSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
+        const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+        const seconds = String(totalSeconds % 60).padStart(2, "0");
+        return `${minutes}:${seconds}`;
+    }
+
+    function renderPlainText(text) {
+        return escapeHtml(text || "").replace(/\n/g, "<br>");
+    }
+
+    function renderAnswerSection(qna, hasStructuredReview) {
+        if (!hasStructuredReview || !Array.isArray(qna.sentences) || qna.sentences.length === 0) {
+            return `<div class="qna-answer">A. ${renderPlainText(qna.answer)}</div>`;
+        }
+
+        const annotationMap = new Map();
+        qna.sentenceAnnotations.forEach(annotation => {
+            if (!annotationMap.has(annotation.sentenceId)) {
+                annotationMap.set(annotation.sentenceId, []);
+            }
+            annotationMap.get(annotation.sentenceId).push(annotation);
+        });
+
+        return `<div class="qna-answer">A. ${renderHighlightedAnswer(qna.answer || "", qna.sentences, annotationMap)}</div>`;
+    }
+
+    function renderMissingPoints(qna, hasStructuredReview) {
+        if (!hasStructuredReview) {
+            return "";
+        }
+
+        if (!Array.isArray(qna.missingPoints) || qna.missingPoints.length === 0) {
+            return `<div class="qna-missing-points"><div class="qna-missing-points-title">${missingPointsLabel}</div><div class="qna-missing-point-empty">${noMissingPointsLabel}</div></div>`;
+        }
+
+        return `
+            <div class="qna-missing-points">
+                <div class="qna-missing-points-title">${missingPointsLabel}</div>
+                ${qna.missingPoints.map(point => `
+                    <div class="qna-missing-point-item">
+                        <div class="qna-missing-point-label">${renderPlainText(point.label)}</div>
+                        <div class="qna-missing-point-reason">${renderPlainText(point.reason)}</div>
+                    </div>
+                `).join("")}
+            </div>
+        `;
+    }
+
+    function stripHighlightMarkers(text) {
+        return (text || "").replace(/\[\[/g, "").replace(/]]/g, "");
+    }
+
+    function renderHighlightedAnswer(answerText, sentences, annotationMap) {
+        let html = "";
+        let cursor = 0;
+
+        sentences.forEach(sentence => {
+            const start = Number(sentence.startIndex);
+            const end = Number(sentence.endIndex);
+
+            if (Number.isNaN(start) || Number.isNaN(end) || start < cursor || end > answerText.length) {
+                return;
+            }
+
+            html += escapeHtml(answerText.slice(cursor, start)).replace(/\n/g, "<br>");
+            html += renderSentenceWithHighlights(
+                answerText.slice(start, end),
+                annotationMap.get(sentence.sentenceId) || []
+            );
+            cursor = end;
+        });
+
+        html += escapeHtml(answerText.slice(cursor)).replace(/\n/g, "<br>");
+        return html;
+    }
+
+    function renderSentenceWithHighlights(sentenceText, annotations) {
+        const highlightRanges = collectHighlightRanges(sentenceText, annotations);
+        if (highlightRanges.length === 0) {
+            return escapeHtml(sentenceText).replace(/\n/g, "<br>");
+        }
+
+        let html = "";
+        let cursor = 0;
+        highlightRanges.forEach(range => {
+            html += escapeHtml(sentenceText.slice(cursor, range.start)).replace(/\n/g, "<br>");
+            html += `<span class="qna-answer-issue-inline">${escapeHtml(sentenceText.slice(range.start, range.end)).replace(/\n/g, "<br>")}</span>`;
+            cursor = range.end;
+        });
+        html += escapeHtml(sentenceText.slice(cursor)).replace(/\n/g, "<br>");
+        return html;
+    }
+
+    function collectHighlightRanges(sentenceText, annotations) {
+        const lowerSentence = sentenceText.toLowerCase();
+        const ranges = [];
+
+        annotations.forEach(annotation => {
+            extractQuotedPhrases(annotation.reason).forEach(phrase => {
+                const normalized = phrase.trim();
+                if (!normalized || normalized.length < 2) {
+                    return;
+                }
+                if (annotation.reason && annotation.reason.toLowerCase().includes("missing")) {
+                    return;
+                }
+
+                let searchStart = 0;
+                const lowerPhrase = normalized.toLowerCase();
+                while (searchStart < lowerSentence.length) {
+                    const foundAt = lowerSentence.indexOf(lowerPhrase, searchStart);
+                    if (foundAt < 0) {
+                        break;
+                    }
+
+                    const end = foundAt + normalized.length;
+                    if (!ranges.some(range => !(end <= range.start || foundAt >= range.end))) {
+                        ranges.push({ start: foundAt, end });
+                    }
+                    searchStart = end;
+                }
+            });
+        });
+
+        return ranges.sort((a, b) => a.start - b.start);
+    }
+
+    function extractQuotedPhrases(text) {
+        const phrases = [];
+        const patterns = [/'([^']+)'/g, /"([^"]+)"/g];
+
+        patterns.forEach(pattern => {
+            let match;
+            while ((match = pattern.exec(text || "")) !== null) {
+                phrases.push(match[1]);
+            }
+        });
+
+        return phrases;
+    }
+
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
 </script>
 
 </body>

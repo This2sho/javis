@@ -1,6 +1,8 @@
 package com.javis.learn_hub.evaluation.application;
 
 import com.javis.learn_hub.answer.domain.Answer;
+import com.javis.learn_hub.evaluation.domain.analysis.SegmentedSentence;
+import com.javis.learn_hub.evaluation.domain.analysis.SentenceSegmenter;
 import com.javis.learn_hub.evaluation.domain.service.EvaluationProcessor;
 import com.javis.learn_hub.evaluation.infrastructure.AnswerEvaluator;
 import com.javis.learn_hub.evaluation.infrastructure.dto.EvaluationResponse;
@@ -9,6 +11,7 @@ import com.javis.learn_hub.interview.domain.Question;
 import com.javis.learn_hub.interview.domain.service.InterviewReader;
 import com.javis.learn_hub.problem.domain.ProblemScoringInfo;
 import com.javis.learn_hub.problem.domain.service.ProblemReader;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -24,12 +27,20 @@ public class EvaluationService {
     private final EvaluationProcessor evaluationProcessor;
     private final ProblemReader problemReader;
     private final InterviewReader interviewReader;
+    private final SentenceSegmenter sentenceSegmenter;
     private final ApplicationEventPublisher eventPublisher;
 
     public EvaluationResponse evaluate(Answer answer, Long questionId) {
         Question question = interviewReader.getQuestion(questionId);
         ProblemScoringInfo scoringInfo = problemReader.getProblemScoringInfoByQuestionId(questionId);
-        return answerEvaluator.evaluate(question.getMessage(), scoringInfo.getReferenceAnswer(), answer.getMessage());
+        List<SegmentedSentence> sentences = sentenceSegmenter.segment(answer.getMessage());
+        return answerEvaluator.evaluate(
+                question.getMessage(),
+                scoringInfo.getReferenceAnswer(),
+                answer.getMessage(),
+                sentences,
+                question.getContentLanguage()
+        );
     }
 
     @Transactional

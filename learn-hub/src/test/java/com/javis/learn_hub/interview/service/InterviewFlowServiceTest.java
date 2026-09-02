@@ -22,6 +22,7 @@ import com.javis.learn_hub.support.TestFixtureFactory;
 import com.javis.learn_hub.support.builder.InterviewBuilder;
 import com.javis.learn_hub.support.builder.QuestionBuilder;
 import com.javis.learn_hub.support.config.WithMockEventPublisher;
+import com.javis.learn_hub.support.i18n.ContentLanguage;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,11 +66,12 @@ class InterviewFlowServiceTest {
     @Test
     void testStart() {
         //given
-        given(interviewStepFinder.findActiveInterview(MainCategory.COMPUTER_SCIENCE, 1L)).willReturn(Optional.empty());
+        given(interviewStepFinder.findActiveInterview(MainCategory.COMPUTER_SCIENCE, 1L, ContentLanguage.KO))
+                .willReturn(Optional.empty());
         List<Question> rootQuestions = List.of(fixtureFactory.make(QuestionBuilder.builder().build()), fixtureFactory.make(QuestionBuilder.builder().build()),
                 fixtureFactory.make(QuestionBuilder.builder().build()));
         Question firstQuestion = rootQuestions.get(0);
-        given(interviewProcessor.initInterview(MainCategory.COMPUTER_SCIENCE, 1L))
+        given(interviewProcessor.initInterview(MainCategory.COMPUTER_SCIENCE, 1L, ContentLanguage.KO))
                 .willReturn(rootQuestions);
         QuestionResponse expected = QuestionResponse.from(firstQuestion);
 
@@ -88,7 +90,8 @@ class InterviewFlowServiceTest {
         Question answeredQuestion = fixtureFactory.make(QuestionBuilder.builder().withInterviewId(interview.getId()).buildRoot());
         InterviewStepResult step = InterviewStepResult.pendingEvaluation(answeredQuestion);
 
-        given(interviewStepFinder.findActiveInterview(MainCategory.COMPUTER_SCIENCE, 1L)).willReturn(Optional.of(interview));
+        given(interviewStepFinder.findActiveInterview(MainCategory.COMPUTER_SCIENCE, 1L, ContentLanguage.KO))
+                .willReturn(Optional.of(interview));
         given(interviewStepFinder.find(interview)).willReturn(step);
 
         // when
@@ -114,7 +117,8 @@ class InterviewFlowServiceTest {
         Question nextQuestion = fixtureFactory.make(QuestionBuilder.builder().withInterviewId(interview.getId()).buildRoot());
         NextQuestionResult nextQuestionResult = NextQuestionResult.withNextQuestion(interview, nextQuestion);
 
-        given(interviewStepFinder.findActiveInterview(MainCategory.COMPUTER_SCIENCE, 1L)).willReturn(Optional.of(interview));
+        given(interviewStepFinder.findActiveInterview(MainCategory.COMPUTER_SCIENCE, 1L, ContentLanguage.KO))
+                .willReturn(Optional.of(interview));
         given(interviewStepFinder.find(interview)).willReturn(step);
         given(questionFlowProcessor.continueNextQuestion(answeredQuestion.getId(), preferences)).willReturn(nextQuestionResult);
 
@@ -180,6 +184,27 @@ class InterviewFlowServiceTest {
 
         //then
         verify(questionFlowProcessor).markQuestionAnswered(questionId);
+    }
+
+    @DisplayName("같은 카테고리라도 언어가 다르면 활성 인터뷰를 재사용하지 않고 새 인터뷰를 시작한다.")
+    @Test
+    void testStartWithDifferentLanguageStartsNewInterview() {
+        given(interviewStepFinder.findActiveInterview(MainCategory.COMPUTER_SCIENCE, 1L, ContentLanguage.EN))
+                .willReturn(Optional.empty());
+        List<Question> rootQuestions = List.of(
+                fixtureFactory.make(QuestionBuilder.builder().withContentLanguage(ContentLanguage.EN).build())
+        );
+        given(interviewProcessor.initInterview(MainCategory.COMPUTER_SCIENCE, 1L, ContentLanguage.EN))
+                .willReturn(rootQuestions);
+
+        QuestionResponse actual = interviewFlowService.start(
+                MainCategory.COMPUTER_SCIENCE.name(),
+                1L,
+                ContentLanguage.EN
+        );
+
+        assertThat(actual).isEqualTo(QuestionResponse.from(rootQuestions.get(0)));
+        verify(interviewProcessor).initInterview(MainCategory.COMPUTER_SCIENCE, 1L, ContentLanguage.EN);
     }
 
 }

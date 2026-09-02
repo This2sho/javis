@@ -12,6 +12,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
@@ -42,13 +43,17 @@ public class Evaluation extends CreatedOnlyEntity {
     @Embedded
     private EvaluationResult result;
 
-    public Evaluation(Association<Answer> answerId, EvaluationResult result) {
+    @Lob
+    private String analysisJson;
+
+    public Evaluation(Association<Answer> answerId, EvaluationResult result, String analysisJson) {
         this.answerId = answerId;
         this.result = result;
+        this.analysisJson = analysisJson;
     }
 
-    public static Evaluation completed(Long answerId, EvaluationResult result) {
-        return new Evaluation(Association.from(answerId), result);
+    public static Evaluation completed(Long answerId, EvaluationResult result, String analysisJson) {
+        return new Evaluation(Association.from(answerId), result, analysisJson);
     }
 
     public int getScore() {

@@ -4,6 +4,29 @@
 
 let problemIdSeq = 0;
 
+function autoResizeTextarea(textarea) {
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+}
+
+function bindAutoResize(textarea) {
+    if (!textarea || textarea.dataset.autoResizeBound === "true") {
+        return;
+    }
+
+    textarea.dataset.autoResizeBound = "true";
+    textarea.style.overflowY = "hidden";
+    textarea.addEventListener("input", () => autoResizeTextarea(textarea));
+}
+
+function refreshProblemTextareas(scope = document) {
+    scope.querySelectorAll("textarea").forEach(textarea => {
+        bindAutoResize(textarea);
+        autoResizeTextarea(textarea);
+    });
+}
+
 /* =========================
    Problem Node 생성
 ========================= */
@@ -56,6 +79,7 @@ function createProblemNode(parentCategoryPath = "", isFollowUp = false) {
 
     renderDifficultySelector(DIFFICULTIES, box.querySelector(`#difficulty-selector-${problemId}`), problemId);
     renderCategorySelector(CATEGORY_TREE, box.querySelector(`#category-selector-${problemId}`), problemId);
+    refreshProblemTextareas(box);
 
     return box;
 }

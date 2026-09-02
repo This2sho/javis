@@ -1,15 +1,16 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
     <meta charset="UTF-8">
-    <title>카테고리 점수 상세</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{score.detail.title}">Category Scores</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
 <header>
-    <h1 id="pageTitle">카테고리 점수</h1>
-    <button onclick="goBack()">뒤로</button>
+    <h1 id="pageTitle" th:text="#{score.detail.title}">Category Scores</h1>
+    <button onclick="goBack()" th:text="#{common.back}">Back</button>
 </header>
 
 <input type="hidden" th:value="${mainCategory}" id="mainCategory">
@@ -18,19 +19,57 @@
     <div class="chart-title" id="chartTitle"></div>
     <div id="chart"></div>
 </main>
+<main class="score-list">
+    <div class="score-list-title" th:text="#{mypage.practice.focus.title}">Needs Practice</div>
+    <div class="focus-list" id="practiceFocusList"></div>
+</main>
+<main class="score-list" id="englishCoachingSection" hidden>
+    <div class="english-coaching-group">
+        <div class="english-coaching-title" th:text="#{score.detail.english.memorize.title}">Useful Sentences</div>
+        <div class="focus-list" id="memorizeSentenceList"></div>
+    </div>
+    <div class="english-coaching-group">
+        <div class="english-coaching-title" th:text="#{score.detail.english.mistakes.title}">Common Mistakes</div>
+        <div class="focus-list" id="commonMistakeList"></div>
+    </div>
+</main>
 
-<script>
+<script th:inline="javascript">
     let rootNode = null;
-    let nodeStack = []; // 드릴다운 스택
+    let nodeStack = [];
     const mainCategory = document.getElementById("mainCategory").value;
+    const messages = {
+        loadFailed: /*[[#{score.detail.load.failed}]]*/ "Unable to load score information.",
+        noChildren: /*[[#{score.detail.no.children}]]*/ "No subcategories.",
+        scoreUnit: /*[[#{common.score.unit}]]*/ "pts",
+        detailSuffix: /*[[#{score.detail.suffix}]]*/ "Score",
+        practiceEmpty: /*[[#{mypage.practice.focus.empty}]]*/ "No categories need extra practice right now.",
+        reasonLowRecentScore: /*[[#{mypage.practice.reason.low_recent_score}]]*/ "Recently unstable",
+        reasonSlowResponse: /*[[#{mypage.practice.reason.slow_response}]]*/ "Response is slow",
+        reasonLowCumulativeScore: /*[[#{mypage.practice.reason.low_cumulative_score}]]*/ "Cumulative score is low",
+        attemptCount: /*[[#{mypage.practice.attempts}]]*/ "Attempts",
+        averageScore: /*[[#{mypage.practice.average.score}]]*/ "Recent Avg",
+        averageResponseTime: /*[[#{mypage.practice.average.response_time}]]*/ "Avg Response Time",
+        startPractice: /*[[#{mypage.practice.start}]]*/ "Start Practice",
+        englishCoachingEmpty: /*[[#{score.detail.english.empty}]]*/ "No English coaching data yet.",
+        memorizeCategory: /*[[#{score.detail.english.category}]]*/ "Category",
+        memorizeSentence: /*[[#{score.detail.english.sentence}]]*/ "Sentence",
+        betterExpression: /*[[#{score.detail.english.better_expression}]]*/ "Better Expression",
+        issueReason: /*[[#{score.detail.english.issue_reason}]]*/ "Why",
+        repeatedCount: /*[[#{score.detail.english.repeated_count}]]*/ "Repeated"
+    };
+    const mainCategoryLabelsByPath = {
+        computer_science: /*[[#{mainCategory.computer_science}]]*/ "Computer Science",
+        backend: /*[[#{mainCategory.backend}]]*/ "Backend",
+        system_design: /*[[#{mainCategory.system_design}]]*/ "System Design",
+        culture_fit: /*[[#{mainCategory.culture_fit}]]*/ "Culture Fit",
+        english_conversation: /*[[#{mainCategory.english_conversation}]]*/ "영어회화"
+    };
 
     document.addEventListener("DOMContentLoaded", () => {
         loadScoreTree();
     });
 
-    /* =========================
-       API 호출
-    ========================= */
     function loadScoreTree() {
         fetch(`/api/scores/${mainCategory}`, {
             method: "GET",
@@ -38,29 +77,28 @@
         })
             .then(res => res.json())
             .then(data => {
-                rootNode = data;          // MainCategory 노드
-                nodeStack = [rootNode];  // 스택 초기화
+                rootNode = data.scoreTree;
+                nodeStack = [rootNode];
                 renderCurrentLevel();
+                renderPracticeFocuses(data.practiceFocuses || []);
+                renderEnglishCoaching(data.englishCoaching || null);
             })
-            .catch(() => alert("점수 정보를 불러오지 못했습니다."));
+            .catch(() => alert(messages.loadFailed));
     }
 
-    /* =========================
-       렌더링
-    ========================= */
     function renderCurrentLevel() {
         const currentNode = nodeStack[nodeStack.length - 1];
         const children = currentNode.children;
+        const currentLabel = displayCategoryName(currentNode.categoryName);
 
-        // ✅ categoryName 그대로 사용
         document.getElementById("chartTitle").innerText =
-            `${currentNode.categoryName} 점수`;
+            `${currentLabel} ${messages.detailSuffix}`.trim();
 
         const chart = document.getElementById("chart");
         chart.innerHTML = "";
 
         if (!children || children.length === 0) {
-            chart.innerHTML = "<p>하위 카테고리가 없습니다.</p>";
+            chart.innerHTML = `<p>${messages.noChildren}</p>`;
             return;
         }
 
@@ -70,7 +108,6 @@
             const row = document.createElement("div");
             row.className = "bar-row";
 
-            // children 있으면 드릴다운 가능
             if (child.children && child.children.length > 0) {
                 row.style.cursor = "pointer";
                 row.addEventListener("click", () => {
@@ -81,7 +118,7 @@
 
             const label = document.createElement("div");
             label.className = "bar-label";
-            label.innerText = child.categoryName; // ✅ 그대로 사용
+            label.innerText = displayCategoryName(child.categoryName);
 
             const wrapper = document.createElement("div");
             wrapper.className = "bar-wrapper";
@@ -92,7 +129,7 @@
 
             const score = document.createElement("div");
             score.className = "bar-score";
-            score.innerText = child.score + "점";
+            score.innerText = `${child.score}${messages.scoreUnit}`;
 
             wrapper.appendChild(bar);
             row.appendChild(label);
@@ -102,9 +139,149 @@
         });
     }
 
-    /* =========================
-       네비게이션
-    ========================= */
+    function displayCategoryName(categoryName) {
+        return mainCategoryLabelsByPath[categoryName] || categoryName;
+    }
+
+    function renderPracticeFocuses(items) {
+        const container = document.getElementById("practiceFocusList");
+        container.innerHTML = "";
+
+        if (items.length === 0) {
+            container.innerHTML = `<div class="focus-empty">${messages.practiceEmpty}</div>`;
+            return;
+        }
+
+        items.forEach(item => {
+            const card = document.createElement("div");
+            card.className = "focus-card";
+            card.innerHTML = `
+                <div class="focus-card-top">
+                    <div>
+                        <div class="focus-card-title">${formatCategoryPath(item.categoryPath)}</div>
+                    </div>
+                    <span class="focus-badge">${reasonLabel(item.reason)}</span>
+                </div>
+                <div class="focus-metrics">
+                    <span>${messages.attemptCount}: ${item.attemptCount}</span>
+                    <span>${messages.averageScore}: ${formatAverageScore(item.recentAverageScore)}</span>
+                    <span>${messages.averageResponseTime}: ${formatElapsed(item.averageResponseTimeMs)}</span>
+                </div>
+                ${item.latestFeedback ? `<div class="focus-feedback">${escapeHtml(stripHighlightMarkers(item.latestFeedback)).replace(/\n/g, "<br>")}</div>` : ""}
+                <button class="focus-action" data-main-category="${item.mainCategoryPath}">${messages.startPractice}</button>
+            `;
+            card.querySelector(".focus-action").addEventListener("click", () => {
+                location.href = `/interviews/start/${item.mainCategoryPath}`;
+            });
+            container.appendChild(card);
+        });
+    }
+
+    function renderEnglishCoaching(englishCoaching) {
+        const section = document.getElementById("englishCoachingSection");
+        const memorizeContainer = document.getElementById("memorizeSentenceList");
+        const mistakeContainer = document.getElementById("commonMistakeList");
+        memorizeContainer.innerHTML = "";
+        mistakeContainer.innerHTML = "";
+
+        const memorizeSentences = englishCoaching?.memorizeSentences || [];
+        const commonMistakes = englishCoaching?.commonMistakes || [];
+
+        if (memorizeSentences.length === 0 && commonMistakes.length === 0) {
+            section.hidden = true;
+            return;
+        }
+
+        section.hidden = false;
+        renderMemorizeSentences(memorizeSentences, memorizeContainer);
+        renderCommonMistakes(commonMistakes, mistakeContainer);
+    }
+
+    function renderMemorizeSentences(items, container) {
+        if (items.length === 0) {
+            container.innerHTML = `<div class="focus-empty">${messages.englishCoachingEmpty}</div>`;
+            return;
+        }
+
+        items.forEach(item => {
+            const card = document.createElement("div");
+            card.className = "focus-card english-card";
+            card.innerHTML = `
+                <div class="english-label">${messages.memorizeCategory}</div>
+                <div class="focus-card-subtitle">${formatCategoryPath(item.categoryPath)}</div>
+                <div class="english-label">${messages.memorizeSentence}</div>
+                <div class="english-sentence">${escapeHtml(item.sentence)}</div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function renderCommonMistakes(items, container) {
+        if (items.length === 0) {
+            container.innerHTML = `<div class="focus-empty">${messages.englishCoachingEmpty}</div>`;
+            return;
+        }
+
+        items.forEach(item => {
+            const card = document.createElement("div");
+            card.className = "focus-card english-card";
+            card.innerHTML = `
+                <div class="english-label">${messages.memorizeSentence}</div>
+                <div class="english-wrong-sentence">${escapeHtml(item.sentence)}</div>
+                <div class="english-label">${messages.betterExpression}</div>
+                <div class="english-sentence">${escapeHtml(item.suggestion)}</div>
+                <div class="focus-metrics">
+                    <span>${messages.issueReason}: ${escapeHtml(item.reason || "-")}</span>
+                    <span>${messages.repeatedCount}: ${item.count}</span>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function reasonLabel(reason) {
+        switch (reason) {
+            case "LOW_RECENT_SCORE":
+                return messages.reasonLowRecentScore;
+            case "SLOW_RESPONSE":
+                return messages.reasonSlowResponse;
+            default:
+                return messages.reasonLowCumulativeScore;
+        }
+    }
+
+    function formatCategoryPath(path) {
+        return path
+            .split(":")
+            .slice(1)
+            .map(part => part.replace(/_/g, " "))
+            .join(" / ");
+    }
+
+    function formatAverageScore(score) {
+        return Number(score).toFixed(1);
+    }
+
+    function formatElapsed(elapsedMs) {
+        if (elapsedMs == null) {
+            return "-";
+        }
+        const totalSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
+        const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+        const seconds = String(totalSeconds % 60).padStart(2, "0");
+        return `${minutes}:${seconds}`;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.innerText = text;
+        return div.innerHTML;
+    }
+
+    function stripHighlightMarkers(text) {
+        return (text || "").replace(/\[\[/g, "").replace(/]]/g, "");
+    }
+
     function goBack() {
         if (nodeStack.length > 1) {
             nodeStack.pop();

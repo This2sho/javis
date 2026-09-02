@@ -103,6 +103,41 @@ class ProblemRecommenderTest {
         assertThat(problems).hasSize(problemSize);
     }
 
+    @DisplayName("루트 문제 추천은 우선 카테고리 순서를 유지하면서 카테고리별로 문제를 고르게 뽑는다.")
+    @Test
+    void testRecommendRootProblemsPreservesPreferredLeafCategoryOrder() {
+        Member member = fixtureFactory.make(MemberBuilder.builder().build());
+        MainCategory mainCategory = MainCategory.CULTURE_FIT;
+        Category aboutMe = fixtureFactory.make(
+                CategoryBuilder.builder().withMainCategory(mainCategory).withSubCategories("about_me").build());
+        Category selfIntroduction = fixtureFactory.make(
+                CategoryBuilder.builder().withMainCategory(mainCategory).withSubCategories("about_me", "self_introduction").build());
+        Category motivation = fixtureFactory.make(
+                CategoryBuilder.builder().withMainCategory(mainCategory).withSubCategories("motivation").build());
+        Category whyCompany = fixtureFactory.make(
+                CategoryBuilder.builder().withMainCategory(mainCategory).withSubCategories("motivation", "why_company").build());
+        Category resume = fixtureFactory.make(
+                CategoryBuilder.builder().withMainCategory(mainCategory).withSubCategories("resume").build());
+        Category currentRole = fixtureFactory.make(
+                CategoryBuilder.builder().withMainCategory(mainCategory).withSubCategories("resume", "current_role").build());
+
+        fixtureFactory.make(
+                ScoreBuilder.builder().withScore(30).withCategoryId(selfIntroduction.getId()).withMemberId(member.getId()).build());
+        fixtureFactory.make(
+                ScoreBuilder.builder().withScore(40).withCategoryId(whyCompany.getId()).withMemberId(member.getId()).build());
+
+        Problem resumeProblem = fixtureFactory.make(ProblemBuilder.builder().withCategoryId(currentRole.getId()).build());
+        Problem motivationProblem = fixtureFactory.make(ProblemBuilder.builder().withCategoryId(whyCompany.getId()).build());
+        Problem aboutMeProblem = fixtureFactory.make(ProblemBuilder.builder().withCategoryId(selfIntroduction.getId()).build());
+
+        List<Problem> problems = problemRecommender.recommendRootProblems(member.getId(), mainCategory, 3);
+
+        assertThat(problems)
+                .extracting(problem -> problem.getCategoryId().getId())
+                .containsExactly(currentRole.getId(), selfIntroduction.getId(), whyCompany.getId());
+        assertThat(problems).containsExactly(resumeProblem, aboutMeProblem, motivationProblem);
+    }
+
     @DisplayName("이전 문제와 선호 난이도를 기준으로 꼬리 문제를 가져온다.")
     @Test
     void testRecommendNextProblem() {
